@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "DENIED",
+  "repository": "jayesh9747/guardian-demo-checkout",
+  "base_branch": "main",
+  "remediation_branch": "guardian/fix-checkout-egress",
+  "proposal_hash_sha256": "2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15",
+  "approved_tool_call_references": [],
+  "denied_tool_call_references": ["call_8455492"],
+  "github_result_references": ["call_1209563", "call_1209579", "call_1209587", "call_1209598"],
+  "remote_candidate_verified": false,
+  "base_branch_unchanged": true,
+  "remaining_limitations": [
+    "GitHub evidence is real; deployment, alert, reachability, and dependency observations are owned synthetic fixtures.",
+    "The proof is deterministic static NetworkPolicy analysis, not Kubernetes admission, CNI enforcement, live reachability, data access, or exfiltration evidence.",
+    "This proposal authorizes presentation only. It does not authorize a branch, pull request, merge, deployment, or cluster action.",
+    "Official GitHub MCP writes are separately approved and are not one atomic transaction."
+  ],
+  "guardian_did_not_merge_or_deploy": true
+}

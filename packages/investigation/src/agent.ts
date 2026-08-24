@@ -1,4 +1,5 @@
 import {
+  defineGuardianAgent,
   DEMO_CASE_ID,
   DEMO_REPOSITORY,
   LAST_GOOD_COMMIT_SHA,
@@ -97,45 +98,34 @@ The supported finding must state asset checkout-api, rule SEC-NET-001, repositor
 If any link is missing, conflicting, invalid, or unsupported, stop at INCONCLUSIVE. Identify the evidence defect, preserve cause, severity, data access, and exfiltration as Unknown, and stop. In either outcome, do not generate or request a remediation patch, candidate-policy validation, sandbox work, approval, GitHub write, branch, pull request, merge, deployment, cluster access, later-phase UI, persistence, reliability, or reconnect behavior. Your final response must contain only the bounded finding or INCONCLUSIVE; no next-step remediation request.
 `.trim();
 
-export const ROOT_AGENT_SPEC = {
+export const ROOT_AGENT_SPEC = defineGuardianAgent({
   name: ROOT_AGENT_NAME,
-  manifest: {
-    model: {
-      name: 'google-gemini/gemini-3-6-flash',
-      params: { temperature: 0 },
+  instructions: ROOT_AGENT_INSTRUCTIONS,
+  mcpServers: [
+    {
+      name: 'github',
+      enable_tools: [
+        'get_commit',
+        'list_commits',
+        'get_file_contents',
+        'list_branches',
+        'search_pull_requests',
+      ],
+      require_approval_for_tools: [],
+      preload: true,
     },
-    instructions: ROOT_AGENT_INSTRUCTIONS,
-    mcp_servers: [
-      {
-        name: 'github',
-        enable_tools: [
-          'get_commit',
-          'list_commits',
-          'get_file_contents',
-          'list_branches',
-          'search_pull_requests',
-        ],
-        require_approval_for_tools: [],
-        preload: true,
-      },
-      {
-        name: 'guardian-fixture',
-        enable_tools: [
-          'get_security_alert',
-          'get_deployment',
-          'get_reachability_observations',
-          'get_service_dependencies',
-        ],
-        require_approval_for_tools: [],
-        preload: true,
-      },
-    ],
-    config: {
-      sandbox: { enabled: false },
-      generative_ui: { enabled: false },
-      ask_user_questions: { enabled: false },
-      dynamic_sub_agents: { enabled: true },
-      iteration_limit: 12,
+    {
+      name: 'guardian-fixture',
+      enable_tools: [
+        'get_security_alert',
+        'get_deployment',
+        'get_reachability_observations',
+        'get_service_dependencies',
+      ],
+      require_approval_for_tools: [],
+      preload: true,
     },
-  },
-};
+  ],
+  dynamicSubAgents: true,
+  iterationLimit: 12,
+});

@@ -64,6 +64,19 @@ export interface EligibleProposal {
 
 type ProposalCore = Omit<EligibleProposal, 'proposal_id' | 'proposal_hash_sha256'>;
 
+function proposalCore(proposal: EligibleProposal): ProposalCore {
+  const core = { ...proposal } as Partial<EligibleProposal>;
+  delete core.proposal_id;
+  delete core.proposal_hash_sha256;
+  return core as ProposalCore;
+}
+
+export function recomputeProposalHash(proposal: EligibleProposal): string {
+  return createHash('sha256')
+    .update(canonicalJson(proposalCore(proposal)))
+    .digest('hex');
+}
+
 export function verifyFourStates(
   inputs: {
     lastGoodYaml: string;
@@ -85,14 +98,19 @@ export function verifyFourStates(
 }
 
 export function fourStateProofPasses(proof: FourStateProof): boolean {
-  const classifications = proof.states.map(({ state, result }) => [state, result.classification]);
+  const outcomes = proof.states.map(({ state, result }) => [
+    state,
+    result.classification,
+    result.secure,
+    result.functional,
+  ]);
   return (
-    JSON.stringify(classifications) ===
+    JSON.stringify(outcomes) ===
     JSON.stringify([
-      ['last-good', 'SECURE_AND_FUNCTIONAL'],
-      ['suspect', 'EXPOSED'],
-      ['deny-all', 'SECURE_BUT_OPERATIONALLY_REJECTED'],
-      ['candidate', 'SECURE_AND_FUNCTIONAL'],
+      ['last-good', 'SECURE_AND_FUNCTIONAL', true, true],
+      ['suspect', 'EXPOSED', false, true],
+      ['deny-all', 'SECURE_BUT_OPERATIONALLY_REJECTED', true, false],
+      ['candidate', 'SECURE_AND_FUNCTIONAL', true, true],
     ])
   );
 }
@@ -138,10 +156,15 @@ export function buildEligibleProposal(input: {
       'create_pull_request',
     ],
   };
-  const proposalHash = createHash('sha256').update(canonicalJson(core)).digest('hex');
+  const unhashedProposal: EligibleProposal = {
+    proposal_id: '',
+    proposal_hash_sha256: '',
+    ...core,
+  };
+  const proposalHash = recomputeProposalHash(unhashedProposal);
   return {
+    ...unhashedProposal,
     proposal_id: `proposal:sha256:${proposalHash}`,
     proposal_hash_sha256: proposalHash,
-    ...core,
   };
 }

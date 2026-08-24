@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "status": "PR_REUSED",
+  "repository": "jayesh9747/guardian-demo-checkout",
+  "base_branch": "main",
+  "remediation_branch": "guardian/fix-checkout-egress",
+  "proposal_hash_sha256": "2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15",
+  "remote_commit_sha": "44fb8c7f5e99f835c6779f5e7b777c1b016af5b3",
+  "pr_number": 1,
+  "pr_url": "https://github.com/jayesh9747/guardian-demo-checkout/pull/1",
+  "approved_tool_call_references": [],
+  "denied_tool_call_references": [],
+  "github_result_references": [
+    "call_6791435",
+    "call_6791447",
+    "call_6791466",
+    "call_6791470",
+    "call_8972036",
+    "call_8972059"
+  ],
+  "remote_candidate_verified": true,
+  "base_branch_unchanged": true,
+  "remaining_limitations": [
+    "GitHub evidence is real; deployment, alert, reachability, and dependency observations are owned synthetic fixtures.",
+    "The proof is deterministic static NetworkPolicy analysis, not Kubernetes admission, CNI enforcement, live reachability, data access, or exfiltration evidence.",
+    "Official GitHub MCP writes are separately approved and are not one atomic transaction.",
+    "Remote byte identity is verified with the expected Git blob SHA; no cluster behavior is inferred.",
+    "Guardian did not merge, deploy, roll back, delete a branch, or access a Kubernetes cluster."
+  ],
+  "guardian_did_not_merge_or_deploy": true
+}

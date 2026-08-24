@@ -6,9 +6,9 @@ This `main` branch is the reviewed planning baseline. Product implementation is 
 
 ## Start here
 
-1. Read the [active product plan](./docs/current/SECUREOPS_INCIDENT_CHANGE_GUARDIAN_HYBRID_PRODUCT_PLAN.md).
-2. Read the [hackathon compliance and feasibility audit](./docs/current/HYBRID_PLAN_HACKATHON_COMPLIANCE_AND_4_DAY_FEASIBILITY.md).
-3. Read the [phase index and execution contract](./plans/secureops-guardian-hackathon/README.md).
+1. Read the [implementation status](./docs/current/IMPLEMENTATION_STATUS.md) to identify the live phase and prerequisites.
+2. Read the [active product plan](./docs/current/SECUREOPS_INCIDENT_CHANGE_GUARDIAN_HYBRID_PRODUCT_PLAN.md).
+3. Read the current phase plan under [`plans/secureops-guardian-hackathon`](./plans/secureops-guardian-hackathon/README.md).
 4. Follow the [development and Qodo workflow](./docs/current/DEVELOPMENT_WORKFLOW.md).
 
 Phase 0 runtime proof is recorded in the [platform-gate evidence bundle](./docs/evidence/PHASE_0_PLATFORM_GATE.md).

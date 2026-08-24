@@ -4,6 +4,7 @@ This folder keeps planning material out of the workspace root and separates the 
 
 ## Current
 
+- [`IMPLEMENTATION_STATUS.md`](./current/IMPLEMENTATION_STATUS.md) — compact live phase, revision, prerequisite, and handoff snapshot; read this first.
 - [`SECUREOPS_INCIDENT_CHANGE_GUARDIAN_HYBRID_PRODUCT_PLAN.md`](./current/SECUREOPS_INCIDENT_CHANGE_GUARDIAN_HYBRID_PRODUCT_PLAN.md) — approved product direction.
 - [`HYBRID_PLAN_HACKATHON_COMPLIANCE_AND_4_DAY_FEASIBILITY.md`](./current/HYBRID_PLAN_HACKATHON_COMPLIANCE_AND_4_DAY_FEASIBILITY.md) — official-guideline and feasibility audit.
 - [`CONTEXT.md`](./current/CONTEXT.md) — project context accumulated before implementation.

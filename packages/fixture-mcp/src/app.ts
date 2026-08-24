@@ -3,14 +3,51 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { z } from 'zod';
 
-import { caseMetadataSchema } from '@guardian/shared';
+import {
+  caseMetadataSchema,
+  deploymentResultSchema,
+  reachabilityResultSchema,
+  securityAlertResultSchema,
+  serviceDependenciesResultSchema,
+} from '@guardian/shared';
 
-import { getCaseMetadata } from './metadata.js';
+import {
+  getDeployment,
+  getReachabilityObservations,
+  getSecurityAlert,
+  getServiceDependencies,
+} from './evidence.js';
+import { getCaseMetadata } from './fixtures.js';
+
+const readOnlyAnnotations = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false,
+};
+
+const caseInputSchema = {
+  case_id: z.string().min(1).describe('Exact owned synthetic demo case identifier.'),
+};
+
+function unknownCaseResult(caseId: string) {
+  return {
+    content: [{ type: 'text' as const, text: `Unknown synthetic case: ${caseId}` }],
+    isError: true,
+  };
+}
+
+function successResult(structuredContent: Record<string, unknown>) {
+  return {
+    content: [{ type: 'text' as const, text: JSON.stringify(structuredContent) }],
+    structuredContent,
+  };
+}
 
 function createServer(): McpServer {
   const server = new McpServer({
     name: 'secureops-guardian-fixture-mcp',
-    version: '0.0.0',
+    version: '0.1.0',
   });
 
   server.registerTool(
@@ -18,31 +55,78 @@ function createServer(): McpServer {
     {
       title: 'Get synthetic Guardian case metadata',
       description:
-        'Returns the identity and explicit synthetic-data boundary for an owned Guardian demo case.',
-      inputSchema: {
-        caseId: z.string().min(1).describe('Exact owned demo case identifier.'),
-      },
+        'Returns identity and explicit synthetic-data boundaries for an owned Guardian demo case.',
+      inputSchema: caseInputSchema,
       outputSchema: caseMetadataSchema.shape,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false,
-      },
+      annotations: readOnlyAnnotations,
     },
-    ({ caseId }) => {
-      const result = getCaseMetadata(caseId);
-      if (result === undefined) {
-        return {
-          content: [{ type: 'text', text: `Unknown synthetic case: ${caseId}` }],
-          isError: true,
-        };
-      }
+    ({ case_id }) => {
+      const result = getCaseMetadata(case_id);
+      return result === undefined ? unknownCaseResult(case_id) : successResult(result);
+    },
+  );
 
-      return {
-        content: [{ type: 'text', text: JSON.stringify(result) }],
-        structuredContent: result,
-      };
+  server.registerTool(
+    'get_security_alert',
+    {
+      title: 'Get synthetic security alert',
+      description:
+        'Returns the source observation emitted by the owned synthetic security sensor without interpreting cause or severity.',
+      inputSchema: caseInputSchema,
+      outputSchema: securityAlertResultSchema.shape,
+      annotations: readOnlyAnnotations,
+    },
+    ({ case_id }) => {
+      const result = getSecurityAlert(case_id);
+      return result === undefined ? unknownCaseResult(case_id) : successResult(result);
+    },
+  );
+
+  server.registerTool(
+    'get_deployment',
+    {
+      title: 'Get synthetic deployment observation',
+      description:
+        'Returns the owned synthetic deployment record, including source-native revision fields, without causal interpretation.',
+      inputSchema: caseInputSchema,
+      outputSchema: deploymentResultSchema.shape,
+      annotations: readOnlyAnnotations,
+    },
+    ({ case_id }) => {
+      const result = getDeployment(case_id);
+      return result === undefined ? unknownCaseResult(case_id) : successResult(result);
+    },
+  );
+
+  server.registerTool(
+    'get_reachability_observations',
+    {
+      title: 'Get synthetic reachability observations',
+      description:
+        'Returns owned synthetic reachability probe observations without inferring a policy rule or root cause.',
+      inputSchema: caseInputSchema,
+      outputSchema: reachabilityResultSchema.shape,
+      annotations: readOnlyAnnotations,
+    },
+    ({ case_id }) => {
+      const result = getReachabilityObservations(case_id);
+      return result === undefined ? unknownCaseResult(case_id) : successResult(result);
+    },
+  );
+
+  server.registerTool(
+    'get_service_dependencies',
+    {
+      title: 'Get synthetic service dependencies',
+      description:
+        'Returns declared dependencies from the owned synthetic service catalog without recommending remediation.',
+      inputSchema: caseInputSchema,
+      outputSchema: serviceDependenciesResultSchema.shape,
+      annotations: readOnlyAnnotations,
+    },
+    ({ case_id }) => {
+      const result = getServiceDependencies(case_id);
+      return result === undefined ? unknownCaseResult(case_id) : successResult(result);
     },
   );
 

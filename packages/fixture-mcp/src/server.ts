@@ -57,7 +57,10 @@ function createServer(): McpServer {
   return server;
 }
 
-const app = createMcpExpressApp({ host });
+const app = createMcpExpressApp({
+  host,
+  allowedHosts: ['127.0.0.1', 'localhost', 'host.docker.internal'],
+});
 
 app.get('/health', (_request, response) => {
   response.status(200).json({ status: 'ok', synthetic: true });

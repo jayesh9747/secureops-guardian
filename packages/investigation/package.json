@@ -10,11 +10,9 @@
     "build": "tsc -b"
   },
   "dependencies": {
+    "@guardian/fixture-mcp": "workspace:*",
     "@guardian/shared": "workspace:*",
     "yaml": "2.8.1",
     "zod": "4.4.3"
-  },
-  "devDependencies": {
-    "@guardian/fixture-mcp": "workspace:*"
   }
 }

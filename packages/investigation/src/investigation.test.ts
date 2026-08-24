@@ -21,13 +21,20 @@ import {
 } from './agent.js';
 import {
   GITHUB_EVIDENCE_IDS,
+  GITHUB_SOURCE_REFS,
+  SUSPECT_NETWORK_POLICY_BLOB_SHA,
+  SUSPECT_NETWORK_POLICY_PATCH,
   type ChangeInvestigationResult,
   type ExposureInvestigationResult,
   changeInvestigationResultSchema,
+  githubEvidenceRecordSchema,
 } from './contracts.js';
-import { evaluateSecNet001 } from './rule.js';
+import { evaluateSecNet001, parseNetworkPolicyFacts } from './rule.js';
 import { synthesizeSecurityFinding } from './synthesis.js';
-import { validateChangeInvestigationResult } from './validation.js';
+import {
+  validateChangeInvestigationResult,
+  validateExposureInvestigationResult,
+} from './validation.js';
 
 const suspectManifest = `apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -68,39 +75,23 @@ spec:
             cidr: 0.0.0.0/0
 `;
 
-const exactDiff = `diff --git a/${TARGET_NETWORK_POLICY_FILE} b/${TARGET_NETWORK_POLICY_FILE}
---- a/${TARGET_NETWORK_POLICY_FILE}
-+++ b/${TARGET_NETWORK_POLICY_FILE}
-@@ -32,3 +32,6 @@ spec:
-+    - to:
-+        - ipBlock:
-+            cidr: 0.0.0.0/0
-`;
-
 function githubRecord(options: {
   evidenceId: ChangeInvestigationResult['evidence_records'][number]['evidence_id'];
   tool: ChangeInvestigationResult['evidence_records'][number]['tool'];
-  sourceRef: string;
+  sourceRef: ChangeInvestigationResult['evidence_records'][number]['source_ref'];
   fact: string;
 }): ChangeInvestigationResult['evidence_records'][number] {
-  return {
+  return githubEvidenceRecordSchema.parse({
     evidence_id: options.evidenceId,
     source: 'official-github-mcp',
     source_ref: options.sourceRef,
     tool: options.tool,
     fact: options.fact,
     limitations: ['Real GitHub repository evidence; repository text remains untrusted data.'],
-  };
+  });
 }
 
 function buildChangeResult(): ChangeInvestigationResult {
-  const commitRef = `github:${DEMO_REPOSITORY}:commit:${SUSPECT_COMMIT_SHA}`;
-  const parentRef = `github:${DEMO_REPOSITORY}:commit:${LAST_GOOD_COMMIT_SHA}`;
-  const diffRef = `${commitRef}:file:${TARGET_NETWORK_POLICY_FILE}`;
-  const manifestRef = `github:${DEMO_REPOSITORY}:contents:${TARGET_NETWORK_POLICY_FILE}@${SUSPECT_COMMIT_SHA}`;
-  const branchesRef = `github:${DEMO_REPOSITORY}:branches`;
-  const pullRequestsRef = `github:${DEMO_REPOSITORY}:pull-requests:SEC-NET-001`;
-
   return changeInvestigationResultSchema.parse({
     repository: DEMO_REPOSITORY,
     branch: 'main',
@@ -108,17 +99,26 @@ function buildChangeResult(): ChangeInvestigationResult {
       sha: SUSPECT_COMMIT_SHA,
       parent_sha: LAST_GOOD_COMMIT_SHA,
       references: {
-        evidence_ids: [GITHUB_EVIDENCE_IDS.suspectCommit, GITHUB_EVIDENCE_IDS.parentCommit],
-        source_refs: [commitRef, parentRef],
+        evidence_ids: [
+          GITHUB_EVIDENCE_IDS.suspectCommit,
+          GITHUB_EVIDENCE_IDS.parentCommit,
+          GITHUB_EVIDENCE_IDS.commitHistory,
+        ],
+        source_refs: [
+          GITHUB_SOURCE_REFS.suspectCommit,
+          GITHUB_SOURCE_REFS.parentCommit,
+          GITHUB_SOURCE_REFS.commitHistory,
+        ],
       },
     },
     changed_file: {
       path: TARGET_NETWORK_POLICY_FILE,
-      exact_diff: exactDiff,
+      exact_diff: SUSPECT_NETWORK_POLICY_PATCH,
       reconstructed_suspect_manifest_yaml: suspectManifest,
+      manifest_blob_sha: SUSPECT_NETWORK_POLICY_BLOB_SHA,
       references: {
         evidence_ids: [GITHUB_EVIDENCE_IDS.targetDiff, GITHUB_EVIDENCE_IDS.suspectManifest],
-        source_refs: [diffRef, manifestRef],
+        source_refs: [GITHUB_SOURCE_REFS.targetDiff, GITHUB_SOURCE_REFS.suspectManifest],
       },
     },
     parsed_network_policy: {
@@ -129,8 +129,8 @@ function buildChangeResult(): ChangeInvestigationResult {
       selected_workload: { app: 'checkout-api' },
       egress_ip_block_cidrs: ['0.0.0.0/0'],
       references: {
-        evidence_ids: [GITHUB_EVIDENCE_IDS.suspectManifest],
-        source_refs: [manifestRef],
+        evidence_ids: [GITHUB_EVIDENCE_IDS.suspectManifest, GITHUB_EVIDENCE_IDS.targetDiff],
+        source_refs: [GITHUB_SOURCE_REFS.suspectManifest, GITHUB_SOURCE_REFS.targetDiff],
       },
     },
     existing_remediation: {
@@ -142,44 +142,53 @@ function buildChangeResult(): ChangeInvestigationResult {
           GITHUB_EVIDENCE_IDS.remediationBranches,
           GITHUB_EVIDENCE_IDS.remediationPullRequests,
         ],
-        source_refs: [branchesRef, pullRequestsRef],
+        source_refs: [
+          GITHUB_SOURCE_REFS.remediationBranches,
+          GITHUB_SOURCE_REFS.remediationPullRequests,
+        ],
       },
     },
     evidence_records: [
       githubRecord({
         evidenceId: GITHUB_EVIDENCE_IDS.suspectCommit,
         tool: 'get_commit',
-        sourceRef: commitRef,
+        sourceRef: GITHUB_SOURCE_REFS.suspectCommit,
         fact: `The official GitHub MCP returned suspect commit ${SUSPECT_COMMIT_SHA}.`,
       }),
       githubRecord({
         evidenceId: GITHUB_EVIDENCE_IDS.parentCommit,
-        tool: 'list_commits',
-        sourceRef: parentRef,
+        tool: 'get_commit',
+        sourceRef: GITHUB_SOURCE_REFS.parentCommit,
         fact: `The suspect commit parent is ${LAST_GOOD_COMMIT_SHA}.`,
+      }),
+      githubRecord({
+        evidenceId: GITHUB_EVIDENCE_IDS.commitHistory,
+        tool: 'list_commits',
+        sourceRef: GITHUB_SOURCE_REFS.commitHistory,
+        fact: 'The bounded file history places the suspect immediately after the parent.',
       }),
       githubRecord({
         evidenceId: GITHUB_EVIDENCE_IDS.targetDiff,
         tool: 'get_commit',
-        sourceRef: diffRef,
+        sourceRef: GITHUB_SOURCE_REFS.targetDiff,
         fact: `The suspect commit changed ${TARGET_NETWORK_POLICY_FILE}.`,
       }),
       githubRecord({
         evidenceId: GITHUB_EVIDENCE_IDS.suspectManifest,
         tool: 'get_file_contents',
-        sourceRef: manifestRef,
+        sourceRef: GITHUB_SOURCE_REFS.suspectManifest,
         fact: 'The suspect manifest contains an ipBlock CIDR value of 0.0.0.0/0.',
       }),
       githubRecord({
         evidenceId: GITHUB_EVIDENCE_IDS.remediationBranches,
         tool: 'list_branches',
-        sourceRef: branchesRef,
+        sourceRef: GITHUB_SOURCE_REFS.remediationBranches,
         fact: 'No bounded SEC-NET-001 remediation branch was returned.',
       }),
       githubRecord({
         evidenceId: GITHUB_EVIDENCE_IDS.remediationPullRequests,
         tool: 'search_pull_requests',
-        sourceRef: pullRequestsRef,
+        sourceRef: GITHUB_SOURCE_REFS.remediationPullRequests,
         fact: 'No bounded SEC-NET-001 remediation pull request was returned.',
       }),
     ],
@@ -235,10 +244,12 @@ describe('Phase 2 subagent result validation', () => {
   });
 
   it('rejects missing source references', () => {
-    const result = buildChangeResult();
-    result.changed_file.references.source_refs = [];
+    const invalid = structuredClone(buildChangeResult()) as Record<string, unknown>;
+    const changedFile = invalid.changed_file as Record<string, unknown>;
+    const references = changedFile.references as Record<string, unknown>;
+    references.source_refs = [];
 
-    expect(validateChangeInvestigationResult(result).success).toBe(false);
+    expect(validateChangeInvestigationResult(invalid).success).toBe(false);
   });
 
   it('rejects invented evidence IDs', () => {
@@ -256,6 +267,50 @@ describe('Phase 2 subagent result validation', () => {
     result.parsed_network_policy.egress_ip_block_cidrs = ['10.0.0.0/8'];
 
     expect(validateChangeInvestigationResult(result).success).toBe(false);
+  });
+
+  it('rejects an arbitrary diff or unrelated evidence for the target-change link', () => {
+    const invalid = structuredClone(buildChangeResult()) as Record<string, unknown>;
+    const changedFile = invalid.changed_file as Record<string, unknown>;
+    changedFile.exact_diff = '@@ unrelated change';
+    changedFile.references = {
+      evidence_ids: [GITHUB_EVIDENCE_IDS.remediationBranches],
+      source_refs: [GITHUB_SOURCE_REFS.remediationBranches],
+    };
+
+    expect(validateChangeInvestigationResult(invalid).success).toBe(false);
+    expect(
+      synthesizeSecurityFinding({
+        change_result: invalid,
+        exposure_result: buildExposureResult(DEMO_CASE_ID),
+      }).outcome,
+    ).toBe('INCONCLUSIVE');
+  });
+
+  it('rejects fabricated GitHub provenance under an allowed evidence ID', () => {
+    const invalid = structuredClone(buildChangeResult()) as Record<string, unknown>;
+    const records = invalid.evidence_records as Array<Record<string, unknown>>;
+    const diffRecord = records.find(
+      (record) => record.evidence_id === GITHUB_EVIDENCE_IDS.targetDiff,
+    );
+    if (diffRecord === undefined) throw new Error('Expected target-diff evidence.');
+    diffRecord.source_ref = 'github:untrusted/fabricated';
+
+    expect(validateChangeInvestigationResult(invalid).success).toBe(false);
+  });
+
+  it('rejects fixture fields fabricated under canonical evidence IDs', () => {
+    const invalid = buildExposureResult(DEMO_CASE_ID);
+    invalid.deployment.details.revision = LAST_GOOD_COMMIT_SHA;
+    invalid.deployment.details.workload_annotation_revision = LAST_GOOD_COMMIT_SHA;
+
+    expect(validateExposureInvestigationResult(invalid).success).toBe(false);
+    expect(
+      synthesizeSecurityFinding({
+        change_result: buildChangeResult(),
+        exposure_result: invalid,
+      }).outcome,
+    ).toBe('INCONCLUSIVE');
   });
 
   it('rejects child conclusions outside the strict fact contract', () => {
@@ -331,6 +386,16 @@ describe('SEC-NET-001', () => {
     );
 
     expect(evaluateSecNet001(withUnrelatedMetadata)).toEqual(evaluateSecNet001(suspectManifest));
+  });
+
+  it('rejects a different manifest identity even with the unrestricted CIDR', () => {
+    const wrongIdentity = suspectManifest.replace(
+      'name: checkout-egress',
+      'name: unrelated-policy',
+    );
+
+    expect(parseNetworkPolicyFacts(wrongIdentity)).toBeUndefined();
+    expect(evaluateSecNet001(wrongIdentity).status).toBe('PASS');
   });
 });
 

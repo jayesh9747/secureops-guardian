@@ -7,6 +7,17 @@ export const SECURITY_RULE_ID = 'SEC-NET-001';
 export const UNRESTRICTED_IPV4_CIDR = '0.0.0.0/0';
 export const NETWORK_POLICY_CIDR_FIELD = 'spec.egress[*].to[*].ipBlock.cidr';
 
+export const parsedNetworkPolicyFactsSchema = z
+  .object({
+    api_version: z.literal('networking.k8s.io/v1'),
+    kind: z.literal('NetworkPolicy'),
+    name: z.literal('checkout-egress'),
+    namespace: z.literal('payments'),
+    selected_workload: z.object({ app: z.literal('checkout-api') }).strict(),
+    egress_ip_block_cidrs: z.array(z.string().min(1)),
+  })
+  .strict();
+
 export const securityRuleResultSchema = z
   .object({
     rule_id: z.literal(SECURITY_RULE_ID),
@@ -35,11 +46,21 @@ function getArray(record: JsonRecord, key: string): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
-export function getEgressIpBlockCidrs(manifestYaml: string): string[] {
+export function parseNetworkPolicyFacts(
+  manifestYaml: string,
+): z.infer<typeof parsedNetworkPolicyFactsSchema> | undefined {
   const parsed: unknown = parseDocument(manifestYaml).toJS();
-  if (!isRecord(parsed)) return [];
+  if (!isRecord(parsed)) return undefined;
+  const metadata = parsed.metadata;
+  if (!isRecord(metadata)) return undefined;
   const spec = parsed.spec;
-  if (!isRecord(spec)) return [];
+  if (!isRecord(spec)) return undefined;
+  const podSelector = spec.podSelector;
+  if (!isRecord(podSelector)) return undefined;
+  const matchLabels = podSelector.matchLabels;
+  if (!isRecord(matchLabels)) return undefined;
+  if (!Array.isArray(spec.egress)) return undefined;
+  if (!Array.isArray(spec.policyTypes) || !spec.policyTypes.includes('Egress')) return undefined;
 
   const cidrs: string[] = [];
   for (const egressRule of getArray(spec, 'egress')) {
@@ -52,7 +73,20 @@ export function getEgressIpBlockCidrs(manifestYaml: string): string[] {
       if (typeof cidr === 'string') cidrs.push(cidr);
     }
   }
-  return cidrs;
+
+  const result = parsedNetworkPolicyFactsSchema.safeParse({
+    api_version: parsed.apiVersion,
+    kind: parsed.kind,
+    name: metadata.name,
+    namespace: metadata.namespace,
+    selected_workload: { app: matchLabels.app },
+    egress_ip_block_cidrs: cidrs,
+  });
+  return result.success ? result.data : undefined;
+}
+
+export function getEgressIpBlockCidrs(manifestYaml: string): string[] {
+  return parseNetworkPolicyFacts(manifestYaml)?.egress_ip_block_cidrs ?? [];
 }
 
 export function evaluateSecNet001(manifestYaml: string): z.infer<typeof securityRuleResultSchema> {

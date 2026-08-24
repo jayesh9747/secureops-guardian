@@ -15,45 +15,153 @@ import {
   serviceDependencyEvidenceSchema,
 } from '@guardian/shared';
 
+import { parsedNetworkPolicyFactsSchema } from './rule.js';
+
 export const GITHUB_EVIDENCE_IDS = {
   suspectCommit: 'evidence:github:commit:suspect',
   parentCommit: 'evidence:github:commit:parent',
+  commitHistory: 'evidence:github:commit-history:checkout-networkpolicy',
   targetDiff: 'evidence:github:diff:checkout-networkpolicy',
   suspectManifest: 'evidence:github:manifest:checkout-networkpolicy:suspect',
   remediationBranches: 'evidence:github:remediation-branches',
   remediationPullRequests: 'evidence:github:remediation-pull-requests',
 } as const;
 
-const githubEvidenceIdSchema = z.enum([
-  GITHUB_EVIDENCE_IDS.suspectCommit,
-  GITHUB_EVIDENCE_IDS.parentCommit,
-  GITHUB_EVIDENCE_IDS.targetDiff,
-  GITHUB_EVIDENCE_IDS.suspectManifest,
-  GITHUB_EVIDENCE_IDS.remediationBranches,
-  GITHUB_EVIDENCE_IDS.remediationPullRequests,
+export const SUSPECT_NETWORK_POLICY_BLOB_SHA = '477c7db7edd61de10fce67713d52e442f2358318';
+export const SUSPECT_NETWORK_POLICY_PATCH = `@@ -32,3 +32,6 @@ spec:
+       ports:
+         - protocol: TCP
+           port: 5432
++    - to:
++        - ipBlock:
++            cidr: 0.0.0.0/0`;
+
+export const GITHUB_SOURCE_REFS = {
+  suspectCommit: `github:${DEMO_REPOSITORY}:commit:${SUSPECT_COMMIT_SHA}`,
+  parentCommit: `github:${DEMO_REPOSITORY}:commit:${LAST_GOOD_COMMIT_SHA}`,
+  commitHistory: `github:${DEMO_REPOSITORY}:history:${TARGET_NETWORK_POLICY_FILE}@${SUSPECT_COMMIT_SHA}`,
+  targetDiff: `github:${DEMO_REPOSITORY}:commit:${SUSPECT_COMMIT_SHA}:file:${TARGET_NETWORK_POLICY_FILE}:patch`,
+  suspectManifest: `github:${DEMO_REPOSITORY}:blob:${SUSPECT_NETWORK_POLICY_BLOB_SHA}`,
+  remediationBranches: `github:${DEMO_REPOSITORY}:branches`,
+  remediationPullRequests: `github:${DEMO_REPOSITORY}:pull-requests:SEC-NET-001`,
+} as const;
+
+const githubEvidenceBaseShape = {
+  source: z.literal('official-github-mcp'),
+  fact: z.string().min(1),
+  limitations: z.array(z.string().min(1)),
+};
+
+export const githubEvidenceRecordSchema = z.discriminatedUnion('evidence_id', [
+  z
+    .object({
+      ...githubEvidenceBaseShape,
+      evidence_id: z.literal(GITHUB_EVIDENCE_IDS.suspectCommit),
+      source_ref: z.literal(GITHUB_SOURCE_REFS.suspectCommit),
+      tool: z.literal('get_commit'),
+    })
+    .strict(),
+  z
+    .object({
+      ...githubEvidenceBaseShape,
+      evidence_id: z.literal(GITHUB_EVIDENCE_IDS.parentCommit),
+      source_ref: z.literal(GITHUB_SOURCE_REFS.parentCommit),
+      tool: z.literal('get_commit'),
+    })
+    .strict(),
+  z
+    .object({
+      ...githubEvidenceBaseShape,
+      evidence_id: z.literal(GITHUB_EVIDENCE_IDS.commitHistory),
+      source_ref: z.literal(GITHUB_SOURCE_REFS.commitHistory),
+      tool: z.literal('list_commits'),
+    })
+    .strict(),
+  z
+    .object({
+      ...githubEvidenceBaseShape,
+      evidence_id: z.literal(GITHUB_EVIDENCE_IDS.targetDiff),
+      source_ref: z.literal(GITHUB_SOURCE_REFS.targetDiff),
+      tool: z.literal('get_commit'),
+    })
+    .strict(),
+  z
+    .object({
+      ...githubEvidenceBaseShape,
+      evidence_id: z.literal(GITHUB_EVIDENCE_IDS.suspectManifest),
+      source_ref: z.literal(GITHUB_SOURCE_REFS.suspectManifest),
+      tool: z.literal('get_file_contents'),
+    })
+    .strict(),
+  z
+    .object({
+      ...githubEvidenceBaseShape,
+      evidence_id: z.literal(GITHUB_EVIDENCE_IDS.remediationBranches),
+      source_ref: z.literal(GITHUB_SOURCE_REFS.remediationBranches),
+      tool: z.literal('list_branches'),
+    })
+    .strict(),
+  z
+    .object({
+      ...githubEvidenceBaseShape,
+      evidence_id: z.literal(GITHUB_EVIDENCE_IDS.remediationPullRequests),
+      source_ref: z.literal(GITHUB_SOURCE_REFS.remediationPullRequests),
+      tool: z.literal('search_pull_requests'),
+    })
+    .strict(),
 ]);
 
-export const githubEvidenceRecordSchema = z
+const suspectCommitReferencesSchema = z
   .object({
-    evidence_id: githubEvidenceIdSchema,
-    source: z.literal('official-github-mcp'),
-    source_ref: z.string().min(1),
-    tool: z.enum([
-      'get_commit',
-      'list_commits',
-      'get_file_contents',
-      'list_branches',
-      'search_pull_requests',
+    evidence_ids: z.tuple([
+      z.literal(GITHUB_EVIDENCE_IDS.suspectCommit),
+      z.literal(GITHUB_EVIDENCE_IDS.parentCommit),
+      z.literal(GITHUB_EVIDENCE_IDS.commitHistory),
     ]),
-    fact: z.string().min(1),
-    limitations: z.array(z.string().min(1)),
+    source_refs: z.tuple([
+      z.literal(GITHUB_SOURCE_REFS.suspectCommit),
+      z.literal(GITHUB_SOURCE_REFS.parentCommit),
+      z.literal(GITHUB_SOURCE_REFS.commitHistory),
+    ]),
   })
   .strict();
 
-const evidenceReferencesSchema = z
+const changedFileReferencesSchema = z
   .object({
-    evidence_ids: z.array(githubEvidenceIdSchema).min(1),
-    source_refs: z.array(z.string().min(1)).min(1),
+    evidence_ids: z.tuple([
+      z.literal(GITHUB_EVIDENCE_IDS.targetDiff),
+      z.literal(GITHUB_EVIDENCE_IDS.suspectManifest),
+    ]),
+    source_refs: z.tuple([
+      z.literal(GITHUB_SOURCE_REFS.targetDiff),
+      z.literal(GITHUB_SOURCE_REFS.suspectManifest),
+    ]),
+  })
+  .strict();
+
+const parsedPolicyReferencesSchema = z
+  .object({
+    evidence_ids: z.tuple([
+      z.literal(GITHUB_EVIDENCE_IDS.suspectManifest),
+      z.literal(GITHUB_EVIDENCE_IDS.targetDiff),
+    ]),
+    source_refs: z.tuple([
+      z.literal(GITHUB_SOURCE_REFS.suspectManifest),
+      z.literal(GITHUB_SOURCE_REFS.targetDiff),
+    ]),
+  })
+  .strict();
+
+const remediationReferencesSchema = z
+  .object({
+    evidence_ids: z.tuple([
+      z.literal(GITHUB_EVIDENCE_IDS.remediationBranches),
+      z.literal(GITHUB_EVIDENCE_IDS.remediationPullRequests),
+    ]),
+    source_refs: z.tuple([
+      z.literal(GITHUB_SOURCE_REFS.remediationBranches),
+      z.literal(GITHUB_SOURCE_REFS.remediationPullRequests),
+    ]),
   })
   .strict();
 
@@ -65,26 +173,21 @@ export const changeInvestigationResultSchema = z
       .object({
         sha: z.literal(SUSPECT_COMMIT_SHA),
         parent_sha: z.literal(LAST_GOOD_COMMIT_SHA),
-        references: evidenceReferencesSchema,
+        references: suspectCommitReferencesSchema,
       })
       .strict(),
     changed_file: z
       .object({
         path: z.literal(TARGET_NETWORK_POLICY_FILE),
-        exact_diff: z.string().min(1),
+        exact_diff: z.literal(SUSPECT_NETWORK_POLICY_PATCH),
         reconstructed_suspect_manifest_yaml: z.string().min(1),
-        references: evidenceReferencesSchema,
+        manifest_blob_sha: z.literal(SUSPECT_NETWORK_POLICY_BLOB_SHA),
+        references: changedFileReferencesSchema,
       })
       .strict(),
-    parsed_network_policy: z
-      .object({
-        api_version: z.literal('networking.k8s.io/v1'),
-        kind: z.literal('NetworkPolicy'),
-        name: z.literal('checkout-egress'),
-        namespace: z.literal('payments'),
-        selected_workload: z.object({ app: z.literal('checkout-api') }).strict(),
-        egress_ip_block_cidrs: z.array(z.string().min(1)),
-        references: evidenceReferencesSchema,
+    parsed_network_policy: parsedNetworkPolicyFactsSchema
+      .extend({
+        references: parsedPolicyReferencesSchema,
       })
       .strict(),
     existing_remediation: z
@@ -92,10 +195,10 @@ export const changeInvestigationResultSchema = z
         status: z.enum(['found', 'none', 'Unknown']),
         branch_names: z.array(z.string().min(1)),
         pull_request_urls: z.array(z.url()),
-        references: evidenceReferencesSchema,
+        references: remediationReferencesSchema,
       })
       .strict(),
-    evidence_records: z.array(githubEvidenceRecordSchema).min(1),
+    evidence_records: z.array(githubEvidenceRecordSchema).length(7),
     unknowns: z.array(z.string().min(1)),
     limitations: z.array(z.string().min(1)).min(1),
   })
@@ -115,6 +218,7 @@ export const changeInvestigationResultSchema = z
       result.existing_remediation.references,
     ];
     for (const reference of references) {
+      const sourceRefs = new Set<string>(reference.source_refs);
       for (const evidenceId of reference.evidence_ids) {
         const record = evidenceById.get(evidenceId);
         if (record === undefined) {
@@ -124,7 +228,7 @@ export const changeInvestigationResultSchema = z
           });
           continue;
         }
-        if (!reference.source_refs.includes(record.source_ref)) {
+        if (!sourceRefs.has(record.source_ref)) {
           context.addIssue({
             code: 'custom',
             message: `Source reference is missing for evidence ID: ${evidenceId}`,

@@ -3,8 +3,9 @@ import { request, type Server } from 'node:http';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { DEMO_CASE_ID } from '@guardian/shared';
+
 import { createFixtureMcpApp } from './app.js';
-import { DEMO_CASE_ID } from './fixtures.js';
 
 let server: Server;
 let baseUrl: string;

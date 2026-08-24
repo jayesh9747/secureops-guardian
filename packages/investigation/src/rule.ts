@@ -60,7 +60,6 @@ export function parseNetworkPolicyFacts(
   const matchLabels = podSelector.matchLabels;
   if (!isRecord(matchLabels)) return undefined;
   if (!Array.isArray(spec.egress)) return undefined;
-  if (!Array.isArray(spec.policyTypes) || !spec.policyTypes.includes('Egress')) return undefined;
 
   const cidrs: string[] = [];
   for (const egressRule of getArray(spec, 'egress')) {

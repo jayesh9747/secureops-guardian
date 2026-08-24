@@ -388,6 +388,13 @@ describe('SEC-NET-001', () => {
     expect(evaluateSecNet001(withUnrelatedMetadata)).toEqual(evaluateSecNet001(suspectManifest));
   });
 
+  it('detects the exact unrestricted CIDR when policyTypes is implicit', () => {
+    const implicitEgressManifest = suspectManifest.replace('  policyTypes:\n    - Egress\n', '');
+
+    expect(evaluateSecNet001(implicitEgressManifest).status).toBe('FAIL');
+    expect(evaluateSecNet001(implicitEgressManifest).observed_value).toBe('0.0.0.0/0');
+  });
+
   it('rejects a different manifest identity even with the unrestricted CIDR', () => {
     const wrongIdentity = suspectManifest.replace(
       'name: checkout-egress',

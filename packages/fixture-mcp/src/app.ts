@@ -52,7 +52,7 @@ function createServer(): McpServer {
 export function createFixtureMcpApp(host: string) {
   const app = createMcpExpressApp({
     host,
-    allowedHosts: ['127.0.0.1', 'localhost', 'host.docker.internal'],
+    allowedHosts: ['127.0.0.1', '::1', 'localhost', 'host.docker.internal'],
   });
 
   app.get('/health', (_request, response) => {
@@ -62,11 +62,6 @@ export function createFixtureMcpApp(host: string) {
   app.post('/mcp', async (request, response) => {
     const server = createServer();
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-
-    response.on('close', () => {
-      void transport.close();
-      void server.close();
-    });
 
     try {
       await server.connect(transport);
@@ -80,6 +75,9 @@ export function createFixtureMcpApp(host: string) {
           id: null,
         });
       }
+    } finally {
+      await transport.close();
+      await server.close();
     }
   });
 

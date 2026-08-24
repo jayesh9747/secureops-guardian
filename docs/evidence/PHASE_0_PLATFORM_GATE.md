@@ -197,7 +197,7 @@ Result: **Pass**.
 | `pnpm format:check` | Pass; all checked files matched Prettier style |
 | `pnpm lint` | Pass |
 | `pnpm typecheck` | Pass |
-| `pnpm test` | Pass; 3 files and 8 tests |
+| `pnpm test` | Pass; 3 files and 9 tests |
 | `pnpm build` | Pass |
 
 ## Qodo PR gate
@@ -205,15 +205,15 @@ Result: **Pass**.
 - PR #1 was promoted from draft only after the platform evidence and local quality gates passed.
 - `qodo-code-review[bot]` posted its PR summary and high-level assessment on 24 August 2026.
 - Qodo assessed the small stateless Streamable HTTP MCP, typed shared schema, and workspace toolchain as appropriate for the Phase 0 gate.
-- No inline comments, change requests, or actionable findings were posted after the review window.
-- Applicable findings: none.
-- Non-applicable findings requiring a reply: none.
+- Applicable findings were resolved: per-request MCP server/transport cleanup now runs in `finally`, and the Host allowlist includes IPv6 loopback.
+- The loopback bind remains the safer default; the README now supplies the explicit `HOST=0.0.0.0` command required for local TrueForge-container access.
+- The cross-repository request for Phase 1 Kubernetes history is intentionally deferred: creating that fixture is the Phase 1 entry work and is explicitly excluded from Phase 0.
 - The complete quality command set was rerun after closing the review checklist.
 
 An additional GitHub Copilot review posted two applicable recommendations after the Qodo result. Both were resolved:
 
 - The Fixture MCP `dev` lifecycle now force-builds `@guardian/shared` before starting. A missing compiled shared entry point was simulated locally; `predev` recreated it and the server started on an unused port.
-- The Express/MCP app is separated from its listening entry point and covered by four integration tests: synthetic health, stateless GET/DELETE rejection, a successful Streamable HTTP tool call, and fail-closed unknown-case behavior.
+- The Express/MCP app is separated from its listening entry point and covered by five integration tests: synthetic health, untrusted-Host rejection, stateless GET/DELETE rejection, a successful Streamable HTTP tool call, and fail-closed unknown-case behavior.
 
 ## Exit-gate conclusion
 

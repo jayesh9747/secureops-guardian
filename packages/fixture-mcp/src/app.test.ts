@@ -1,5 +1,5 @@
 import { once } from 'node:events';
-import type { Server } from 'node:http';
+import { request, type Server } from 'node:http';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -48,12 +48,29 @@ async function callTool(caseId: string): Promise<string> {
   return response.text();
 }
 
+async function getWithHostHeader(path: string, host: string): Promise<number | undefined> {
+  return new Promise((resolve, reject) => {
+    const outgoing = request(`${baseUrl}${path}`, { headers: { host } }, (response) => {
+      response.resume();
+      resolve(response.statusCode);
+    });
+    outgoing.on('error', reject);
+    outgoing.end();
+  });
+}
+
 describe('Fixture MCP HTTP app', () => {
   it('reports an explicitly synthetic health response', async () => {
     const response = await fetch(`${baseUrl}/health`);
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ status: 'ok', synthetic: true });
+  });
+
+  it('rejects an untrusted Host header', async () => {
+    const status = await getWithHostHeader('/health', 'untrusted.example');
+
+    expect(status).toBe(403);
   });
 
   it('rejects stateful GET and DELETE MCP methods', async () => {

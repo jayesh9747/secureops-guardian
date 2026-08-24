@@ -13,6 +13,17 @@ This `main` branch is the reviewed planning baseline. Product implementation is 
 
 Phase 0 runtime proof is recorded in the [platform-gate evidence bundle](./docs/evidence/PHASE_0_PLATFORM_GATE.md).
 
+## Run the Phase 0 Fixture MCP
+
+The safe default binds only to `127.0.0.1`. To make the service reachable from the local TrueForge container, opt in to the host-interface binding explicitly:
+
+```sh
+pnpm install --frozen-lockfile
+HOST=0.0.0.0 PORT=8788 pnpm --filter @guardian/fixture-mcp dev
+```
+
+Register `http://host.docker.internal:8788/mcp` as the `guardian-fixture` Streamable HTTP connector in TrueForge. The application still validates the Host header and exposes only owned synthetic metadata.
+
 The intentionally vulnerable owned fixture is maintained separately in [`jayesh9747/guardian-demo-checkout`](https://github.com/jayesh9747/guardian-demo-checkout).
 
 ## Evidence boundary

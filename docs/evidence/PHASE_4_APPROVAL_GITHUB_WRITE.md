@@ -12,6 +12,8 @@ Phase 4 passes its proposal-binding, denial, approved-write, remote-verification
 
 Remediation pull request: [`jayesh9747/guardian-demo-checkout#1`](https://github.com/jayesh9747/guardian-demo-checkout/pull/1), open and unmerged.
 
+Development pull request: [`jayesh9747/secureops-guardian#5`](https://github.com/jayesh9747/secureops-guardian/pull/5), open and unmerged.
+
 Guardian did not merge, deploy, roll back, delete a branch, create an issue, access Actions or secrets, administer a repository, contact a Kubernetes cluster, or write to the product repository through the remediation credential.
 
 ## Entry-gate reconciliation
@@ -127,6 +129,10 @@ Receipt factories reject unsupported claims: `PR_CREATED` requires three approve
 | `git diff --check` | Pass |
 | Working-tree secret pattern scan | Pass |
 | Working-tree local absolute-path scan | Pass |
+| GitGuardian Security Checks on PR #5 | Pass |
+| Qodo review | Attempted; externally unavailable because reviews are paused for this user |
+
+Qodo automatically attempted PR #5 at `2026-08-24T15:11:11Z` and posted that reviews are paused for this user. It produced no findings or completed review. This record does not infer a zero-finding Qodo result; the development PR remains open.
 
 ## Exit-gate conclusion
 

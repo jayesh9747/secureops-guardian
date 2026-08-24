@@ -1,21 +1,16 @@
 import {
+  CONFLICTING_REVISION_CASE_ID,
+  DEMO_CASE_ID,
+  LAST_GOOD_COMMIT_SHA,
+  MISSING_DEPLOYMENT_REVISION_CASE_ID,
+  MISSING_REACHABILITY_CASE_ID,
+  SUSPECT_COMMIT_SHA,
   caseMetadataSchema,
   incidentFixtureSchema,
   type CaseMetadata,
   type EvidenceItem,
   type IncidentFixture,
 } from '@guardian/shared';
-
-export const DEMO_CASE_ID = 'checkout-networkpolicy-egress-exposure';
-export const MISSING_DEPLOYMENT_REVISION_CASE_ID =
-  'checkout-networkpolicy-egress-exposure-missing-deployment-revision';
-export const MISSING_REACHABILITY_CASE_ID =
-  'checkout-networkpolicy-egress-exposure-missing-reachability';
-export const CONFLICTING_REVISION_CASE_ID =
-  'checkout-networkpolicy-egress-exposure-conflicting-revision';
-
-export const LAST_GOOD_COMMIT_SHA = 'a6d177b43396c7b4b45aa98cb2970d0489a7a4f9';
-export const SUSPECT_COMMIT_SHA = '7b2f2ad51f9ef97334176fbfed3138465b62fcdb';
 
 const FIXTURE_VERSION = '2';
 const SYNTHETIC_LIMITATION =

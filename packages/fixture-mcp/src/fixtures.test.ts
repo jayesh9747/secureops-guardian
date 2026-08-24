@@ -7,9 +7,9 @@ import {
   MISSING_DEPLOYMENT_REVISION_CASE_ID,
   MISSING_REACHABILITY_CASE_ID,
   SUSPECT_COMMIT_SHA,
-  getFixture,
-  listCaseIds,
-} from './fixtures.js';
+} from '@guardian/shared';
+
+import { getFixture, listCaseIds } from './fixtures.js';
 
 describe('incident fixtures', () => {
   it('keeps the normal case internally consistent and joined to the suspect revision', () => {

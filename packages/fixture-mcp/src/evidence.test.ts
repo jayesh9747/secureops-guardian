@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEMO_CASE_ID } from '@guardian/shared';
+
 import {
   getDeployment,
   getReachabilityObservations,
   getSecurityAlert,
   getServiceDependencies,
 } from './evidence.js';
-import { DEMO_CASE_ID } from './fixtures.js';
 
 describe('read-only evidence accessors', () => {
   it('returns each source-native evidence contract without a conclusion field', () => {

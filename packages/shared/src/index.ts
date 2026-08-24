@@ -1,6 +1,20 @@
 import { z } from 'zod';
 
-const fullGitShaSchema = z.string().regex(/^[0-9a-f]{40}$/u, 'Expected a full Git commit SHA.');
+export const DEMO_REPOSITORY = 'jayesh9747/guardian-demo-checkout';
+export const DEMO_CASE_ID = 'checkout-networkpolicy-egress-exposure';
+export const MISSING_DEPLOYMENT_REVISION_CASE_ID =
+  'checkout-networkpolicy-egress-exposure-missing-deployment-revision';
+export const MISSING_REACHABILITY_CASE_ID =
+  'checkout-networkpolicy-egress-exposure-missing-reachability';
+export const CONFLICTING_REVISION_CASE_ID =
+  'checkout-networkpolicy-egress-exposure-conflicting-revision';
+export const LAST_GOOD_COMMIT_SHA = 'a6d177b43396c7b4b45aa98cb2970d0489a7a4f9';
+export const SUSPECT_COMMIT_SHA = '7b2f2ad51f9ef97334176fbfed3138465b62fcdb';
+export const TARGET_NETWORK_POLICY_FILE = 'k8s/checkout-networkpolicy.yaml';
+
+export const fullGitShaSchema = z
+  .string()
+  .regex(/^[0-9a-f]{40}$/u, 'Expected a full Git commit SHA.');
 
 const evidenceBaseShape = {
   evidence_id: z.string().min(1),

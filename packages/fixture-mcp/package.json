@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./fixtures": "./dist/fixtures.js"
+  },
   "scripts": {
     "build": "tsc -b",
     "predev": "pnpm --filter @guardian/shared exec tsc -b --force",

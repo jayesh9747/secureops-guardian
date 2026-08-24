@@ -6,6 +6,9 @@
     },
     {
       "path": "./packages/fixture-mcp"
+    },
+    {
+      "path": "./packages/investigation"
     }
   ]
 }

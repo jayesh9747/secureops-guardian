@@ -197,7 +197,7 @@ Result: **Pass**.
 | `pnpm format:check` | Pass; all checked files matched Prettier style |
 | `pnpm lint` | Pass |
 | `pnpm typecheck` | Pass |
-| `pnpm test` | Pass; 2 files and 4 tests |
+| `pnpm test` | Pass; 3 files and 8 tests |
 | `pnpm build` | Pass |
 
 ## Qodo PR gate
@@ -209,6 +209,11 @@ Result: **Pass**.
 - Applicable findings: none.
 - Non-applicable findings requiring a reply: none.
 - The complete quality command set was rerun after closing the review checklist.
+
+An additional GitHub Copilot review posted two applicable recommendations after the Qodo result. Both were resolved:
+
+- The Fixture MCP `dev` lifecycle now force-builds `@guardian/shared` before starting. A missing compiled shared entry point was simulated locally; `predev` recreated it and the server started on an unused port.
+- The Express/MCP app is separated from its listening entry point and covered by four integration tests: synthetic health, stateless GET/DELETE rejection, a successful Streamable HTTP tool call, and fail-closed unknown-case behavior.
 
 ## Exit-gate conclusion
 

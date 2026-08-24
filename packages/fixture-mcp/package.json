@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -b",
+    "predev": "pnpm --filter @guardian/shared exec tsc -b --force",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js"
   },

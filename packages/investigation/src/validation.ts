@@ -30,7 +30,9 @@ export function validateChangeInvestigationResult(
 
   let observedCidrs: string[];
   try {
-    observedCidrs = getEgressIpBlockCidrs(parsed.data.changed_file.suspect_manifest_yaml);
+    observedCidrs = getEgressIpBlockCidrs(
+      parsed.data.changed_file.reconstructed_suspect_manifest_yaml,
+    );
   } catch {
     return { success: false, error: customError('Suspect manifest is not valid YAML.') };
   }

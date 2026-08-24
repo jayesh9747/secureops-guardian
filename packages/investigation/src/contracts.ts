@@ -38,9 +38,15 @@ export const githubEvidenceRecordSchema = z
     evidence_id: githubEvidenceIdSchema,
     source: z.literal('official-github-mcp'),
     source_ref: z.string().min(1),
-    tool: z.enum(['get_commit', 'get_file_contents', 'list_branches', 'search_pull_requests']),
+    tool: z.enum([
+      'get_commit',
+      'list_commits',
+      'get_file_contents',
+      'list_branches',
+      'search_pull_requests',
+    ]),
     fact: z.string().min(1),
-    limitations: z.array(z.string().min(1)).min(1),
+    limitations: z.array(z.string().min(1)),
   })
   .strict();
 
@@ -66,7 +72,7 @@ export const changeInvestigationResultSchema = z
       .object({
         path: z.literal(TARGET_NETWORK_POLICY_FILE),
         exact_diff: z.string().min(1),
-        suspect_manifest_yaml: z.string().min(1),
+        reconstructed_suspect_manifest_yaml: z.string().min(1),
         references: evidenceReferencesSchema,
       })
       .strict(),
@@ -76,7 +82,7 @@ export const changeInvestigationResultSchema = z
         kind: z.literal('NetworkPolicy'),
         name: z.literal('checkout-egress'),
         namespace: z.literal('payments'),
-        selected_workload: z.literal('checkout-api'),
+        selected_workload: z.object({ app: z.literal('checkout-api') }).strict(),
         egress_ip_block_cidrs: z.array(z.string().min(1)),
         references: evidenceReferencesSchema,
       })
@@ -125,10 +131,6 @@ export const changeInvestigationResultSchema = z
           });
         }
       }
-    }
-
-    if (!result.changed_file.exact_diff.includes(TARGET_NETWORK_POLICY_FILE)) {
-      context.addIssue({ code: 'custom', message: 'Exact diff does not name the target file.' });
     }
 
     if (

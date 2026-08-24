@@ -14,6 +14,12 @@ import {
 import { getFixture } from '@guardian/fixture-mcp/fixtures';
 
 import {
+  CHANGE_SECURITY_INVESTIGATOR_TASK,
+  EXPOSURE_EVIDENCE_INVESTIGATOR_TASK,
+  ROOT_AGENT_INSTRUCTIONS,
+  ROOT_AGENT_SPEC,
+} from './agent.js';
+import {
   GITHUB_EVIDENCE_IDS,
   type ChangeInvestigationResult,
   type ExposureInvestigationResult,
@@ -109,7 +115,7 @@ function buildChangeResult(): ChangeInvestigationResult {
     changed_file: {
       path: TARGET_NETWORK_POLICY_FILE,
       exact_diff: exactDiff,
-      suspect_manifest_yaml: suspectManifest,
+      reconstructed_suspect_manifest_yaml: suspectManifest,
       references: {
         evidence_ids: [GITHUB_EVIDENCE_IDS.targetDiff, GITHUB_EVIDENCE_IDS.suspectManifest],
         source_refs: [diffRef, manifestRef],
@@ -120,7 +126,7 @@ function buildChangeResult(): ChangeInvestigationResult {
       kind: 'NetworkPolicy',
       name: 'checkout-egress',
       namespace: 'payments',
-      selected_workload: 'checkout-api',
+      selected_workload: { app: 'checkout-api' },
       egress_ip_block_cidrs: ['0.0.0.0/0'],
       references: {
         evidence_ids: [GITHUB_EVIDENCE_IDS.suspectManifest],
@@ -148,7 +154,7 @@ function buildChangeResult(): ChangeInvestigationResult {
       }),
       githubRecord({
         evidenceId: GITHUB_EVIDENCE_IDS.parentCommit,
-        tool: 'get_commit',
+        tool: 'list_commits',
         sourceRef: parentRef,
         fact: `The suspect commit parent is ${LAST_GOOD_COMMIT_SHA}.`,
       }),
@@ -259,6 +265,39 @@ describe('Phase 2 subagent result validation', () => {
   });
 });
 
+describe('saved root-agent contract', () => {
+  it('is bounded to the one repository, case, file, rule, asset, and two child tasks', () => {
+    for (const requiredValue of [
+      DEMO_REPOSITORY,
+      DEMO_CASE_ID,
+      TARGET_NETWORK_POLICY_FILE,
+      'SEC-NET-001',
+      'checkout-api',
+    ]) {
+      expect(ROOT_AGENT_INSTRUCTIONS).toContain(requiredValue);
+    }
+    expect(ROOT_AGENT_INSTRUCTIONS).toContain(CHANGE_SECURITY_INVESTIGATOR_TASK);
+    expect(ROOT_AGENT_INSTRUCTIONS).toContain(EXPOSURE_EVIDENCE_INVESTIGATOR_TASK);
+    expect(ROOT_AGENT_INSTRUCTIONS).toContain('exactly two TrueForge child investigations');
+    expect(ROOT_AGENT_INSTRUCTIONS).toContain('Wait until both children return');
+  });
+
+  it('enables only read sources and dynamic children without sandbox or later-phase output', () => {
+    expect(ROOT_AGENT_SPEC.manifest.config).toMatchObject({
+      sandbox: { enabled: false },
+      generative_ui: { enabled: false },
+      ask_user_questions: { enabled: false },
+      dynamic_sub_agents: { enabled: true },
+    });
+    expect(ROOT_AGENT_SPEC.manifest.mcp_servers).toHaveLength(2);
+    expect(ROOT_AGENT_SPEC.manifest.mcp_servers.map((server) => server.name)).toEqual([
+      'github',
+      'guardian-fixture',
+    ]);
+    expect(ROOT_AGENT_INSTRUCTIONS).toContain('do not generate or request a remediation patch');
+  });
+});
+
 describe('SEC-NET-001', () => {
   it('detects only the exact unrestricted IPv4 egress value with explicit evidence fields', () => {
     expect(evaluateSecNet001(suspectManifest)).toEqual({
@@ -346,7 +385,7 @@ describe('deterministic causal-chain synthesis', () => {
 
   it('returns INCONCLUSIVE when the deterministic rule link is invalidated', () => {
     const change = buildChangeResult();
-    change.changed_file.suspect_manifest_yaml = suspectManifest.replace(
+    change.changed_file.reconstructed_suspect_manifest_yaml = suspectManifest.replace(
       'cidr: 0.0.0.0/0',
       'cidr: 10.0.0.0/8',
     );

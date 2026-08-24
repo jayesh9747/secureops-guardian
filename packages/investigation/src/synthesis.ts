@@ -125,7 +125,7 @@ function synthesizeValidated(options: {
     );
   }
 
-  const rule = evaluateSecNet001(change.changed_file.suspect_manifest_yaml);
+  const rule = evaluateSecNet001(change.changed_file.reconstructed_suspect_manifest_yaml);
   if (rule.status !== 'FAIL' || rule.observed_value !== '0.0.0.0/0') {
     defects.push(`Rule ${SECURITY_RULE_ID} did not identify unrestricted IPv4 egress.`);
   }

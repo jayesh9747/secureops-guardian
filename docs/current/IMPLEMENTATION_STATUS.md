@@ -11,8 +11,8 @@ This file is navigation and handoff state, not a product specification. The acti
 ## Current state
 
 - Completed and merged: Phase 0 and Phase 1.
-- Gate passed, PR not yet merged: Phase 2 — agent investigation and finding.
-- Current product branch: `phase-2/agent-investigation`, created from updated `main`; reviewed implementation head before the evidence/status commit is `c71618be33b3f184a58de9c22adc64b45456c04f`.
+- Gate passed, PR open and not merged: Phase 2 — agent investigation and finding; `jayesh9747/secureops-guardian#3`.
+- Current product branch: `phase-2/agent-investigation`, created from updated `main`; Qodo-reviewed head before the final review-status handoff is `f9de2a99c5153af63d0f7ff0d534c40ac4241fa7`.
 - Next phase after merge: Phase 3 — sandbox remediation proof, from updated `main` only.
 - Product `main`: `c8fe85b929f27d675a26cf6fb990eb624988874c` after Phase 1 merge.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
@@ -24,6 +24,7 @@ This file is navigation and handoff state, not a product specification. The acti
 | --- | --- | --- | --- | --- |
 | 0 — platform gate | `jayesh9747/secureops-guardian#1` | `5097f16806363edb45db8531691390e2cab10a63` | `9b1c7436ef3a32b9c274d9eaa5e51ed6b58dd4e0` | [`PHASE_0_PLATFORM_GATE.md`](../evidence/PHASE_0_PLATFORM_GATE.md) |
 | 1 — demo evidence | `jayesh9747/secureops-guardian#2` | `913474c9cbd53bcecb5a4794d8625549ac5a332f` | `c8fe85b929f27d675a26cf6fb990eb624988874c` | [`PHASE_1_DEMO_EVIDENCE.md`](../evidence/PHASE_1_DEMO_EVIDENCE.md) |
+| 2 — agent investigation | `jayesh9747/secureops-guardian#3` | `f9de2a99c5153af63d0f7ff0d534c40ac4241fa7` | Open | [`PHASE_2_AGENT_INVESTIGATION.md`](../evidence/PHASE_2_AGENT_INVESTIGATION.md) |
 
 Read a completed phase's plan or evidence only when verifying its prerequisite, reproducing its trace, or diagnosing a regression.
 
@@ -58,7 +59,7 @@ Verified before Phase 2 implementation:
 3. The product, fixture, and TrueForge worktrees were inspected; the operator-owned TrueForge change remains preserved.
 4. The Phase 2 plan was read completely and `phase-2/agent-investigation` was created from updated product `main`.
 
-The Phase 2 entry check and implementation/trace gate passed. Phase 2 is not merged; its product PR and Qodo gate must complete before Phase 3 begins.
+The Phase 2 entry, implementation, trace, and Qodo gates passed. Phase 2 is not merged; Phase 3 must not begin until product PR #3 is merged and `main` is updated.
 
 ## Known risks and limits
 

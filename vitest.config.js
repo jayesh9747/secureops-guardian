@@ -9,6 +9,9 @@ export default defineConfig({
         new URL('./packages/fixture-mcp/src/fixtures.ts', import.meta.url),
       ),
       '@guardian/shared': fileURLToPath(new URL('./packages/shared/src/index.ts', import.meta.url)),
+      '@guardian/policy-verifier': fileURLToPath(
+        new URL('./packages/policy-verifier/src/index.ts', import.meta.url),
+      ),
     },
   },
   test: {

@@ -16,6 +16,47 @@ export const fullGitShaSchema = z
   .string()
   .regex(/^[0-9a-f]{40}$/u, 'Expected a full Git commit SHA.');
 
+export interface GuardianMcpServerSpec {
+  name: string;
+  enable_tools: readonly string[];
+  require_approval_for_tools: readonly string[];
+  preload: boolean;
+}
+
+export interface GuardianAgentDefinition {
+  name: string;
+  instructions: string;
+  mcpServers?: readonly GuardianMcpServerSpec[];
+  sandbox?: { enabled: boolean; file_downloads?: boolean };
+  dynamicSubAgents?: boolean;
+  iterationLimit: number;
+}
+
+export function defineGuardianAgent(definition: GuardianAgentDefinition) {
+  return {
+    name: definition.name,
+    manifest: {
+      model: {
+        name: 'google-gemini/gemini-3-6-flash',
+        params: { temperature: 0 },
+      },
+      instructions: definition.instructions,
+      mcp_servers: (definition.mcpServers ?? []).map((server) => ({
+        ...server,
+        enable_tools: [...server.enable_tools],
+        require_approval_for_tools: [...server.require_approval_for_tools],
+      })),
+      config: {
+        sandbox: definition.sandbox ?? { enabled: false },
+        generative_ui: { enabled: false },
+        ask_user_questions: { enabled: false },
+        dynamic_sub_agents: { enabled: definition.dynamicSubAgents ?? false },
+        iteration_limit: definition.iterationLimit,
+      },
+    },
+  };
+}
+
 const evidenceBaseShape = {
   evidence_id: z.string().min(1),
   source: z.string().min(1),

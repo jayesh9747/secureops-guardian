@@ -4,3 +4,4 @@ export * from './constants.js';
 export * from './contract.js';
 export * from './presentation.js';
 export * from './receipt.js';
+export * from './receipt-artifacts.js';

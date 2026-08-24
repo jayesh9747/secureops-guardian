@@ -1,4 +1,9 @@
-import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
+import {
+  defineGuardianAgent,
+  DEMO_REPOSITORY,
+  SUSPECT_COMMIT_SHA,
+  TARGET_NETWORK_POLICY_FILE,
+} from '@guardian/shared';
 
 export const PHASE_THREE_AGENT_NAME = 'secureops-guardian-phase-3';
 
@@ -14,21 +19,9 @@ After the candidate exists, use the supplied checked-in verifier bundle and fixt
 For a passing candidate, run the same verifier CLI with explicit last-good, suspect, deny-all, candidate, and contract paths to create the four-state proof and eligible proposal. The matrix must classify last-good and candidate SECURE_AND_FUNCTIONAL, suspect EXPOSED, and deny-all SECURE_BUT_OPERATIONALLY_REJECTED. Return the proposal hash, verifier result, candidate sandbox path, evidence IDs, and static/synthetic limitations. Do not claim live reachability, cluster behavior, data access, or exfiltration.
 `.trim();
 
-export const PHASE_THREE_AGENT_SPEC = {
+export const PHASE_THREE_AGENT_SPEC = defineGuardianAgent({
   name: PHASE_THREE_AGENT_NAME,
-  manifest: {
-    model: {
-      name: 'google-gemini/gemini-3-6-flash',
-      params: { temperature: 0 },
-    },
-    instructions: PHASE_THREE_AGENT_INSTRUCTIONS,
-    mcp_servers: [],
-    config: {
-      sandbox: { enabled: true, file_downloads: true },
-      generative_ui: { enabled: false },
-      ask_user_questions: { enabled: false },
-      dynamic_sub_agents: { enabled: false },
-      iteration_limit: 8,
-    },
-  },
-};
+  instructions: PHASE_THREE_AGENT_INSTRUCTIONS,
+  sandbox: { enabled: true, file_downloads: true },
+  iterationLimit: 8,
+});

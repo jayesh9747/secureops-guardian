@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@guardian/policy-verifier": "workspace:*",
-    "@guardian/shared": "workspace:*"
+    "@guardian/shared": "workspace:*",
+    "zod": "4.4.3"
   }
 }

@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import type { EligibleProposal } from '@guardian/policy-verifier';
+import { canonicalJson, type EligibleProposal } from '@guardian/policy-verifier';
 import { describe, expect, it } from 'vitest';
 
 import { PHASE_FOUR_AGENT_SPEC } from './agent.js';
@@ -14,12 +15,14 @@ import {
   VERIFIED_CANDIDATE_YAML,
 } from './constants.js';
 import {
+  decideWrite,
   evaluateRemoteSnapshot,
   expectedWriteCall,
   writeCallMatchesProposal,
   type RemoteSnapshot,
 } from './contract.js';
 import { buildPreMutationPresentation } from './presentation.js';
+import { buildPhaseFourReceiptArtifacts } from './receipt-artifacts.js';
 import { buildActionReceipt } from './receipt.js';
 
 const proposal = JSON.parse(
@@ -29,12 +32,16 @@ const candidateArtifact = readFileSync(
   new URL('../../../docs/evidence/PHASE_3_CANDIDATE.yaml', import.meta.url),
   'utf8',
 );
-const binding = bindEligibleProposal(proposal);
+const bindingResult = bindEligibleProposal(proposal);
+if (bindingResult.status !== 'BOUND') throw new Error(bindingResult.reason);
+const binding = bindingResult.binding;
+const baseCommitSha = '7b2f2ad51f9ef97334176fbfed3138465b62fcdb';
+const candidateCommitSha = '44fb8c7f5e99f835c6779f5e7b777c1b016af5b3';
 
 function snapshot(overrides: Partial<RemoteSnapshot> = {}): RemoteSnapshot {
   return {
     base: {
-      commitSha: 'base-commit',
+      commitSha: baseCommitSha,
       targetFileGitBlobSha: SUSPECT_CANDIDATE_GIT_BLOB_SHA,
     },
     branch: null,
@@ -45,22 +52,44 @@ function snapshot(overrides: Partial<RemoteSnapshot> = {}): RemoteSnapshot {
 
 describe('Phase 4 proposal binding and presentation', () => {
   it('byte-matches the displayed candidate to the merged sandbox-verified artifact', () => {
+    const candidateBytes = Buffer.from(binding.candidateYaml);
+    const candidateGitBlobSha = createHash('sha1')
+      .update(`blob ${String(candidateBytes.byteLength)}\0`)
+      .update(candidateBytes)
+      .digest('hex');
     expect(binding.candidateYaml).toBe(candidateArtifact);
     expect(binding.candidateYaml).toBe(VERIFIED_CANDIDATE_YAML);
     expect(binding.candidateSha256).toBe(VERIFIED_CANDIDATE_SHA256);
     expect(binding.candidateGitBlobSha).toBe(VERIFIED_CANDIDATE_GIT_BLOB_SHA);
+    expect(createHash('sha256').update(candidateBytes).digest('hex')).toBe(
+      VERIFIED_CANDIDATE_SHA256,
+    );
+    expect(candidateGitBlobSha).toBe(VERIFIED_CANDIDATE_GIT_BLOB_SHA);
   });
 
   it('fails closed for a mismatched proposal hash or target', () => {
-    expect(() =>
-      bindEligibleProposal({ ...proposal, proposal_hash_sha256: '0'.repeat(64) }),
-    ).toThrow('WRITE_CONFLICT');
-    expect(() =>
+    expect(bindEligibleProposal({ ...proposal, proposal_hash_sha256: '0'.repeat(64) }).status).toBe(
+      'WRITE_CONFLICT',
+    );
+    expect(
       bindEligibleProposal({
         ...proposal,
         target: { ...proposal.target, repository: 'jayesh9747/secureops-guardian' },
-      }),
-    ).toThrow('WRITE_CONFLICT');
+      }).status,
+    ).toBe('WRITE_CONFLICT');
+    expect(
+      decideWrite({ ...proposal, proposal_hash_sha256: '0'.repeat(64) }, snapshot()).status,
+    ).toBe('WRITE_CONFLICT');
+  });
+
+  it('rejects proof rows whose security flags contradict their classification', () => {
+    const inconsistentProof = structuredClone(proposal);
+    const candidate = inconsistentProof.four_state_verifier_result.states.find(
+      ({ state }) => state === 'candidate',
+    );
+    if (candidate === undefined) throw new Error('Expected candidate proof row.');
+    candidate.result.secure = false;
+    expect(bindEligibleProposal(inconsistentProof).status).toBe('WRITE_CONFLICT');
   });
 
   it('presents every decision field before mutation', () => {
@@ -116,7 +145,7 @@ describe('Phase 4 ordered write contract', () => {
   it('requires remote candidate verification before PR creation', () => {
     const unmodifiedBranch = snapshot({
       branch: {
-        commitSha: 'base-commit',
+        commitSha: baseCommitSha,
         targetFileGitBlobSha: SUSPECT_CANDIDATE_GIT_BLOB_SHA,
         commitMessage: 'fixture base',
       },
@@ -128,7 +157,7 @@ describe('Phase 4 ordered write contract', () => {
 
     const verifiedBranch = snapshot({
       branch: {
-        commitSha: 'candidate-commit',
+        commitSha: candidateCommitSha,
         targetFileGitBlobSha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
         commitMessage: binding.commitMessage,
       },
@@ -144,14 +173,14 @@ describe('Phase 4 ordered write contract', () => {
       binding,
       snapshot({
         branch: {
-          commitSha: 'candidate-commit',
+          commitSha: candidateCommitSha,
           targetFileGitBlobSha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
           commitMessage: binding.commitMessage,
         },
         pullRequest: {
           number: 7,
           url: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/7',
-          state: 'open',
+          title: binding.pullRequestTitle,
           base: PHASE_FOUR_TARGET.baseBranch,
           head: PHASE_FOUR_TARGET.remediationBranch,
           body: binding.pullRequestBody,
@@ -160,10 +189,27 @@ describe('Phase 4 ordered write contract', () => {
     );
     expect(decision).toEqual({
       status: 'PR_REUSED',
-      remoteCommitSha: 'candidate-commit',
+      remoteCommitSha: candidateCommitSha,
       prNumber: 7,
       prUrl: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/7',
     });
+
+    const alteredBody = snapshot({
+      branch: {
+        commitSha: candidateCommitSha,
+        targetFileGitBlobSha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
+        commitMessage: binding.commitMessage,
+      },
+      pullRequest: {
+        number: 7,
+        url: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/7',
+        title: binding.pullRequestTitle,
+        base: PHASE_FOUR_TARGET.baseBranch,
+        head: PHASE_FOUR_TARGET.remediationBranch,
+        body: `${binding.pullRequestBody} `,
+      },
+    });
+    expect(evaluateRemoteSnapshot(binding, alteredBody).status).toBe('WRITE_CONFLICT');
   });
 
   it('fails closed instead of overwriting mismatched remote work', () => {
@@ -171,7 +217,7 @@ describe('Phase 4 ordered write contract', () => {
       binding,
       snapshot({
         branch: {
-          commitSha: 'unknown-commit',
+          commitSha: 'd'.repeat(40),
           targetFileGitBlobSha: 'f'.repeat(40),
           commitMessage: binding.commitMessage,
         },
@@ -182,14 +228,33 @@ describe('Phase 4 ordered write contract', () => {
     const changedBase = evaluateRemoteSnapshot(
       binding,
       snapshot({
-        base: { commitSha: 'changed-base', targetFileGitBlobSha: 'e'.repeat(40) },
+        base: { commitSha: 'c'.repeat(40), targetFileGitBlobSha: 'e'.repeat(40) },
       }),
     );
     expect(changedBase.status).toBe('WRITE_CONFLICT');
+
+    expect(() =>
+      evaluateRemoteSnapshot(binding, {
+        ...snapshot(),
+        base: { commitSha: 'base-commit', targetFileGitBlobSha: 'e'.repeat(40) },
+      }),
+    ).toThrow();
   });
 });
 
 describe('Phase 4 truthful receipts and TrueForge policy', () => {
+  it('keeps every committed receipt byte-semantically derived from the receipt builder', () => {
+    for (const receiptCase of buildPhaseFourReceiptArtifacts(binding)) {
+      const committed = JSON.parse(
+        readFileSync(
+          new URL(`../../../docs/evidence/${receiptCase.fileName}`, import.meta.url),
+          'utf8',
+        ),
+      ) as unknown;
+      expect(canonicalJson(committed)).toBe(canonicalJson(receiptCase.receipt));
+    }
+  });
+
   it('proves denial performs zero writes and claims no mutation', () => {
     const receipt = buildActionReceipt(binding, {
       status: 'DENIED',
@@ -216,7 +281,7 @@ describe('Phase 4 truthful receipts and TrueForge policy', () => {
         deterministicBranchAbsent: false,
         matchingPullRequestAbsent: true,
       }),
-    ).toThrow('zero-write denial proof');
+    ).toThrow();
   });
 
   it('never claims mutations unsupported by GitHub and TrueForge results', () => {
@@ -227,29 +292,30 @@ describe('Phase 4 truthful receipts and TrueForge policy', () => {
         githubResultReferences: ['branch-result', 'file-result'],
         remoteCandidateVerified: false,
         baseBranchUnchanged: true,
-        remoteCommitSha: 'candidate-commit',
+        remoteCommitSha: candidateCommitSha,
         prNumber: 7,
         prUrl: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/7',
       }),
-    ).toThrow('lacks approved GitHub mutation');
+    ).toThrow();
 
     expect(() =>
       buildActionReceipt(binding, {
         status: 'WRITE_CONFLICT',
+        reason: 'Existing remote work differs.',
         githubResultReferences: ['conflict-read'],
         remoteCandidateVerified: false,
         baseBranchUnchanged: true,
         prNumber: 7,
         prUrl: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/7',
       }),
-    ).toThrow('must not claim a successful pull request');
+    ).toThrow();
   });
 
   it('enables only minimum GitHub tools and approval-gates every write', () => {
     const github = PHASE_FOUR_AGENT_SPEC.manifest.mcp_servers[0];
     expect(github?.enable_tools).toEqual([
       'list_branches',
-      'search_pull_requests',
+      'list_pull_requests',
       'get_file_contents',
       'get_commit',
       'create_branch',

@@ -1,10 +1,9 @@
-import type { ProposalBinding } from './binding.js';
-import { canonicalJson } from '@guardian/policy-verifier';
-import {
-  PHASE_FOUR_TARGET,
-  PHASE_THREE_PROPOSAL_HASH,
-  SUSPECT_CANDIDATE_GIT_BLOB_SHA,
-} from './constants.js';
+import { canonicalJson, type EligibleProposal } from '@guardian/policy-verifier';
+import { fullGitShaSchema } from '@guardian/shared';
+import { z } from 'zod';
+
+import { bindEligibleProposal, type ProposalBinding } from './binding.js';
+import { PHASE_FOUR_TARGET, SUSPECT_CANDIDATE_GIT_BLOB_SHA } from './constants.js';
 
 export type GitHubWriteTool = 'create_branch' | 'create_or_update_file' | 'create_pull_request';
 export type WriteStep = 'CREATE_BRANCH' | 'UPDATE_FILE' | 'CREATE_PR';
@@ -14,25 +13,31 @@ export interface WriteToolCall {
   arguments: Record<string, unknown>;
 }
 
-export interface RemoteSnapshot {
-  base: {
-    commitSha: string;
-    targetFileGitBlobSha: string;
-  };
-  branch: null | {
-    commitSha: string;
-    targetFileGitBlobSha: string;
-    commitMessage: string;
-  };
-  pullRequest: null | {
-    number: number;
-    url: string;
-    state: 'open';
-    base: string;
-    head: string;
-    body: string;
-  };
-}
+export const remoteSnapshotSchema = z.object({
+  base: z.object({
+    commitSha: fullGitShaSchema,
+    targetFileGitBlobSha: fullGitShaSchema,
+  }),
+  branch: z
+    .object({
+      commitSha: fullGitShaSchema,
+      targetFileGitBlobSha: fullGitShaSchema,
+      commitMessage: z.string().min(1),
+    })
+    .nullable(),
+  pullRequest: z
+    .object({
+      number: z.number().int().positive(),
+      url: z.url(),
+      title: z.string().min(1),
+      base: z.string().min(1),
+      head: z.string().min(1),
+      body: z.string(),
+    })
+    .nullable(),
+});
+
+export type RemoteSnapshot = z.infer<typeof remoteSnapshotSchema>;
 
 export type RemoteDecision =
   | { status: 'WRITE_REQUIRED'; step: WriteStep }
@@ -96,8 +101,9 @@ export function writeCallMatchesProposal(
 
 export function evaluateRemoteSnapshot(
   binding: ProposalBinding,
-  snapshot: RemoteSnapshot,
+  untrustedSnapshot: RemoteSnapshot,
 ): RemoteDecision {
+  const snapshot = remoteSnapshotSchema.parse(untrustedSnapshot);
   if (snapshot.base.targetFileGitBlobSha !== SUSPECT_CANDIDATE_GIT_BLOB_SHA) {
     return {
       status: 'WRITE_CONFLICT',
@@ -116,13 +122,14 @@ export function evaluateRemoteSnapshot(
 
   const branchHasCandidate =
     snapshot.branch.targetFileGitBlobSha === binding.candidateGitBlobSha &&
-    snapshot.branch.commitMessage.includes(PHASE_THREE_PROPOSAL_HASH);
+    snapshot.branch.commitMessage === binding.commitMessage;
 
   if (snapshot.pullRequest !== null) {
     const pullRequestMatches =
       snapshot.pullRequest.base === PHASE_FOUR_TARGET.baseBranch &&
       snapshot.pullRequest.head === PHASE_FOUR_TARGET.remediationBranch &&
-      snapshot.pullRequest.body.includes(PHASE_THREE_PROPOSAL_HASH);
+      snapshot.pullRequest.title === binding.pullRequestTitle &&
+      snapshot.pullRequest.body === binding.pullRequestBody;
     if (!branchHasCandidate || !pullRequestMatches) {
       return {
         status: 'WRITE_CONFLICT',
@@ -148,4 +155,10 @@ export function evaluateRemoteSnapshot(
     status: 'WRITE_CONFLICT',
     reason: 'Deterministic branch contains work that does not match the eligible proposal.',
   };
+}
+
+export function decideWrite(proposal: EligibleProposal, snapshot: RemoteSnapshot): RemoteDecision {
+  const bindingResult = bindEligibleProposal(proposal);
+  if (bindingResult.status === 'WRITE_CONFLICT') return bindingResult;
+  return evaluateRemoteSnapshot(bindingResult.binding, snapshot);
 }

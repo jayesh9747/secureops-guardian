@@ -5,6 +5,7 @@ import {
   VERIFIED_CANDIDATE_GIT_BLOB_SHA,
   VERIFIED_CANDIDATE_SHA256,
 } from './constants.js';
+import { defineGuardianAgent } from '@guardian/shared';
 
 export const PHASE_FOUR_AGENT_NAME = 'secureops-guardian-phase-4';
 
@@ -15,15 +16,15 @@ The only eligible proposal hash is ${PHASE_THREE_PROPOSAL_HASH}. The only author
 
 Before any mutation, visibly present the supplied pre-mutation record in full: repository, branches, target file, canonical diff, exact candidate, proposal hash, supporting evidence IDs, four-state matrix, limitations, candidate hashes, and ordered write sequence. Stop with WRITE_CONFLICT if any supplied value differs from these pinned values.
 
-Use only the enabled official GitHub MCP tools. First call list_branches, search_pull_requests, get_file_contents for the base target, and get_commit for base. Search only this repository for an open PR with head ${PHASE_FOUR_TARGET.remediationBranch} and the exact proposal hash. Never target another repository, branch, or file.
+Use only the enabled official GitHub MCP tools. First call list_branches, list_pull_requests, get_file_contents for the base target, and get_commit for base. List open pull requests only in this repository with base ${PHASE_FOUR_TARGET.baseBranch} and exact head ${PHASE_FOUR_TARGET.owner}:${PHASE_FOUR_TARGET.remediationBranch}; then verify the exact supplied title and body. Never use GitHub search as the idempotency check, and never target another repository, branch, or file.
 
 Ordered write contract:
 1. If branch and matching PR are absent, call create_branch with exact owner/repo, branch ${PHASE_FOUR_TARGET.remediationBranch}, and from_branch ${PHASE_FOUR_TARGET.baseBranch}.
 2. After branch creation, read the branch file and commit. Proceed only if it exactly matches the base commit and suspect blob ${SUSPECT_CANDIDATE_GIT_BLOB_SHA}.
 3. Call create_or_update_file only for ${PHASE_FOUR_TARGET.file}, with the exact supplied verified candidate bytes, the suspect blob SHA, and the exact supplied commit message containing ${PHASE_THREE_PROPOSAL_HASH}.
 4. After the update, call get_file_contents and get_commit for the remediation branch. Do not create a PR unless the returned target blob is ${VERIFIED_CANDIDATE_GIT_BLOB_SHA}, the commit message contains the exact proposal hash, and a fresh base read proves the base commit and file blob are unchanged.
-5. Search again for a matching open PR. If absent, call create_pull_request with exact base/head/title/body supplied in the request. The body must contain the proposal hash, evidence links and IDs, matrix, limitations, and no merge/deployment claim.
-6. Read/search after creation and emit PR_CREATED only from the official tool result and matching remote proof.
+5. List open pull requests again with the exact base/head filter. If absent, call create_pull_request with exact base/head/title/body supplied in the request. The body must contain the proposal hash, evidence links and IDs, matrix, limitations, and no merge/deployment claim.
+6. Read/list after creation and emit PR_CREATED only from the official tool result and matching remote proof.
 
 Every create_branch, create_or_update_file, and create_pull_request call requires a separate human approval. Never retry a denied write in the same request. When a write is denied, use reads to prove the base is unchanged and no new branch, commit, or PR was created by that attempt, then emit DENIED with the denied tool-call reference and no success URL or mutation claim.
 
@@ -34,40 +35,24 @@ Return one machine-readable receipt with status exactly PR_CREATED, PR_REUSED, D
 Never merge, deploy, roll back, delete a branch, create an issue, access Actions or secrets, administer a repository, use a custom GitHub API client, write to the product repository, access Kubernetes, or claim the separately approved sequence is atomic.
 `.trim();
 
-export const PHASE_FOUR_AGENT_SPEC = {
+export const PHASE_FOUR_AGENT_SPEC = defineGuardianAgent({
   name: PHASE_FOUR_AGENT_NAME,
-  manifest: {
-    model: {
-      name: 'google-gemini/gemini-3-6-flash',
-      params: { temperature: 0 },
+  instructions: PHASE_FOUR_AGENT_INSTRUCTIONS,
+  mcpServers: [
+    {
+      name: 'github',
+      enable_tools: [
+        'list_branches',
+        'list_pull_requests',
+        'get_file_contents',
+        'get_commit',
+        'create_branch',
+        'create_or_update_file',
+        'create_pull_request',
+      ],
+      require_approval_for_tools: ['create_branch', 'create_or_update_file', 'create_pull_request'],
+      preload: true,
     },
-    instructions: PHASE_FOUR_AGENT_INSTRUCTIONS,
-    mcp_servers: [
-      {
-        name: 'github',
-        enable_tools: [
-          'list_branches',
-          'search_pull_requests',
-          'get_file_contents',
-          'get_commit',
-          'create_branch',
-          'create_or_update_file',
-          'create_pull_request',
-        ],
-        require_approval_for_tools: [
-          'create_branch',
-          'create_or_update_file',
-          'create_pull_request',
-        ],
-        preload: true,
-      },
-    ],
-    config: {
-      sandbox: { enabled: false },
-      generative_ui: { enabled: false },
-      ask_user_questions: { enabled: false },
-      dynamic_sub_agents: { enabled: false },
-      iteration_limit: 24,
-    },
-  },
-};
+  ],
+  iterationLimit: 24,
+});

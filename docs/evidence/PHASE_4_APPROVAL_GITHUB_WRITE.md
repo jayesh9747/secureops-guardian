@@ -10,6 +10,17 @@ Scope: Phase 4 only
 
 Phase 4 passes its proposal-binding, denial, approved-write, remote-verification, retry, conflict, and local-quality gates. TrueForge used only the official GitHub MCP against `jayesh9747/guardian-demo-checkout`. Each of the three writes paused for a separate approval, one earlier identical branch write was denied with zero mutation, and a fresh retry reused the same open remediation PR without a write or approval event.
 
+A post-implementation thermo-nuclear review found that the three committed receipt artifacts had been transcribed from agent output rather than produced by the repository receipt builder. A focused regression test reproduced the mismatch before remediation. The receipt proof is now one runtime-validated discriminated union, the trace inputs are recorded in `receipt-artifacts.ts`, and a test rebuilds every committed JSON receipt and requires canonical equality. The regenerated receipts include every builder-produced proposal limitation and no hand-added limitation text.
+
+The remaining product-review findings were resolved as one contract cleanup:
+
+- Proposal binding now returns `BOUND | WRITE_CONFLICT`; `decideWrite` composes it with the remote decision without error-message parsing.
+- The proposal hash formula is exported once by `policy-verifier`, and the redundant per-call candidate-pin self-test was removed while byte/hash assertions remain in tests.
+- The exact proposal target is one canonical record; repository owner/name are derived from the repository pin.
+- PR markdown and pre-mutation markdown share proof-matrix and bullet renderers. The matrix includes derived classification, `secure`, and `functional` values, all validated by the four-state gate.
+- Remote snapshots are parsed at the boundary with full Git SHA schemas, and PR reuse requires the exact derived title/body.
+- Shared agent construction now type-checks the common model/config/manifest shape for the Phase 2, 3, and 4 specs.
+
 Remediation pull request: [`jayesh9747/guardian-demo-checkout#1`](https://github.com/jayesh9747/guardian-demo-checkout/pull/1), open and unmerged.
 
 Development pull request: [`jayesh9747/secureops-guardian#5`](https://github.com/jayesh9747/secureops-guardian/pull/5), open and unmerged.
@@ -43,11 +54,13 @@ The product and fixture worktrees were clean before Phase 4 branching. The TrueF
 
 ## Capability and authorization boundary
 
-Saved TrueForge agent `secureops-guardian-phase-4`, ID `01m0t4gpvz34x60qz6fxqz214d`, attached only these official GitHub MCP tools:
+Saved TrueForge agent `secureops-guardian-phase-4`, ID `01m0t4gpvz34x60qz6fxqz214d`, attached only these official GitHub MCP tools for the accepted trace:
 
 - Reads: `list_branches`, `search_pull_requests`, `get_file_contents`, and `get_commit`.
 - Writes: `create_branch`, `create_or_update_file`, and `create_pull_request`.
 - Approval required separately for all three enabled writes.
+
+That historical trace used `search_pull_requests`. Post-review source configuration replaces it with `list_pull_requests` filtered by exact open base/head, then requires the exact derived title and body. This removes GitHub search-index freshness from the retry decision. The already-open PR title/body were compared byte-for-byte to the derived renderer after the change and remained identical; no fixture write was needed.
 
 Sandbox, dynamic subagents, Generative UI, and question tools were disabled. No merge, delete, issue, Actions, secrets, administration, product-repository, Kubernetes, deployment, or rollback tool was enabled. The fine-grained credential is the fixture-only credential established by the Phase 0 gate with only metadata plus the Contents/Pull Requests access required for this demo.
 
@@ -111,9 +124,11 @@ Receipt: [`PHASE_4_PR_REUSED_RECEIPT.json`](./PHASE_4_PR_REUSED_RECEIPT.json).
 
 ## Conflict and permission tests
 
-The pure contract tests cover mismatched proposal hash/ID, product-repository targeting, wrong file, wrong tool, changed base content, mismatched deterministic-branch content, missing proposal hash in the branch commit, and mismatched PR base/head/body. Every case returns or throws `WRITE_CONFLICT` before an overwrite.
+The pure contract tests cover mismatched proposal hash/ID, product-repository targeting, wrong file, wrong tool, changed base content, malformed full SHAs, inconsistent proof flags, mismatched deterministic-branch content, missing proposal hash in the branch commit, and mismatched PR title/base/head/body. Binding and remote-state gates compose through one typed decision flow and return `WRITE_CONFLICT` before an overwrite.
 
-Receipt factories reject unsupported claims: `PR_CREATED` requires three approved write references, verified remote content, an unchanged base, a remote commit, and a PR result; `PR_REUSED` permits no approval/write references; `DENIED` requires branch/PR absence and an unchanged base; `WRITE_CONFLICT` cannot include a successful PR claim.
+Receipt factories reject unsupported claims in one Zod discriminated union parsed at the agent boundary: `PR_CREATED` requires exactly three approved write references, verified remote content, an unchanged base, a full remote commit SHA, and a PR result; `PR_REUSED` has no approval/write fields; `DENIED` requires branch/PR absence and an unchanged base; `WRITE_CONFLICT` requires a reason and cannot represent successful PR fields.
+
+The review also confirmed the fixture remediation itself is correct and byte-identical to the Phase 3 candidate. Its recommendation to add verifier CI is valid hardening work, but it is not part of the exact approval-bound candidate. Adding workflow, contract, or verifier files to `guardian/fix-checkout-egress` would invalidate the approved one-file proposal and the remote identity proof. It is therefore retained as a separate follow-up after Phase 4, not silently added to remediation PR #1.
 
 ## Quality gate
 
@@ -123,7 +138,7 @@ Receipt factories reject unsupported claims: `PR_CREATED` requires three approve
 | `pnpm format:check` | Pass |
 | `pnpm lint` | Pass |
 | `pnpm typecheck` | Pass |
-| `pnpm test` | Pass; 10 files and 73 tests |
+| `pnpm test` | Pass; 10 files and 75 tests after review remediation |
 | `pnpm build` | Pass |
 | `pnpm bundle:verifier` | Pass |
 | `git diff --check` | Pass |
@@ -133,6 +148,8 @@ Receipt factories reject unsupported claims: `PR_CREATED` requires three approve
 | Qodo review | Attempted; externally unavailable because reviews are paused for this user |
 
 Qodo automatically attempted PR #5 at `2026-08-24T15:11:11Z` and posted that reviews are paused for this user. It produced no findings or completed review. This record does not infer a zero-finding Qodo result; the development PR remains open.
+
+Claude thermo-nuclear review comments on product PR #5 and remediation PR #1 were received at `2026-08-24T17:26:30Z` and `2026-08-24T17:26:31Z`. The product findings were reproduced and remediated in the Phase 4 branch; the fixture review approved the three-line security patch on content. Final check counts and the review-remediation commit are recorded after the post-review verification run.
 
 ## Exit-gate conclusion
 

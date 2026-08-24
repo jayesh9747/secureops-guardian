@@ -11,7 +11,7 @@ This file is navigation and handoff state, not a product specification. The acti
 ## Current state
 
 - Completed and merged: Phase 0, Phase 1, Phase 2, and Phase 3.
-- Phase 4 implementation, local gates, denial proof, approved official-GitHub-MCP sequence, remote verification, and read-only retry proof pass. Development PR `jayesh9747/secureops-guardian#5` is open and unmerged; Qodo attempted review but reviews remain paused for this user.
+- Phase 4 implementation, local gates, denial proof, approved official-GitHub-MCP sequence, remote verification, and read-only retry proof pass. Claude thermo-nuclear review found receipt artifact drift and duplicated contract representations; the Phase 4 branch now derives receipts and PR markdown from typed sources, composes binding conflicts with remote decisions, and uses direct head-filtered PR listing for retry safety. Development PR `jayesh9747/secureops-guardian#5` remains open and unmerged; Qodo attempted review but reviews remain paused for this user.
 - Current product branch: `phase-4/github-approval-write`, created from updated `main` at `382e57da8e2b6aae1ed6f0fee19ffd12c017cbac`.
 - Product `main`: `382e57da8e2b6aae1ed6f0fee19ffd12c017cbac` after Phase 3 merge and contains the final Phase 3 branch head `3c1a5a503821e21f2301ed7fa2f633648d4ede84`.
 - Controlling proposal hash: `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
@@ -79,7 +79,7 @@ The Phase 4 entry, implementation, tests, local quality, denial, approval, and r
 - Dynamic subagent roles are instruction-scoped, not enforced authorization boundaries.
 - Full-SHA coordination depends on preserving the owned fixture history.
 - The accepted Daytona sandbox retrieved only pinned public runtime packages without credentials. It received no GitHub, cloud, cluster, SSH, model, or other service credentials.
-- GitHub remediation writes are separately approval-gated, retry-safe, and not atomic. The exact remediation branch, commit, and PR now exist only in the owned fixture repository and remain open/unmerged.
+- GitHub remediation writes are separately approval-gated, retry-safe, and not atomic. The exact remediation branch, commit, and PR now exist only in the owned fixture repository and remain open/unmerged. The fixture review approved the patch content and recommended a separate verifier-CI hardening change; adding that workflow to the approval-bound branch would invalidate the exact proposal, so PR #1 remains the one-file candidate.
 - Remote candidate byte identity is proven by matching the expected Git blob SHA exposed by the official GitHub MCP. The transport does not provide an independent SHA-256 digest.
 - Two Qodo deep reviews completed and all five findings were resolved. A final confirmation review was requested, but Qodo reported reviews paused for this user; do not infer a third zero-finding review.
 - Qodo automatically attempted Phase 3 PR #4 and reported reviews paused for this user. The operator explicitly accepted Claude review before merging Phase 3; do not recast that as a Qodo review.

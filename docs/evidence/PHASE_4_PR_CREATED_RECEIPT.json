@@ -25,9 +25,9 @@
   "remaining_limitations": [
     "GitHub evidence is real; deployment, alert, reachability, and dependency observations are owned synthetic fixtures.",
     "The proof is deterministic static NetworkPolicy analysis, not Kubernetes admission, CNI enforcement, live reachability, data access, or exfiltration evidence.",
+    "This proposal authorizes presentation only. It does not authorize a branch, pull request, merge, deployment, or cluster action.",
     "Official GitHub MCP writes are separately approved and are not one atomic transaction.",
-    "Remote byte identity is verified with the expected Git blob SHA; no cluster behavior is inferred.",
-    "Guardian did not merge, deploy, roll back, delete a branch, or access a Kubernetes cluster."
+    "Remote byte identity is verified with the expected Git blob SHA; no cluster behavior is inferred."
   ],
   "guardian_did_not_merge_or_deploy": true
 }

@@ -1,13 +1,69 @@
 import type { ProposalBinding } from './binding.js';
-import { PHASE_FOUR_TARGET } from './constants.js';
+import type { EligibleProposal, FourStateProof, ProofState } from '@guardian/policy-verifier';
+import {
+  PHASE_FOUR_TARGET,
+  VERIFIED_CANDIDATE_GIT_BLOB_SHA,
+  VERIFIED_CANDIDATE_SHA256,
+} from './constants.js';
+
+const proofStateLabels: Record<ProofState, string> = {
+  'last-good': 'Last-known-good',
+  suspect: 'Suspect',
+  'deny-all': 'Deny-all',
+  candidate: 'Guardian candidate',
+};
+
+export function renderBullets(items: readonly string[], code = false): string {
+  return items.map((item) => `- ${code ? `\`${item}\`` : item}`).join('\n');
+}
+
+export function renderProofMatrix(proof: FourStateProof, friendlyLabels = false): string {
+  return proof.states
+    .map(({ state, result }) => {
+      const label = friendlyLabels ? proofStateLabels[state] : state;
+      return `| ${label} | ${result.classification} | ${result.secure ? 'Yes' : 'No'} | ${result.functional ? 'Yes' : 'No'} |`;
+    })
+    .join('\n');
+}
+
+export function buildRemediationPullRequestBody(proposal: EligibleProposal): string {
+  return `## SecureOps Guardian remediation
+
+This pull request applies the exact Phase 3 sandbox-verified candidate for \`SEC-NET-001\`.
+
+- Proposal hash: \`${proposal.proposal_hash_sha256}\`
+- Proposal ID: \`${proposal.proposal_id}\`
+- Base branch: \`${proposal.target.base_branch}\`
+- Remediation branch: \`${proposal.target.remediation_branch}\`
+- Target file: \`${proposal.target.file}\`
+- Verified candidate SHA-256: \`${VERIFIED_CANDIDATE_SHA256}\`
+- Verified candidate Git blob SHA: \`${VERIFIED_CANDIDATE_GIT_BLOB_SHA}\`
+
+### Four-state verifier
+
+| State | Classification | Secure | Functional |
+| --- | --- | --- | --- |
+${renderProofMatrix(proposal.four_state_verifier_result, true)}
+
+### Supporting evidence IDs
+
+${renderBullets(proposal.supporting_evidence_ids, true)}
+
+### Evidence records
+
+- [Phase 3 sandbox proof](https://github.com/jayesh9747/secureops-guardian/blob/main/docs/evidence/PHASE_3_SANDBOX_PROOF.md)
+- [Verified candidate artifact](https://github.com/jayesh9747/secureops-guardian/blob/main/docs/evidence/PHASE_3_CANDIDATE.yaml)
+- [Canonical proposal artifact](https://github.com/jayesh9747/secureops-guardian/blob/main/docs/evidence/PHASE_3_PROPOSAL.json)
+
+### Limitations
+
+${renderBullets(proposal.limitations)}
+
+Guardian created this reviewable pull request through separately approved official GitHub MCP writes. The sequence is retry-safe, not atomic. Guardian did not merge, deploy, roll back, delete a branch, or access a Kubernetes cluster.
+`;
+}
 
 export function buildPreMutationPresentation(binding: ProposalBinding): string {
-  const matrix = binding.proposal.four_state_verifier_result.states
-    .map(
-      ({ state, result }) =>
-        `| ${state} | ${result.classification} | ${result.secure ? 'Yes' : 'No'} | ${result.functional ? 'Yes' : 'No'} |`,
-    )
-    .join('\n');
   return `# Pending GitHub remediation
 
 - Repository: \`${PHASE_FOUR_TARGET.repository}\`
@@ -30,17 +86,17 @@ ${binding.candidateYaml}\`\`\`
 
 ## Supporting evidence IDs
 
-${binding.proposal.supporting_evidence_ids.map((id) => `- \`${id}\``).join('\n')}
+${renderBullets(binding.proposal.supporting_evidence_ids, true)}
 
 ## Four-state verifier matrix
 
 | State | Classification | Secure | Functional |
 | --- | --- | --- | --- |
-${matrix}
+${renderProofMatrix(binding.proposal.four_state_verifier_result)}
 
 ## Limitations
 
-${binding.proposal.limitations.map((limitation) => `- ${limitation}`).join('\n')}
+${renderBullets(binding.proposal.limitations)}
 
 ## Expected GitHub write sequence
 

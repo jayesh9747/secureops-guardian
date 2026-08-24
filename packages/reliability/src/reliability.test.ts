@@ -1,7 +1,11 @@
 import { PHASE_FOUR_AGENT_SPEC, PHASE_THREE_PROPOSAL_HASH } from '@guardian/github-write';
 import { describe, expect, it } from 'vitest';
 
-import { runPhaseFiveMatrix, runPhaseFiveScenario } from './harness.js';
+import {
+  assertApprovalMatchesCheckpoint,
+  runPhaseFiveMatrix,
+  runPhaseFiveScenario,
+} from './harness.js';
 import { phaseFiveRunRecordSchema } from './records.js';
 
 describe('Phase 5 deterministic integration matrix', () => {
@@ -38,6 +42,16 @@ describe('Phase 5 deterministic integration matrix', () => {
     expect(record.approval_event_references).toEqual([]);
     expect(record.tool_event_references).toContain(
       'deterministic:github:list_pull_requests:open:main:guardian/fix-checkout-egress',
+    );
+    expect(record.remote_result).toEqual({
+      status: 'PR_REUSED',
+      remote_commit_sha: '44fb8c7f5e99f835c6779f5e7b777c1b016af5b3',
+      candidate_git_blob_sha: '1eddb230ac7c05bae199e6b9162a42da3bf039fa',
+      pr_number: 1,
+      pr_url: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/1',
+    });
+    expect(record.unsupported_github_mutation.before_state_sha256).toBe(
+      record.unsupported_github_mutation.after_state_sha256,
     );
   });
 
@@ -89,6 +103,11 @@ describe('Phase 5 deterministic integration matrix', () => {
     expect(record.write_approval_requested).toBe(false);
     expect(record.approval_event_references).toEqual([]);
     expect(record.unsupported_github_mutation.verification).toContain('without overwrite');
+    expect(record.remote_result).toMatchObject({
+      status: 'WRITE_CONFLICT',
+      observed_remote_commit_sha: 'd'.repeat(40),
+      observed_git_blob_sha: 'f'.repeat(40),
+    });
   });
 
   it('restores the same evidence, proposal hash, and pending action after reconnect', () => {
@@ -108,6 +127,24 @@ describe('Phase 5 deterministic integration matrix', () => {
     );
   });
 
+  it('rejects reconnect approvals for a different proposal or pending action', () => {
+    const checkpoint = runPhaseFiveScenario('reconnect-pending-action').persistence
+      ?.after_reconnect;
+    expect(checkpoint).toBeDefined();
+    expect(() =>
+      assertApprovalMatchesCheckpoint(checkpoint, {
+        proposal_hash_sha256: '0'.repeat(64),
+        pending_action: 'CREATE_BRANCH',
+      }),
+    ).toThrow(/persisted proposal/u);
+    expect(() =>
+      assertApprovalMatchesCheckpoint(checkpoint, {
+        proposal_hash_sha256: PHASE_THREE_PROPOSAL_HASH,
+        pending_action: 'UPDATE_FILE',
+      }),
+    ).toThrow(/pending action/u);
+  });
+
   it('rejects records that claim an unsupported GitHub mutation or wrong terminal state', () => {
     const valid = runPhaseFiveScenario('existing-pr-reuse');
     expect(() =>
@@ -122,6 +159,35 @@ describe('Phase 5 deterministic integration matrix', () => {
     expect(() =>
       phaseFiveRunRecordSchema.parse({ ...valid, actual_terminal_status: 'PR_CREATED' }),
     ).toThrow();
+
+    expect(() =>
+      phaseFiveRunRecordSchema.parse({
+        ...valid,
+        unsupported_github_mutation: {
+          ...valid.unsupported_github_mutation,
+          after_state_sha256: '0'.repeat(64),
+        },
+      }),
+    ).toThrow(/before\/after state hashes/u);
+  });
+
+  it('rejects reconnect records whose persisted values changed despite boolean claims', () => {
+    const valid = runPhaseFiveScenario('reconnect-pending-action');
+    expect(valid.persistence).not.toBeNull();
+    if (valid.persistence === null) throw new Error('Expected reconnect persistence proof.');
+    const persistence = valid.persistence;
+    expect(() =>
+      phaseFiveRunRecordSchema.parse({
+        ...valid,
+        persistence: {
+          ...persistence,
+          after_reconnect: {
+            ...persistence.after_reconnect,
+            evidence_ids: [...persistence.after_reconnect.evidence_ids, 'evidence:changed'],
+          },
+        },
+      }),
+    ).toThrow(/byte-semantically identical/u);
   });
 
   it('uses direct head-filtered PR listing and approval-gates every write', () => {

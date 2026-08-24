@@ -75,7 +75,35 @@ const persistenceProofSchema = z
     same_proposal_hash: z.literal(true),
     same_pending_action: z.literal(true),
   })
-  .strict();
+  .strict()
+  .superRefine((proof, context) => {
+    if (JSON.stringify(proof.before_reconnect) !== JSON.stringify(proof.after_reconnect)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Reconnect values must be byte-semantically identical.',
+      });
+    }
+  });
+
+const remoteResultSchema = z.discriminatedUnion('status', [
+  z
+    .object({
+      status: z.literal('PR_REUSED'),
+      remote_commit_sha: z.string().regex(/^[0-9a-f]{40}$/u),
+      candidate_git_blob_sha: z.string().regex(/^[0-9a-f]{40}$/u),
+      pr_number: z.number().int().positive(),
+      pr_url: z.url(),
+    })
+    .strict(),
+  z
+    .object({
+      status: z.literal('WRITE_CONFLICT'),
+      reason: z.string().min(1),
+      observed_remote_commit_sha: z.string().regex(/^[0-9a-f]{40}$/u),
+      observed_git_blob_sha: z.string().regex(/^[0-9a-f]{40}$/u),
+    })
+    .strict(),
+]);
 
 export const phaseFiveRunRecordSchema = z
   .object({
@@ -98,9 +126,18 @@ export const phaseFiveRunRecordSchema = z
     sandbox_started: z.boolean(),
     write_approval_requested: z.boolean(),
     persistence: persistenceProofSchema.nullable(),
+    remote_result: remoteResultSchema.nullable(),
     unsupported_github_mutation: z
       .object({
         confirmed_absent: z.literal(true),
+        before_state_sha256: z
+          .string()
+          .regex(/^[0-9a-f]{64}$/u)
+          .nullable(),
+        after_state_sha256: z
+          .string()
+          .regex(/^[0-9a-f]{64}$/u)
+          .nullable(),
         observed_mutation_events: z.array(z.string()).max(0),
         verification: z.string().min(1),
       })
@@ -141,12 +178,46 @@ export const phaseFiveRunRecordSchema = z
       }
     }
     if (record.actual_terminal_status === 'PR_REUSED') {
-      if (record.write_approval_requested || record.approval_event_references.length > 0) {
+      if (
+        record.write_approval_requested ||
+        record.approval_event_references.length > 0 ||
+        record.remote_result?.status !== 'PR_REUSED'
+      ) {
         context.addIssue({
           code: 'custom',
           message: 'PR_REUSED cannot contain a write approval event.',
         });
       }
+    }
+    if (
+      record.actual_terminal_status === 'WRITE_CONFLICT' &&
+      record.remote_result?.status !== 'WRITE_CONFLICT'
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'WRITE_CONFLICT requires remote conflict proof.',
+      });
+    }
+    if (
+      record.actual_terminal_status !== 'PR_REUSED' &&
+      record.actual_terminal_status !== 'WRITE_CONFLICT' &&
+      record.remote_result !== null
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Terminal state cannot carry this remote result.',
+      });
+    }
+    const mutation = record.unsupported_github_mutation;
+    if (
+      (mutation.before_state_sha256 === null) !== (mutation.after_state_sha256 === null) ||
+      (mutation.before_state_sha256 !== null &&
+        mutation.before_state_sha256 !== mutation.after_state_sha256)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Confirmed mutation absence requires equal before/after state hashes.',
+      });
     }
     if (record.scenario_id === 'reconnect-pending-action' && record.persistence === null) {
       context.addIssue({

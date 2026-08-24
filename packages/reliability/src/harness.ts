@@ -143,12 +143,79 @@ function baseSnapshot(): RemoteSnapshot {
   };
 }
 
-function pureHarnessMutationProof(detail: string) {
+function stateSha256(snapshot: RemoteSnapshot): string {
+  return createHash('sha256').update(canonicalJson(snapshot)).digest('hex');
+}
+
+function observedNoMutationProof(input: {
+  before: RemoteSnapshot | null;
+  after: RemoteSnapshot | null;
+  mutationEvents: string[];
+  detail: string;
+}) {
+  const beforeStateSha256 = input.before === null ? null : stateSha256(input.before);
+  const afterStateSha256 = input.after === null ? null : stateSha256(input.after);
+  if (
+    input.mutationEvents.length > 0 ||
+    beforeStateSha256 !== afterStateSha256 ||
+    (input.before === null) !== (input.after === null)
+  ) {
+    throw new Error('Observed deterministic remote mutation.');
+  }
   return {
     confirmed_absent: true as const,
+    before_state_sha256: beforeStateSha256,
+    after_state_sha256: afterStateSha256,
     observed_mutation_events: [],
-    verification: `Pure deterministic harness has no network or GitHub client; ${detail}`,
+    verification: `Pure deterministic harness has no network or GitHub client; ${input.detail}`,
   };
+}
+
+type RecordFields = Pick<
+  PhaseFiveRunRecord,
+  | 'evidence_ids'
+  | 'tool_event_references'
+  | 'approval_event_references'
+  | 'verifier_output'
+  | 'proposal_hash_sha256'
+  | 'sandbox_started'
+  | 'write_approval_requested'
+  | 'persistence'
+  | 'remote_result'
+  | 'unsupported_github_mutation'
+>;
+
+function buildRecord(
+  scenarioId: PhaseFiveScenarioId,
+  caseId: ReturnType<typeof caseIdForScenario>,
+  fields: RecordFields,
+): PhaseFiveRunRecord {
+  const terminalStatus = expectedStatus[scenarioId];
+  return phaseFiveRunRecordSchema.parse({
+    schema_version: 1,
+    scenario_id: scenarioId,
+    fixture_case_id: caseId,
+    execution_mode: 'DETERMINISTIC_INTEGRATION',
+    trueforge_agent_id: null,
+    trueforge_session_id: null,
+    ...fields,
+    expected_terminal_status: terminalStatus,
+    actual_terminal_status: terminalStatus,
+  });
+}
+
+export function assertApprovalMatchesCheckpoint(
+  untrustedCheckpoint: unknown,
+  approval: { proposal_hash_sha256: string; pending_action: string },
+) {
+  const checkpoint = checkpointValuesSchema.parse(untrustedCheckpoint);
+  if (
+    approval.proposal_hash_sha256 !== checkpoint.proposal_hash_sha256 ||
+    approval.pending_action !== checkpoint.pending_action
+  ) {
+    throw new Error('Reconnect approval does not match the persisted proposal and pending action.');
+  }
+  return checkpoint;
 }
 
 function inconclusiveRecord(input: {
@@ -157,26 +224,22 @@ function inconclusiveRecord(input: {
   evidenceIds: string[];
   toolReferences: string[];
 }): PhaseFiveRunRecord {
-  return phaseFiveRunRecordSchema.parse({
-    schema_version: 1,
-    scenario_id: input.scenarioId,
-    fixture_case_id: input.caseId,
-    execution_mode: 'DETERMINISTIC_INTEGRATION',
-    trueforge_agent_id: null,
-    trueforge_session_id: null,
+  return buildRecord(input.scenarioId, input.caseId, {
     evidence_ids: input.evidenceIds,
     tool_event_references: input.toolReferences,
     approval_event_references: [],
     verifier_output: null,
     proposal_hash_sha256: null,
-    expected_terminal_status: 'INCONCLUSIVE',
-    actual_terminal_status: 'INCONCLUSIVE',
     sandbox_started: false,
     write_approval_requested: false,
     persistence: null,
-    unsupported_github_mutation: pureHarnessMutationProof(
-      'the evidence gate returned before candidate or write construction.',
-    ),
+    remote_result: null,
+    unsupported_github_mutation: observedNoMutationProof({
+      before: null,
+      after: null,
+      mutationEvents: [],
+      detail: 'the evidence gate returned before candidate or write construction.',
+    }),
   });
 }
 
@@ -208,13 +271,7 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
     ) {
       throw new Error('Bounded candidate workflow did not terminate after two failed attempts.');
     }
-    return phaseFiveRunRecordSchema.parse({
-      schema_version: 1,
-      scenario_id: scenarioId,
-      fixture_case_id: caseId,
-      execution_mode: 'DETERMINISTIC_INTEGRATION',
-      trueforge_agent_id: null,
-      trueforge_session_id: null,
+    return buildRecord(scenarioId, caseId, {
       evidence_ids: evidenceIds,
       tool_event_references: [
         ...toolReferences,
@@ -227,14 +284,16 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
         four_state: null,
       },
       proposal_hash_sha256: null,
-      expected_terminal_status: 'NO_SAFE_REMEDIATION',
-      actual_terminal_status: 'NO_SAFE_REMEDIATION',
       sandbox_started: true,
       write_approval_requested: false,
       persistence: null,
-      unsupported_github_mutation: pureHarnessMutationProof(
-        'two failed verifier attempts produced no eligible proposal or write request.',
-      ),
+      remote_result: null,
+      unsupported_github_mutation: observedNoMutationProof({
+        before: null,
+        after: null,
+        mutationEvents: [],
+        detail: 'two failed verifier attempts produced no eligible proposal or write request.',
+      }),
     });
   }
 
@@ -291,6 +350,7 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
     };
     const decision = evaluateRemoteSnapshot(binding, remoteSnapshot);
     if (decision.status !== 'PR_REUSED') throw new Error('Expected exact PR reuse decision.');
+    const afterSnapshot = structuredClone(remoteSnapshot);
     buildActionReceipt(binding, {
       status: 'PR_REUSED',
       githubResultReferences: ['deterministic:github:exact-open-base-head-pr-1'],
@@ -300,14 +360,8 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
       prNumber: decision.prNumber,
       prUrl: decision.prUrl,
     });
-    return phaseFiveRunRecordSchema.parse({
-      schema_version: 1,
-      scenario_id: scenarioId,
-      fixture_case_id: caseId,
-      execution_mode: 'DETERMINISTIC_INTEGRATION',
-      trueforge_agent_id: null,
-      trueforge_session_id: null,
-      evidence_ids: proposal.supporting_evidence_ids,
+    return buildRecord(scenarioId, caseId, {
+      evidence_ids: [...proposal.supporting_evidence_ids],
       tool_event_references: [
         ...verifierTools,
         'deterministic:github:list_branches',
@@ -320,27 +374,38 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
       approval_event_references: [],
       verifier_output: verifierOutput,
       proposal_hash_sha256: proposal.proposal_hash_sha256,
-      expected_terminal_status: 'PR_REUSED',
-      actual_terminal_status: 'PR_REUSED',
       sandbox_started: true,
       write_approval_requested: false,
       persistence: null,
-      unsupported_github_mutation: pureHarnessMutationProof(
-        'exact existing branch and PR returned PR_REUSED without constructing a write call.',
-      ),
+      remote_result: {
+        status: 'PR_REUSED',
+        remote_commit_sha: decision.remoteCommitSha,
+        candidate_git_blob_sha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
+        pr_number: decision.prNumber,
+        pr_url: decision.prUrl,
+      },
+      unsupported_github_mutation: observedNoMutationProof({
+        before: remoteSnapshot,
+        after: afterSnapshot,
+        mutationEvents: [],
+        detail:
+          'exact existing branch and PR returned PR_REUSED without constructing a write call.',
+      }),
     });
   }
 
   if (scenarioId === 'mismatched-remote-branch-content') {
-    const decision = evaluateRemoteSnapshot(binding, {
+    const remoteSnapshot: RemoteSnapshot = {
       ...baseSnapshot(),
       branch: {
         commitSha: 'd'.repeat(40),
         targetFileGitBlobSha: 'f'.repeat(40),
         commitMessage: 'unrelated remote work',
       },
-    });
+    };
+    const decision = evaluateRemoteSnapshot(binding, remoteSnapshot);
     if (decision.status !== 'WRITE_CONFLICT') throw new Error('Expected WRITE_CONFLICT.');
+    const afterSnapshot = structuredClone(remoteSnapshot);
     buildActionReceipt(binding, {
       status: 'WRITE_CONFLICT',
       reason: decision.reason,
@@ -348,14 +413,8 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
       remoteCandidateVerified: false,
       baseBranchUnchanged: true,
     });
-    return phaseFiveRunRecordSchema.parse({
-      schema_version: 1,
-      scenario_id: scenarioId,
-      fixture_case_id: caseId,
-      execution_mode: 'DETERMINISTIC_INTEGRATION',
-      trueforge_agent_id: null,
-      trueforge_session_id: null,
-      evidence_ids: proposal.supporting_evidence_ids,
+    return buildRecord(scenarioId, caseId, {
+      evidence_ids: [...proposal.supporting_evidence_ids],
       tool_event_references: [
         ...verifierTools,
         'deterministic:github:list_branches',
@@ -365,14 +424,22 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
       approval_event_references: [],
       verifier_output: verifierOutput,
       proposal_hash_sha256: proposal.proposal_hash_sha256,
-      expected_terminal_status: 'WRITE_CONFLICT',
-      actual_terminal_status: 'WRITE_CONFLICT',
       sandbox_started: true,
       write_approval_requested: false,
       persistence: null,
-      unsupported_github_mutation: pureHarnessMutationProof(
-        'mismatched deterministic-branch content returned WRITE_CONFLICT without overwrite.',
-      ),
+      remote_result: {
+        status: 'WRITE_CONFLICT',
+        reason: decision.reason,
+        observed_remote_commit_sha: 'd'.repeat(40),
+        observed_git_blob_sha: 'f'.repeat(40),
+      },
+      unsupported_github_mutation: observedNoMutationProof({
+        before: remoteSnapshot,
+        after: afterSnapshot,
+        mutationEvents: [],
+        detail:
+          'mismatched deterministic-branch content returned WRITE_CONFLICT without overwrite.',
+      }),
     });
   }
 
@@ -384,6 +451,7 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
   if (decision.status !== 'WRITE_REQUIRED' || decision.step !== 'CREATE_BRANCH') {
     throw new Error('Expected the first deterministic write to be CREATE_BRANCH.');
   }
+  const afterSnapshot = structuredClone(initialSnapshot);
   const deniedCallReference = `deterministic:github:create_branch:${scenarioId}:denied`;
   buildActionReceipt(binding, {
     status: 'DENIED',
@@ -408,6 +476,10 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
     });
     const serialized = canonicalJson(beforeReconnect);
     const afterReconnect = checkpointValuesSchema.parse(JSON.parse(serialized) as unknown);
+    assertApprovalMatchesCheckpoint(afterReconnect, {
+      proposal_hash_sha256: proposal.proposal_hash_sha256,
+      pending_action: decision.step,
+    });
     persistence = {
       before_reconnect: beforeReconnect,
       after_reconnect: afterReconnect,
@@ -422,17 +494,8 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
     }
   }
 
-  if (canonicalJson(initialSnapshot) !== canonicalJson(baseSnapshot())) {
-    throw new Error('Denied write mutated the deterministic remote snapshot.');
-  }
-  return phaseFiveRunRecordSchema.parse({
-    schema_version: 1,
-    scenario_id: scenarioId,
-    fixture_case_id: caseId,
-    execution_mode: 'DETERMINISTIC_INTEGRATION',
-    trueforge_agent_id: null,
-    trueforge_session_id: null,
-    evidence_ids: proposal.supporting_evidence_ids,
+  return buildRecord(scenarioId, caseId, {
+    evidence_ids: [...proposal.supporting_evidence_ids],
     tool_event_references: [
       ...verifierTools,
       'deterministic:github:list_branches',
@@ -445,14 +508,16 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
     approval_event_references: [`deterministic:approval:${scenarioId}:create_branch:denied`],
     verifier_output: verifierOutput,
     proposal_hash_sha256: proposal.proposal_hash_sha256,
-    expected_terminal_status: 'DENIED',
-    actual_terminal_status: 'DENIED',
     sandbox_started: true,
     write_approval_requested: true,
     persistence,
-    unsupported_github_mutation: pureHarnessMutationProof(
-      'the denied first-write request left the pre/post remote snapshots byte-identical.',
-    ),
+    remote_result: null,
+    unsupported_github_mutation: observedNoMutationProof({
+      before: initialSnapshot,
+      after: afterSnapshot,
+      mutationEvents: [],
+      detail: 'the denied first-write request left the pre/post remote snapshots byte-identical.',
+    }),
   });
 }
 

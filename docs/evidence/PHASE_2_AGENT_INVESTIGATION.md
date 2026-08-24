@@ -25,7 +25,7 @@ The three Phase 1 defect variants return `INCONCLUSIVE`, preserve actual data ac
 | File | `k8s/checkout-networkpolicy.yaml` |
 | Last-good/parent commit | `a6d177b43396c7b4b45aa98cb2970d0489a7a4f9` |
 | Suspect commit | `7b2f2ad51f9ef97334176fbfed3138465b62fcdb` |
-| Product implementation head before this evidence record | `c71618be33b3f184a58de9c22adc64b45456c04f` |
+| Product implementation head before this evidence record | `9b95dfb024d4408c057c9afa1138e500f5d5f7fc` |
 | Pinned TrueForge runtime | `6026509d905fe255bf493e3845b1fca237bdf0fd` |
 
 Product PR #2 was verified merged at `c8fe85b929f27d675a26cf6fb990eb624988874c`, and product `main` contains Phase 1 implementation commit `913474c9cbd53bcecb5a4794d8625549ac5a332f`. Both fixture commits above were retrieved from the owned fixture repository's remote `main` before implementation.
@@ -50,10 +50,10 @@ Product PR #2 was verified merged at `c8fe85b929f27d675a26cf6fb990eb624988874c`,
 | Item | Safe identifier |
 | --- | --- |
 | Saved agent | `secureops-guardian-phase-2`; `01m0sp174jfxmqt61kb4vh0be8` |
-| Session | `01m0spnj0w3jfqf9pgeaj0qb2h` |
-| Turn | `01m0spnzqwrs3j81x32aem2x1b.336t3a` |
-| Change/security child thread | `06fc873d-008b-4736-a7f3-eb1e4bed39e3` |
-| Exposure-evidence child thread | `628bffb6-6bc2-4fd9-9cae-c29af50d9448` |
+| Session | `01m0srsx28bg2vfa7wvn9me2dn` |
+| Turn | `01m0srsx3prre1779j20jb0taw.336t3a` |
+| Change/security child thread | `5d742a83-b9bc-4b5b-8b82-862d2f9540dc` |
+| Exposure-evidence child thread | `ba3348c3-ae0c-4c2a-993f-fcc6635365fe` |
 | Terminal state | `done`; no required actions |
 
 The root had both connectors attached because TrueForge child roles share the root's resources. The child task contracts restricted their behavior by instruction; this is not claimed as enforced per-child authorization isolation. Sandbox, Generative UI, clarifying questions, and approval/write tools were disabled for the saved agent.
@@ -62,20 +62,20 @@ The root had both connectors attached because TrueForge child roles share the ro
 
 | Thread | Call ID | Tool | Source/result boundary |
 | --- | --- | --- | --- |
-| Root | `call_4546124` | `create_sub_agent` | Created change/security child |
-| Root | `call_4546187` | `create_sub_agent` | Created exposure-evidence child |
-| Change/security | `call_6617971` | `get_commit` | Suspect commit and exact patch |
-| Change/security | `call_6617995` | `list_commits` | Full suspect/parent ordering |
-| Change/security | `call_6618003` | `get_commit` | Parent full-file addition patch |
-| Change/security | `call_6618024` | `get_file_contents` | Suspect file/blob identity |
-| Change/security | `call_6618040` | `list_branches` | Existing branch evidence |
-| Change/security | `call_6618052` | `search_pull_requests` | Existing bounded PR evidence |
-| Exposure-evidence | `call_2839454` | `get_security_alert` | Synthetic alert observation |
-| Exposure-evidence | `call_2839462` | `get_deployment` | Synthetic deployment revision |
-| Exposure-evidence | `call_2839474` | `get_reachability_observations` | Synthetic forbidden/dependency paths |
-| Exposure-evidence | `call_2839486` | `get_service_dependencies` | Synthetic DNS/PostgreSQL dependencies |
+| Root | `call_6733127` | `create_sub_agent` | Created change/security child |
+| Root | `call_5065197` | `create_sub_agent` | Created exposure-evidence child |
+| Change/security | `call_5995223` | `get_commit` | Suspect commit and exact patch |
+| Change/security | `call_6136688` | `list_commits` | Full suspect/parent ordering |
+| Change/security | `call_2826551` | `get_commit` | Parent full-file addition patch |
+| Change/security | `call_8487426` | `get_file_contents` | Suspect file/blob identity |
+| Change/security | `call_8099013` | `list_branches` | Existing branch evidence |
+| Change/security | `call_6511868` | `search_pull_requests` | Existing bounded PR evidence |
+| Exposure-evidence | `call_7196079` | `get_security_alert` | Synthetic alert observation |
+| Exposure-evidence | `call_7196083` | `get_deployment` | Synthetic deployment revision |
+| Exposure-evidence | `call_7196087` | `get_reachability_observations` | Synthetic forbidden/dependency paths |
+| Exposure-evidence | `call_7196102` | `get_service_dependencies` | Synthetic DNS/PostgreSQL dependencies |
 
-The official file-content transport returned the suspect blob identity rather than inline text. The GitHub child reconstructed the suspect YAML only from two official full-patch reads: the parent commit's complete added file plus the suspect commit's three added lines. The resulting child JSON includes the full reconstructed manifest, exact diff, parsed NetworkPolicy facts, evidence records, source references, unknowns, and limitations. Both child outputs pass the checked-in validators without substitution.
+The official file-content transport returned the suspect blob identity rather than inline text. The GitHub child reconstructed the suspect YAML only from two official full-patch reads: the parent commit's complete added file plus the suspect commit's three added lines. Validation recomputes the Git blob SHA over that manifest and requires `477c7db7edd61de10fce67713d52e442f2358318`, requires the exact suspect patch and exact evidence/source/tool tuples, and compares the complete bounded NetworkPolicy identity and parsed facts. Fixture validation compares every source-native item field-for-field with the canonical checked-in case payload. Both captured child outputs pass these validators without substitution.
 
 ## Stable evidence inventory
 
@@ -83,6 +83,7 @@ The official file-content transport returned the suspect blob identity rather th
 
 - `evidence:github:commit:suspect`
 - `evidence:github:commit:parent`
+- `evidence:github:commit-history:checkout-networkpolicy`
 - `evidence:github:diff:checkout-networkpolicy`
 - `evidence:github:manifest:checkout-networkpolicy:suspect`
 - `evidence:github:remediation-branches`
@@ -153,14 +154,15 @@ Every result sets severity and actual data access to `Unknown`, leaves the causa
 | `pnpm format:check` | Pass |
 | `pnpm lint` | Pass |
 | `pnpm typecheck` | Pass |
-| `pnpm test` | Pass; 5 files and 31 tests |
+| `pnpm test` | Pass; 5 files and 36 tests |
+| `pnpm test` with all package `dist` directories absent | Pass; 5 files and 36 tests |
 | `pnpm build` | Pass |
 | Captured-child schema/cross-evidence validation | Pass for both accepted child results |
 | Captured-child deterministic synthesis | `SUPPORTED_SECURITY_FINDING`; no later-phase fields |
-| Post-Qodo full quality suite | Pass; 5 files and 31 tests |
+| Post-Qodo-fix full quality suite | Pass; 5 files and 36 tests |
 | Post-Qodo committed-file scans | Pass; no secret or local absolute path match |
 
-Tests cover valid child results, missing source references, invented evidence IDs, unsupported parsed facts, child conclusions outside the strict fact contract, exact `SEC-NET-001` detection, restricted-selector pass behavior, metadata/prose irrelevance, the complete four-link chain, all three defect variants, and absence of later-phase output.
+Tests cover valid child results, missing source references, invented evidence IDs, unsupported parsed facts, arbitrary diffs and unrelated target references, fabricated GitHub source references, wrong manifest identity, fabricated fixture payloads under valid IDs, child conclusions outside the strict fact contract, exact `SEC-NET-001` detection including implicit egress policy type, restricted-selector pass behavior, metadata/prose irrelevance, clean-checkout source resolution, the complete four-link chain, all three defect variants, and absence of later-phase output.
 
 ## Limitations and safety boundary
 
@@ -174,7 +176,18 @@ Tests cover valid child results, missing source references, invented evidence ID
 
 ## Qodo review
 
-Qodo reviewed product head `f9de2a99c5153af63d0f7ff0d534c40ac4241fa7` on PR #3. Its high-level assessment explicitly recommended the current Zod, cross-evidence validation, and deterministic-rule approach for this bounded phase. It reported zero bugs, zero rule violations, and zero inline findings. No applicable or non-applicable finding required a code change or evidence-backed reply. The complete quality suite and committed-file scans passed after the review.
+Qodo's deep review of product head `5d3dde5b114e1b8f25b2f01eb7b3e5f8e6804bc0` reported three applicable `High` findings and no rule violations or cross-repository conflicts:
+
+1. Target-file change evidence did not require the exact diff or target evidence records. Commit `2fa5749e4b07f09f131dd2f9f7ce4f3d4470edd0` requires the exact patch, exact target evidence/source tuples, and the real manifest blob SHA; regression tests reject arbitrary diffs and unrelated references.
+2. Manifest identity was not tied to the reconstructed YAML. The fix parses and validates the complete bounded NetworkPolicy identity and structure before rule evaluation; a wrong-object regression test fails closed.
+3. Child-supplied evidence labels could front fabricated payloads. The fix recomputes the Git blob digest, constrains GitHub provenance, and compares fixture results field-for-field with canonical checked-in payloads; fabricated GitHub and fixture tests return `INCONCLUSIVE`.
+
+All three inline threads received evidence-backed replies and were resolved. The preliminary zero-finding PR note was explicitly corrected. Qodo's re-review of `2fa5749e4b07f09f131dd2f9f7ce4f3d4470edd0` confirmed those three findings resolved and reported two new applicable `Medium` findings:
+
+4. Clean-checkout tests could depend on ignored fixture `dist` output. Commit `9b95dfb024d4408c057c9afa1138e500f5d5f7fc` aliases workspace packages to source for Vitest. The full test suite passes with every package `dist` directory moved aside.
+5. Requiring explicit `policyTypes: [Egress]` created a false-negative path despite an exact unrestricted CIDR. The fix retains bounded identity and egress-structure checks but evaluates the CIDR regardless of explicit policy type; a new regression test covers implicit egress policy type.
+
+Both new inline threads received evidence-backed replies and were resolved. A final Qodo re-review was requested on the fixed head, but Qodo reported that reviews are paused for this user. This record therefore does not infer a third zero-finding review. Two deep reviews completed, every one of their five applicable findings was addressed, and the complete quality suite plus clean-output test and repository scans passed after the latest fixes.
 
 ## Exit-gate conclusion
 
@@ -188,7 +201,7 @@ Qodo reviewed product head `f9de2a99c5153af63d0f7ff0d534c40ac4241fa7` on PR #3. 
 | Deterministic `SEC-NET-001` evidence | Pass |
 | Bounded evidence-linked `High` finding | Pass |
 | Missing/conflicting evidence fails closed | Pass |
-| Qodo review and post-review verification | Pass |
+| Qodo review and post-review verification | Pass; five findings resolved, with final re-review unavailable because Qodo paused further reviews |
 | Phase 3 or later behavior implemented | No |
 
 Phase 2 has passed its implementation, trace, review, and post-review quality gates. Product PR #3 remains open and unmerged; this record does not claim Phase 2 is merged.

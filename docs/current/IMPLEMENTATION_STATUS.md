@@ -12,7 +12,7 @@ This file is navigation and handoff state, not a product specification. The acti
 
 - Completed and merged: Phase 0 and Phase 1.
 - Gate passed, PR open and not merged: Phase 2 — agent investigation and finding; `jayesh9747/secureops-guardian#3`.
-- Current product branch: `phase-2/agent-investigation`, created from updated `main`; Qodo-reviewed head before the final review-status handoff is `f9de2a99c5153af63d0f7ff0d534c40ac4241fa7`.
+- Current product branch: `phase-2/agent-investigation`, created from updated `main`; Qodo-finding resolution head is `9b95dfb024d4408c057c9afa1138e500f5d5f7fc`.
 - Next phase after merge: Phase 3 — sandbox remediation proof, from updated `main` only.
 - Product `main`: `c8fe85b929f27d675a26cf6fb990eb624988874c` after Phase 1 merge.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
@@ -24,7 +24,7 @@ This file is navigation and handoff state, not a product specification. The acti
 | --- | --- | --- | --- | --- |
 | 0 — platform gate | `jayesh9747/secureops-guardian#1` | `5097f16806363edb45db8531691390e2cab10a63` | `9b1c7436ef3a32b9c274d9eaa5e51ed6b58dd4e0` | [`PHASE_0_PLATFORM_GATE.md`](../evidence/PHASE_0_PLATFORM_GATE.md) |
 | 1 — demo evidence | `jayesh9747/secureops-guardian#2` | `913474c9cbd53bcecb5a4794d8625549ac5a332f` | `c8fe85b929f27d675a26cf6fb990eb624988874c` | [`PHASE_1_DEMO_EVIDENCE.md`](../evidence/PHASE_1_DEMO_EVIDENCE.md) |
-| 2 — agent investigation | `jayesh9747/secureops-guardian#3` | `f9de2a99c5153af63d0f7ff0d534c40ac4241fa7` | Open | [`PHASE_2_AGENT_INVESTIGATION.md`](../evidence/PHASE_2_AGENT_INVESTIGATION.md) |
+| 2 — agent investigation | `jayesh9747/secureops-guardian#3` | `9b95dfb024d4408c057c9afa1138e500f5d5f7fc` | Open | [`PHASE_2_AGENT_INVESTIGATION.md`](../evidence/PHASE_2_AGENT_INVESTIGATION.md) |
 
 Read a completed phase's plan or evidence only when verifying its prerequisite, reproducing its trace, or diagnosing a regression.
 
@@ -34,7 +34,7 @@ The repository currently contains:
 
 - Phase 0 TrueForge proofs for the model path, official GitHub MCP, Fixture MCP transport, Daytona sandbox, dynamic subagent primitive, and approval/reconnect primitive.
 - Phase 1 owned Git history, typed synthetic evidence, deterministic failure variants, and four read-only Fixture MCP evidence tools.
-- Phase 2 bounded root/child contracts, strict evidence aggregation schemas, deterministic `SEC-NET-001` evaluation, four-link causal synthesis, the cited `High` finding, and fail-closed evidence-defect behavior.
+- Phase 2 bounded root/child contracts, exact GitHub evidence and Git-blob provenance validation, canonical fixture-payload validation, complete bounded NetworkPolicy identity parsing, deterministic `SEC-NET-001` evaluation, four-link causal synthesis, the cited `High` finding, and fail-closed evidence-defect behavior.
 - A successful TrueForge trace with two child threads joining real GitHub evidence to owned synthetic observations. See [`PHASE_2_AGENT_INVESTIGATION.md`](../evidence/PHASE_2_AGENT_INVESTIGATION.md).
 
 The repository does not contain remediation generation, candidate policy validation, sandbox proof, GitHub remediation writes, later-phase UI, or persistence behavior.
@@ -65,11 +65,12 @@ The Phase 2 entry, implementation, trace, and Qodo gates passed. Phase 2 is not 
 
 - Fixture incident evidence is owned and synthetic; GitHub commit evidence is real.
 - Phase 2 rule evaluation is a narrow deterministic static manifest check. Candidate policy/service-path validation begins in Phase 3; no live-cluster claim is permitted.
-- The official GitHub file-content transport exposed a blob/download reference in the accepted trace. The GitHub child reconstructed the suspect manifest from the official parent and suspect full-patch responses and cited the returned blob identity.
+- The official GitHub file-content transport exposed a blob/download reference in the accepted trace. The GitHub child reconstructed the suspect manifest from the official parent and suspect full-patch responses; validation recomputed and matched the cited Git blob SHA.
 - Actual data access and exfiltration remain `Unknown`.
 - Dynamic subagent roles are instruction-scoped, not enforced authorization boundaries.
 - Full-SHA coordination depends on preserving the owned fixture history.
 - GitHub writes remain approval-gated later-phase behavior; no remediation write exists yet.
+- Two Qodo deep reviews completed and all five findings were resolved. A final confirmation review was requested, but Qodo reported reviews paused for this user; do not infer a third zero-finding review.
 
 ## Handoff update protocol
 

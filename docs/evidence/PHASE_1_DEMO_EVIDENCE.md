@@ -91,7 +91,7 @@ Normal case: `checkout-networkpolicy-egress-exposure`
 | `pnpm test` | Pass; 4 files and 16 tests |
 | `pnpm build` | Pass |
 | Changed-file secret scan | Pass; no credential/private-key patterns found |
-| Changed-file absolute-path scan | Pass; no `/Users/`, `/home/`, or `file://` references found |
+| Changed-file absolute-path scan | Pass; no local filesystem path references found |
 
 ## Limitations and safety boundary
 

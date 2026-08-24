@@ -8,6 +8,8 @@ import { verifyNetworkPolicy } from './verifier.js';
 
 export type ProofState = 'last-good' | 'suspect' | 'deny-all' | 'candidate';
 
+export const DETERMINISTIC_REMEDIATION_BRANCH = 'guardian/fix-checkout-egress' as const;
+
 export interface ProofMatrixEntry {
   state: ProofState;
   result: VerificationResult;
@@ -43,7 +45,7 @@ export interface EligibleProposal {
   target: {
     repository: string;
     base_branch: 'main';
-    remediation_branch: 'remediation/sec-net-001-checkout-egress';
+    remediation_branch: typeof DETERMINISTIC_REMEDIATION_BRANCH;
     file: string;
     suspect_commit_sha: string;
   };
@@ -116,7 +118,7 @@ export function buildEligibleProposal(input: {
     target: {
       repository: DEMO_REPOSITORY,
       base_branch: 'main',
-      remediation_branch: 'remediation/sec-net-001-checkout-egress',
+      remediation_branch: DETERMINISTIC_REMEDIATION_BRANCH,
       file: TARGET_NETWORK_POLICY_FILE,
       suspect_commit_sha: SUSPECT_COMMIT_SHA,
     },

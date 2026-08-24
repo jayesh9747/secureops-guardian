@@ -59,6 +59,7 @@ describe('bounded candidate workflow', () => {
     expect(first).toBeDefined();
     if (first === undefined) throw new Error('Expected an eligible proposal.');
     expect(first.proposal_id).toBe(`proposal:sha256:${first.proposal_hash_sha256}`);
+    expect(first.target.remediation_branch).toBe('guardian/fix-checkout-egress');
     expect(first?.canonical_diff).toContain('-            cidr: 0.0.0.0/0');
   });
 

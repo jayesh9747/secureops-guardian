@@ -1,3 +1,5 @@
+import { isIP } from 'node:net';
+
 import { parseAllDocuments } from 'yaml';
 
 import type {
@@ -34,6 +36,26 @@ function equalLabels(actual: Record<string, string> | undefined, expected: Recor
   );
 }
 
+function hasExactKeys(value: Record<string, unknown>, expectedKeys: readonly string[]): boolean {
+  const actualKeys = Object.keys(value).sort();
+  const sortedExpectedKeys = [...expectedKeys].sort();
+  return (
+    actualKeys.length === sortedExpectedKeys.length &&
+    actualKeys.every((key, index) => key === sortedExpectedKeys[index])
+  );
+}
+
+function hasOnlyKeys(value: Record<string, unknown>, allowedKeys: readonly string[]): boolean {
+  const allowed = new Set(allowedKeys);
+  return Object.keys(value).every((key) => allowed.has(key));
+}
+
+function isSupportedSelector(value: unknown): boolean {
+  if (!isRecord(value) || !hasExactKeys(value, ['matchLabels'])) return false;
+  const labels = labelMap(value.matchLabels);
+  return labels !== undefined && Object.keys(labels).length > 0;
+}
+
 function selectorLabels(
   peer: Record<string, unknown>,
   key: string,
@@ -52,14 +74,15 @@ function ruleProvidesPath(rule: unknown, expected: PolicyPeerContract): boolean 
   if (!isRecord(rule) || !Array.isArray(rule.to) || !Array.isArray(rule.ports)) return false;
   const peers: unknown[] = rule.to;
   const ports: unknown[] = rule.ports;
-  const peerMatches = peers.some(
-    (peer) =>
-      isRecord(peer) &&
-      equalLabels(selectorLabels(peer, 'namespaceSelector'), expected.namespace_selector) &&
-      equalLabels(selectorLabels(peer, 'podSelector'), expected.pod_selector),
-  );
+  const peer = peers[0];
+  const peerMatches =
+    peers.length === 1 &&
+    isRecord(peer) &&
+    equalLabels(selectorLabels(peer, 'namespaceSelector'), expected.namespace_selector) &&
+    equalLabels(selectorLabels(peer, 'podSelector'), expected.pod_selector);
   return (
     peerMatches &&
+    ports.length === expected.ports.length &&
     expected.ports.every((expectedPort) => ports.some((port) => portMatches(port, expectedPort)))
   );
 }
@@ -92,6 +115,55 @@ function cidrContainsIpv4(cidr: string, ipv4: string): boolean {
   }
   const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
   return (network & mask) === (address & mask);
+}
+
+function validCidr(cidr: string): boolean {
+  const [address, prefixText, ...rest] = cidr.split('/');
+  if (
+    address === undefined ||
+    prefixText === undefined ||
+    rest.length > 0 ||
+    !/^\d{1,3}$/u.test(prefixText)
+  ) {
+    return false;
+  }
+  const addressFamily = isIP(address);
+  const prefix = Number(prefixText);
+  return (
+    (addressFamily === 4 && prefix >= 0 && prefix <= 32) ||
+    (addressFamily === 6 && prefix >= 0 && prefix <= 128)
+  );
+}
+
+function supportedIpBlock(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ['cidr']) &&
+    typeof value.cidr === 'string' &&
+    validCidr(value.cidr)
+  );
+}
+
+function supportedPeer(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (Object.keys(value).length === 0) return true;
+  if (hasExactKeys(value, ['ipBlock'])) return supportedIpBlock(value.ipBlock);
+  return (
+    hasExactKeys(value, ['namespaceSelector', 'podSelector']) &&
+    isSupportedSelector(value.namespaceSelector) &&
+    isSupportedSelector(value.podSelector)
+  );
+}
+
+function supportedPort(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    hasExactKeys(value, ['port', 'protocol']) &&
+    (value.protocol === 'TCP' || value.protocol === 'UDP') &&
+    Number.isInteger(value.port) &&
+    Number(value.port) >= 1 &&
+    Number(value.port) <= 65_535
+  );
 }
 
 interface PolicyInspection {
@@ -142,32 +214,35 @@ function inspectYaml(candidateYaml: string): PolicyInspection {
 }
 
 function hasNarrowStructure(document: Record<string, unknown> | undefined): boolean {
-  if (document === undefined || !isRecord(document.metadata) || !isRecord(document.spec))
+  if (
+    document === undefined ||
+    !hasExactKeys(document, ['apiVersion', 'kind', 'metadata', 'spec']) ||
+    !isRecord(document.metadata) ||
+    !hasExactKeys(document.metadata, ['name', 'namespace']) ||
+    typeof document.metadata.name !== 'string' ||
+    typeof document.metadata.namespace !== 'string' ||
+    !isRecord(document.spec)
+  ) {
     return false;
+  }
   const spec = document.spec;
-  if (!isRecord(spec.podSelector) || !isRecord(spec.podSelector.matchLabels)) return false;
+  if (!hasExactKeys(spec, ['egress', 'podSelector', 'policyTypes'])) return false;
+  if (!isSupportedSelector(spec.podSelector)) return false;
   if (!Array.isArray(spec.egress)) return false;
   if (
-    spec.policyTypes !== undefined &&
-    (!Array.isArray(spec.policyTypes) || !spec.policyTypes.includes('Egress'))
+    !Array.isArray(spec.policyTypes) ||
+    spec.policyTypes.length !== 1 ||
+    spec.policyTypes[0] !== 'Egress'
   ) {
     return false;
   }
   return spec.egress.every((rule) => {
-    if (!isRecord(rule)) return false;
+    if (!isRecord(rule) || !hasOnlyKeys(rule, ['to', 'ports'])) return false;
     if (rule.to !== undefined && !Array.isArray(rule.to)) return false;
     if (rule.ports !== undefined && !Array.isArray(rule.ports)) return false;
     return (
-      (!Array.isArray(rule.to) || rule.to.every(isRecord)) &&
-      (!Array.isArray(rule.ports) ||
-        rule.ports.every(
-          (port) =>
-            isRecord(port) &&
-            (port.protocol === 'TCP' || port.protocol === 'UDP') &&
-            Number.isInteger(port.port) &&
-            Number(port.port) >= 1 &&
-            Number(port.port) <= 65_535,
-        ))
+      (!Array.isArray(rule.to) || rule.to.every(supportedPeer)) &&
+      (!Array.isArray(rule.ports) || rule.ports.every(supportedPort))
     );
   });
 }

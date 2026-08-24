@@ -78,11 +78,65 @@ describe('pure deterministic NetworkPolicy verifier', () => {
     expect(failedCheckIds(candidate)).toContain('POSTGRES_REQUIRED_PATH');
   });
 
+  it('rejects target selector semantics outside the supported matchLabels subset', () => {
+    const candidate = replaceOrThrow(
+      lastGood,
+      '      app: checkout-api\n  policyTypes:',
+      [
+        '      app: checkout-api',
+        '    matchExpressions:',
+        '      - key: app',
+        '        operator: DoesNotExist',
+        '  policyTypes:',
+      ].join('\n'),
+    );
+    const result = verifyNetworkPolicy(candidate, contract);
+    expect(result.classification).toBe('INVALID');
+    expect(result.eligible).toBe(false);
+    expect(failedCheckIds(candidate)).toContain('NETWORK_POLICY_STRUCTURE');
+  });
+
   it.each([
     ['port', 'port: 5432', 'port: 5433'],
     ['protocol', 'protocol: TCP\n          port: 5432', 'protocol: UDP\n          port: 5432'],
   ])('rejects the wrong PostgreSQL %s', (_label, search, replacement) => {
     const candidate = replaceOrThrow(lastGood, search, replacement);
+    expect(failedCheckIds(candidate)).toContain('POSTGRES_REQUIRED_PATH');
+  });
+
+  it('rejects an additional PostgreSQL port outside the exact dependency contract', () => {
+    const candidate = replaceOrThrow(
+      lastGood,
+      '        - protocol: TCP\n          port: 5432',
+      [
+        '        - protocol: TCP',
+        '          port: 5432',
+        '        - protocol: TCP',
+        '          port: 22',
+      ].join('\n'),
+    );
+    expect(verifyNetworkPolicy(candidate, contract).eligible).toBe(false);
+    expect(failedCheckIds(candidate)).toContain('POSTGRES_REQUIRED_PATH');
+  });
+
+  it('rejects an additional peer beside the exact PostgreSQL dependency', () => {
+    const candidate = replaceOrThrow(
+      lastGood,
+      '          podSelector:\n            matchLabels:\n              app: postgres\n      ports:',
+      [
+        '          podSelector:',
+        '            matchLabels:',
+        '              app: postgres',
+        '        - namespaceSelector:',
+        '            matchLabels:',
+        '              kubernetes.io/metadata.name: observability',
+        '          podSelector:',
+        '            matchLabels:',
+        '              app: metrics',
+        '      ports:',
+      ].join('\n'),
+    );
+    expect(verifyNetworkPolicy(candidate, contract).eligible).toBe(false);
     expect(failedCheckIds(candidate)).toContain('POSTGRES_REQUIRED_PATH');
   });
 
@@ -107,6 +161,14 @@ describe('pure deterministic NetworkPolicy verifier', () => {
     const candidate = replaceOrThrow(lastGood, 'kind: NetworkPolicy', 'kind: ConfigMap');
     expect(verifyNetworkPolicy(candidate, contract).classification).toBe('INVALID');
     expect(failedCheckIds(candidate)).toContain('NETWORK_POLICY_KIND');
+  });
+
+  it('fails closed for an invalid ipBlock CIDR in an additional peer', () => {
+    const candidate = `${lastGood}    - to:\n        - ipBlock:\n            cidr: not-a-cidr\n`;
+    const result = verifyNetworkPolicy(candidate, contract);
+    expect(result.classification).toBe('INVALID');
+    expect(result.eligible).toBe(false);
+    expect(failedCheckIds(candidate)).toContain('NETWORK_POLICY_STRUCTURE');
   });
 
   it('rejects a bounded CIDR containing the declared forbidden IPv4 address', () => {

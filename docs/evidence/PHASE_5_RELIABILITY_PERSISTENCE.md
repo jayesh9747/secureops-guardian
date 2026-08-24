@@ -1,6 +1,6 @@
 # Phase 5 reliability and persistence evidence
 
-Date: 24 August 2026
+Updated: 25 August 2026
 
 Branch: `phase-5/reliability-persistence`
 
@@ -8,7 +8,7 @@ Scope: Phase 5 only
 
 ## Result
 
-Phase 5 passes the deterministic reliability matrix and every live proof permitted by the preserved remote state. The integration harness composes the Phase 2 evidence gate, Phase 3 bounded verifier/proposal flow, and Phase 4 remote decision/receipt contracts. All eight required scenarios return the expected safe state and record their case, evidence, tools, approvals, verifier result, proposal hash, and mutation proof.
+Phase 5 passes the deterministic reliability matrix and every live proof permitted by the preserved remote state. The integration harness composes the Phase 2 evidence gate, Phase 3 bounded verifier/proposal flow, and Phase 4 remote decision/receipt contracts. All eight required scenarios return the expected safe state and record their case, evidence, tools, approvals, verifier result, proposal hash, and mutation proof. Remote-state scenarios include typed remote results and independently computed before/after snapshot hashes; the record schema rejects unequal hashes or reconnect values hidden behind affirmative booleans.
 
 Three consecutive live TrueForge rehearsals used the preserved open fixture PR and returned `PR_REUSED` in 38.029, 45.847, and 42.190 seconds. Every rehearsal used `list_pull_requests` with exact open base/head filtering, made six GitHub reads, emitted no write tool call, emitted no approval event, and returned fixture PR #1 at the unchanged remediation commit.
 
@@ -56,7 +56,7 @@ Run:
 pnpm phase5:matrix
 ```
 
-The command emits strict JSON records. The Zod record gate rejects mismatched expected/actual states, claimed mutation events, `INCONCLUSIVE` records that reached verifier/proposal/approval, `NO_SAFE_REMEDIATION` records without exactly two attempts, `PR_REUSED` records with approvals, and reconnect records without a persistence proof.
+The command emits strict JSON records. The Zod record gate rejects mismatched expected/actual states, claimed mutation events, unequal before/after remote hashes, `INCONCLUSIVE` records that reached verifier/proposal/approval, `NO_SAFE_REMEDIATION` records without exactly two attempts, `PR_REUSED` records with approvals or without an exact remote result, `WRITE_CONFLICT` records without observed conflicting commit/blob values, and reconnect records with absent or changed persistence values. A reconnect approval is accepted only when its proposal hash and pending action match the parsed checkpoint.
 
 Deterministic records intentionally use `null` TrueForge agent/session IDs because no TrueForge run is claimed. The Phase 2 causal input retains its historical remediation-evidence tool name, `search_pull_requests`; every Phase 4 remote decision and every live retry uses direct exact-head `list_pull_requests`.
 
@@ -73,14 +73,14 @@ The table below uses these exact bundles to keep repeated records readable:
 
 | Scenario | Fixture/case ID | Agent / session | Tool and approval references | Verifier output | Proposal hash | Expected / actual | Unsupported GitHub mutation |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Existing PR reuse | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-REUSE`; approvals `[]` | Attempt 1 `SECURITY_REMEDIATION_READY`; four-state pass | `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15` | `PR_REUSED` / `PR_REUSED` | Confirmed absent; pure harness has no network client and constructed no write call |
-| Denied first write | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-INITIAL`, `deterministic:github:create_branch:denied-first-write:denied`, `deterministic:github:denied-first-write:post-denial-read`; approval `deterministic:approval:denied-first-write:create_branch:denied` | Attempt 1 ready; four-state pass | same controlling hash | `DENIED` / `DENIED` | Confirmed absent; pre/post remote snapshots are byte-identical |
+| Existing PR reuse | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-REUSE`; approvals `[]` | Attempt 1 `SECURITY_REMEDIATION_READY`; four-state pass | `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15` | `PR_REUSED` / `PR_REUSED`; remote commit `44fb8c5…`, blob `1eddb23…`, PR #1 | Confirmed absent; pre/post snapshot SHA-256 `78ea55baced142575255b3680c22af1c299fb8450657490d743ad2478a888e4`; no write call |
+| Denied first write | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-INITIAL`, `deterministic:github:create_branch:denied-first-write:denied`, `deterministic:github:denied-first-write:post-denial-read`; approval `deterministic:approval:denied-first-write:create_branch:denied` | Attempt 1 ready; four-state pass | same controlling hash | `DENIED` / `DENIED` | Confirmed absent; pre/post snapshot SHA-256 `46e365b7f512d0f9547ad94dff04e1163495bcc026fb0157d00154736f7e6ca9` |
 | Missing deployment | `checkout-networkpolicy-egress-exposure-missing-deployment-revision` | `null` / `null` | GitHub evidence refs plus fixture refs suffixed `missing-deployment-revision`; approvals `[]` | `null`; verifier was not entered | `null` | `INCONCLUSIVE` / `INCONCLUSIVE` | Confirmed absent; stopped before candidate, sandbox, proposal, or approval |
 | Missing reachability | `checkout-networkpolicy-egress-exposure-missing-reachability` | `null` / `null` | GitHub evidence refs plus fixture refs suffixed `missing-reachability`; approvals `[]` | `null`; verifier was not entered | `null` | `INCONCLUSIVE` / `INCONCLUSIVE` | Confirmed absent; stopped before candidate, sandbox, proposal, or approval |
 | Conflicting revision | `checkout-networkpolicy-egress-exposure-conflicting-revision` | `null` / `null` | GitHub evidence refs plus fixture refs suffixed `conflicting-revision`; approvals `[]` | `null`; verifier was not entered | `null` | `INCONCLUSIVE` / `INCONCLUSIVE` | Confirmed absent; stopped before candidate, sandbox, proposal, or approval |
 | Candidate failure twice | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `deterministic:verifier:attempt-1`, `deterministic:verifier:attempt-2`; approvals `[]` | Attempt 1 `CORRECTION_REQUIRED`; attempt 2 `NO_SAFE_REMEDIATION`; both cite `DNS_REQUIRED_PATH` and `POSTGRES_REQUIRED_PATH` | `null` | `NO_SAFE_REMEDIATION` / `NO_SAFE_REMEDIATION` | Confirmed absent; no eligible proposal or write request |
-| Mismatched branch/content | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `deterministic:github:list_branches`, `deterministic:github:get_file_contents:mismatched-remediation`, `deterministic:github:get_commit:mismatched-remediation`; approvals `[]` | Attempt 1 ready; four-state pass | same controlling hash | `WRITE_CONFLICT` / `WRITE_CONFLICT` | Confirmed absent; no overwrite was constructed |
-| Reconnect pending action | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-INITIAL`, `deterministic:github:create_branch:reconnect-pending-action:denied`, `deterministic:github:reconnect-pending-action:post-denial-read`; approval `deterministic:approval:reconnect-pending-action:create_branch:denied` | Attempt 1 ready; four-state pass | same controlling hash | `DENIED` / `DENIED` | Confirmed absent; restored pending call was denied and snapshots stayed byte-identical |
+| Mismatched branch/content | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `deterministic:github:list_branches`, `deterministic:github:get_file_contents:mismatched-remediation`, `deterministic:github:get_commit:mismatched-remediation`; approvals `[]` | Attempt 1 ready; four-state pass | same controlling hash | `WRITE_CONFLICT` / `WRITE_CONFLICT`; observed commit `dddd…`, blob `ffff…` | Confirmed absent; pre/post snapshot SHA-256 `0e4e2ba53f213a463344c7c0288e1079b2268add8f0f7b10aacb55b160d51a8f`; no overwrite |
+| Reconnect pending action | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-INITIAL`, `deterministic:github:create_branch:reconnect-pending-action:denied`, `deterministic:github:reconnect-pending-action:post-denial-read`; approval `deterministic:approval:reconnect-pending-action:create_branch:denied` | Attempt 1 ready; four-state pass | same controlling hash | `DENIED` / `DENIED` | Confirmed absent; restored pending call was denied; pre/post snapshot SHA-256 `46e365b7f512d0f9547ad94dff04e1163495bcc026fb0157d00154736f7e6ca9` |
 
 The common four-state verifier output is:
 
@@ -120,17 +120,41 @@ After all live runs:
 - exact open base/head listing still returned only PR #1;
 - PR `updated_at` remained `2026-08-24T17:46:16Z`, predating the rehearsals.
 
+## Review and verification handoff
+
+Development PR [jayesh9747/secureops-guardian#6](https://github.com/jayesh9747/secureops-guardian/pull/6) is open, non-draft, and unmerged. Qodo attempted an automatic review and was manually invoked with `/review`; both responses reported that reviews are paused for this user. Qodo produced no findings and no approval, so none is claimed.
+
+The alternate two-axis review found four applicable issues: duplicated record construction, mutation absence asserted without state observations, reconnect booleans not tied to the saved values, and a missing release checklist/handoff record. Commit `fce34f3ac80a989591e061079d944e6b3a6f62d5` resolves them with a common record builder, typed remote results, before/after snapshot hashes, strict checkpoint comparison, approval/checkpoint binding, and adversarial tests. Two proposed live-only findings were not applied: recreating the deny/create sequence or an approval-paused reconnect would require resetting the protected fixture state and would contradict the operator's safe-state constraint. Operator acceptance of this alternate review remains required before merge.
+
+Final verification commands:
+
+| Command | Result |
+| --- | --- |
+| `pnpm install --frozen-lockfile` | Pass |
+| `pnpm format:check` | Pass |
+| `pnpm lint` | Pass |
+| `pnpm typecheck` | Pass |
+| `pnpm test` | Pass — 11 files, 88 tests |
+| `pnpm build` | Pass |
+| `pnpm bundle:verifier` plus candidate replay | Pass |
+| `pnpm phase5:matrix` | Pass — eight expected/actual matches |
+| `git diff --check` | Pass |
+| Secret scan | Pass |
+| Local absolute-path scan | Pass |
+
+The frozen references and passing bundle are also captured in [`PHASE_5_RELEASE_CHECKLIST.md`](PHASE_5_RELEASE_CHECKLIST.md).
+
 ## Frozen competition core
 
 | Role | Frozen commit |
 | --- | --- |
-| Product Phase 5 integration core | `67049280f7fe0a011f4569b4571f36578e955d75` |
+| Product Phase 5 review-remediated core | `fce34f3ac80a989591e061079d944e6b3a6f62d5` |
 | Product merged Phase 4 base | `12cafa71769fd180afbaa246508cf4d74ac38902` |
 | Fixture suspect base | `7b2f2ad51f9ef97334176fbfed3138465b62fcdb` |
 | Fixture remediation candidate | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |
 | TrueForge runtime | `6026509d905fe255bf493e3845b1fca237bdf0fd` |
 
-The documentation and review handoff commit follows the frozen product-core commit without changing its integration package.
+The documentation and release-checklist commit follows the frozen product-core commit without changing its integration package.
 
 ## Exit-gate conclusion
 
@@ -143,5 +167,6 @@ The documentation and review handoff commit follows the frozen product-core comm
 | Retry returns existing PR without write or approval | Pass — deterministic plus three live TrueForge runs |
 | Three rehearsals within three-minute narrative | Pass for safe live `PR_REUSED` path; 38.029–45.847 seconds |
 | Fresh live denial/creation sequence | Not run; would require unauthorized destructive fixture reset |
-| Fixture PR and development PR remain unmerged | Fixture confirmed; development PR is opened only after final local gates |
+| Fixture PR and development PR remain unmerged | Pass — fixture PR #1 and development PR #6 are open and unmerged |
+| Qodo review | Paused after automatic and manual requests; no Qodo approval; alternate review completed, operator acceptance pending |
 | Phase 6 behavior | Not implemented |

@@ -12,6 +12,9 @@
     },
     {
       "path": "./packages/policy-verifier"
+    },
+    {
+      "path": "./packages/github-write"
     }
   ]
 }

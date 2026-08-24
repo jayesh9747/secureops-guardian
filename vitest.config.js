@@ -12,6 +12,9 @@ export default defineConfig({
       '@guardian/policy-verifier': fileURLToPath(
         new URL('./packages/policy-verifier/src/index.ts', import.meta.url),
       ),
+      '@guardian/github-write': fileURLToPath(
+        new URL('./packages/github-write/src/index.ts', import.meta.url),
+      ),
     },
   },
   test: {

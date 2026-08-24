@@ -1,0 +1,16 @@
+{
+  "name": "@guardian/github-write",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@guardian/policy-verifier": "workspace:*",
+    "@guardian/shared": "workspace:*"
+  }
+}

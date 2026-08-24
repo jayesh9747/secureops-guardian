@@ -9,6 +9,9 @@
     },
     {
       "path": "./packages/investigation"
+    },
+    {
+      "path": "./packages/policy-verifier"
     }
   ]
 }

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "target": {
+    "api_version": "networking.k8s.io/v1",
+    "kind": "NetworkPolicy",
+    "name": "checkout-egress",
+    "namespace": "payments",
+    "pod_selector": {
+      "app": "checkout-api"
+    }
+  },
+  "required_paths": {
+    "dns": {
+      "namespace_selector": {
+        "kubernetes.io/metadata.name": "kube-system"
+      },
+      "pod_selector": {
+        "k8s-app": "kube-dns"
+      },
+      "ports": [
+        {
+          "protocol": "UDP",
+          "port": 53
+        },
+        {
+          "protocol": "TCP",
+          "port": 53
+        }
+      ]
+    },
+    "postgresql": {
+      "namespace_selector": {
+        "kubernetes.io/metadata.name": "payments-data"
+      },
+      "pod_selector": {
+        "app": "postgres"
+      },
+      "ports": [
+        {
+          "protocol": "TCP",
+          "port": 5432
+        }
+      ]
+    }
+  },
+  "forbidden": {
+    "unrestricted_ipv4_cidr": "0.0.0.0/0",
+    "destination_host": "forbidden.example.test",
+    "destination_ipv4": "203.0.113.10"
+  }
+}

@@ -9,6 +9,8 @@ SecureOps Guardian uses one owned synthetic checkout service. The last-good `che
 | Last good | `a6d177b43396c7b4b45aa98cb2970d0489a7a4f9` |
 | Suspect regression | `7b2f2ad51f9ef97334176fbfed3138465b62fcdb` |
 
+These full SHAs are immutable evidence identifiers, not moving aliases for the fixture repository's current branch tip. Advancing `main` does not alter either referenced commit. Do not rewrite this owned fixture history. Replacing the scenario requires new commits, a fixture-version bump, synchronized constants/tests/documentation, and a fresh TrueForge GitHub-MCP join trace. Tags or environment overrides are intentionally not used because they can move or make the checked-in evidence contract depend on local configuration.
+
 The fixture deployment record names the suspect revision. Synthetic alert and reachability observations occur afterward and report an allowed connection from `checkout-api` to `forbidden.example.test` (`203.0.113.10`) on TCP/443. The service catalog separately declares DNS and PostgreSQL as required dependencies.
 
 These records are independently sourced observations. The Fixture MCP does not decide severity, causal relationship, remediation, or approval.

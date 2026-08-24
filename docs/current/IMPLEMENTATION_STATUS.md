@@ -11,8 +11,9 @@ This file is navigation and handoff state, not a product specification. The acti
 ## Current state
 
 - Completed and merged: Phase 0 and Phase 1.
-- In progress: Phase 2 — agent investigation and finding.
-- Current product branch: `phase-2/agent-investigation`, created from updated `main`.
+- Gate passed, PR not yet merged: Phase 2 — agent investigation and finding.
+- Current product branch: `phase-2/agent-investigation`, created from updated `main`; reviewed implementation head before the evidence/status commit is `c71618be33b3f184a58de9c22adc64b45456c04f`.
+- Next phase after merge: Phase 3 — sandbox remediation proof, from updated `main` only.
 - Product `main`: `c8fe85b929f27d675a26cf6fb990eb624988874c` after Phase 1 merge.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
 - The TrueForge worktree has an operator-owned `docker-compose.yml` change. Preserve it and keep it out of product commits.
@@ -32,9 +33,10 @@ The repository currently contains:
 
 - Phase 0 TrueForge proofs for the model path, official GitHub MCP, Fixture MCP transport, Daytona sandbox, dynamic subagent primitive, and approval/reconnect primitive.
 - Phase 1 owned Git history, typed synthetic evidence, deterministic failure variants, and four read-only Fixture MCP evidence tools.
-- A verified TrueForge read path joining the synthetic deployment revision to the real suspect GitHub commit.
+- Phase 2 bounded root/child contracts, strict evidence aggregation schemas, deterministic `SEC-NET-001` evaluation, four-link causal synthesis, the cited `High` finding, and fail-closed evidence-defect behavior.
+- A successful TrueForge trace with two child threads joining real GitHub evidence to owned synthetic observations. See [`PHASE_2_AGENT_INVESTIGATION.md`](../evidence/PHASE_2_AGENT_INVESTIGATION.md).
 
-The repository does not yet contain Phase 2 causal investigation, a security finding, remediation generation, policy validation, sandbox proof, GitHub remediation writes, later-phase UI, or persistence behavior.
+The repository does not contain remediation generation, candidate policy validation, sandbox proof, GitHub remediation writes, later-phase UI, or persistence behavior.
 
 ## Immutable fixture references
 
@@ -56,12 +58,13 @@ Verified before Phase 2 implementation:
 3. The product, fixture, and TrueForge worktrees were inspected; the operator-owned TrueForge change remains preserved.
 4. The Phase 2 plan was read completely and `phase-2/agent-investigation` was created from updated product `main`.
 
-The Phase 2 entry check passed. Phase 2 remains in progress until its trace, tests, evidence record, review, and final quality gate pass.
+The Phase 2 entry check and implementation/trace gate passed. Phase 2 is not merged; its product PR and Qodo gate must complete before Phase 3 begins.
 
 ## Known risks and limits
 
 - Fixture incident evidence is owned and synthetic; GitHub commit evidence is real.
-- Policy validation is static and begins in Phase 3; no live-cluster claim is permitted.
+- Phase 2 rule evaluation is a narrow deterministic static manifest check. Candidate policy/service-path validation begins in Phase 3; no live-cluster claim is permitted.
+- The official GitHub file-content transport exposed a blob/download reference in the accepted trace. The GitHub child reconstructed the suspect manifest from the official parent and suspect full-patch responses and cited the returned blob identity.
 - Actual data access and exfiltration remain `Unknown`.
 - Dynamic subagent roles are instruction-scoped, not enforced authorization boundaries.
 - Full-SHA coordination depends on preserving the owned fixture history.

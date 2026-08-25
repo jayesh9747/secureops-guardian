@@ -60,4 +60,18 @@ describe('unified TrueForge manifest', () => {
       expect(instructions).toContain(requirement);
     }
   });
+
+  it('keeps greetings and capability questions outside the investigation workflow', () => {
+    const instructions = SECUREOPS_GUARDIAN_AGENT_SPEC.manifest.instructions;
+
+    expect(instructions).toContain('Conversation-only requests');
+    expect(instructions).toContain('must not call any tool');
+    expect(instructions).toContain('Do not offer or substitute the demo fixture');
+    expect(instructions).toContain(
+      'Ask for the request contract only after the user asks to investigate',
+    );
+    expect(instructions.indexOf('## Conversation-only requests')).toBeLessThan(
+      instructions.indexOf('## Mandatory request contract'),
+    );
+  });
 });

@@ -1,39 +1,28 @@
 import { guardianPresentationSchema, type GuardianPresentation } from './schema.js';
 
-const statusLabel: Record<GuardianPresentation['terminal_status'], string> = {
-  SECURITY_REMEDIATION_READY: 'Remediation ready',
-  DENIED: 'Denied',
-  PR_CREATED: 'PR created',
-  PR_REUSED: 'PR reused',
-  INCONCLUSIVE: 'Inconclusive',
-  WRITE_CONFLICT: 'Write conflict',
-  NO_SAFE_REMEDIATION: 'No safe remediation',
-};
-
-const statusTagVariant: Record<
+const statusPresentation: Record<
   GuardianPresentation['terminal_status'],
-  'success' | 'warning' | 'danger'
+  {
+    label: string;
+    tagVariant: 'success' | 'warning' | 'danger';
+    calloutVariant: 'success' | 'warning' | 'error';
+  }
 > = {
-  SECURITY_REMEDIATION_READY: 'warning',
-  DENIED: 'danger',
-  PR_CREATED: 'success',
-  PR_REUSED: 'success',
-  INCONCLUSIVE: 'warning',
-  WRITE_CONFLICT: 'danger',
-  NO_SAFE_REMEDIATION: 'danger',
-};
-
-const calloutVariant: Record<
-  GuardianPresentation['terminal_status'],
-  'success' | 'warning' | 'error'
-> = {
-  SECURITY_REMEDIATION_READY: 'warning',
-  DENIED: 'error',
-  PR_CREATED: 'success',
-  PR_REUSED: 'success',
-  INCONCLUSIVE: 'warning',
-  WRITE_CONFLICT: 'error',
-  NO_SAFE_REMEDIATION: 'error',
+  SECURITY_REMEDIATION_READY: {
+    label: 'Remediation ready',
+    tagVariant: 'warning',
+    calloutVariant: 'warning',
+  },
+  DENIED: { label: 'Denied', tagVariant: 'danger', calloutVariant: 'error' },
+  PR_CREATED: { label: 'PR created', tagVariant: 'success', calloutVariant: 'success' },
+  PR_REUSED: { label: 'PR reused', tagVariant: 'success', calloutVariant: 'success' },
+  INCONCLUSIVE: { label: 'Inconclusive', tagVariant: 'warning', calloutVariant: 'warning' },
+  WRITE_CONFLICT: { label: 'Write conflict', tagVariant: 'danger', calloutVariant: 'error' },
+  NO_SAFE_REMEDIATION: {
+    label: 'No safe remediation',
+    tagVariant: 'danger',
+    calloutVariant: 'error',
+  },
 };
 
 function openUiString(value: string): string {
@@ -117,7 +106,7 @@ export function renderGuardianMarkdown(untrustedPresentation: GuardianPresentati
 \`\`\`diff
 ${presentation.proposal.exact_patch}\`\`\``
       : `No proposal: ${presentation.proposal.reason}`;
-  return `## SecureOps Guardian — ${statusLabel[presentation.terminal_status]}
+  return `## SecureOps Guardian — ${statusPresentation[presentation.terminal_status].label}
 
 **${presentation.headline}**
 
@@ -204,15 +193,16 @@ function githubLinkMarkdown(presentation: GuardianPresentation): string {
 
 export function renderGuardianOpenUi(untrustedPresentation: GuardianPresentation): string {
   const presentation = guardianPresentationSchema.parse(untrustedPresentation);
+  const status = statusPresentation[presentation.terminal_status];
   const lines = [
     'root = Stack([guardianCard], "column", "m")',
     'guardianCard = Card([header, statusRow, terminalCallout, findingTable, evidenceDetail, verifierSection, detailsTabs, actionCallout, githubLink], "card", "column", "m")',
     `header = CardHeader("SecureOps Guardian", ${openUiString(presentation.headline)})`,
     'statusRow = Stack([statusTag, severityTag, dataAccessTag], "row", "s", "center", "start", true)',
-    `statusTag = Tag(${openUiString(statusLabel[presentation.terminal_status])}, null, "md", "${statusTagVariant[presentation.terminal_status]}")`,
+    `statusTag = Tag(${openUiString(status.label)}, null, "md", "${status.tagVariant}")`,
     `severityTag = Tag(${openUiString(`Severity ${presentation.severity}`)}, null, "md", "${presentation.severity === 'High' ? 'danger' : 'neutral'}")`,
     'dataAccessTag = Tag("Actual data access Unknown", null, "md", "warning")',
-    `terminalCallout = Callout("${calloutVariant[presentation.terminal_status]}", ${openUiString(presentation.terminal_status)}, ${openUiString(presentation.headline)})`,
+    `terminalCallout = Callout("${status.calloutVariant}", ${openUiString(presentation.terminal_status)}, ${openUiString(presentation.headline)})`,
     'findingTable = Table([Col("Finding", findingLabels), Col("Value", findingValues)])',
     'findingLabels = ["Affected asset", "Causal commit", "Changed file", "Exposure path"]',
     `findingValues = ${JSON.stringify([
@@ -228,7 +218,7 @@ export function renderGuardianOpenUi(untrustedPresentation: GuardianPresentation
     'proposalTab = TabItem("proposal", "Exact proposal", proposalContent)',
     'limitationsTab = TabItem("limitations", "Limitations", [limitationsDetail])',
     'detailsTabs = Tabs([proposalTab, limitationsTab])',
-    `actionCallout = Callout("${calloutVariant[presentation.terminal_status]}", ${openUiString(`Approval: ${presentation.action.approval_state}`)}, ${openUiString(presentation.action.approval_boundary)})`,
+    `actionCallout = Callout("${status.calloutVariant}", ${openUiString(`Approval: ${presentation.action.approval_state}`)}, ${openUiString(presentation.action.approval_boundary)})`,
     `githubLink = MarkDownRenderer(${openUiString(githubLinkMarkdown(presentation))}, "clear")`,
   ];
   return lines.join('\n');

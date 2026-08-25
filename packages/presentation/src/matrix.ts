@@ -56,7 +56,7 @@ function findingForCase(caseId: Parameters<typeof buildDeterministicExposureResu
   });
 }
 
-function controllingArtifacts(): {
+export function buildPhaseSixControllingArtifacts(): {
   finding: InvestigationOutcome;
   proposal: EligibleProposal;
   createdReceipt: ActionReceipt;
@@ -101,7 +101,7 @@ function controllingArtifacts(): {
 }
 
 export function buildPhaseSixPresentationMatrix(): PhaseSixPresentationCase[] {
-  const { finding, proposal, createdReceipt } = controllingArtifacts();
+  const { finding, proposal, createdReceipt } = buildPhaseSixControllingArtifacts();
   const cases: PhaseSixPresentationCase[] = [
     {
       scenario: 'remediation-ready',

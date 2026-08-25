@@ -1,8 +1,10 @@
 import { PHASE_FOUR_AGENT_SPEC } from '@guardian/github-write';
+import { runPhaseFiveScenario } from '@guardian/reliability';
 import { describe, expect, it } from 'vitest';
 
 import { PHASE_SIX_AGENT_SPEC } from './agent.js';
-import { buildPhaseSixPresentationMatrix } from './matrix.js';
+import { buildCreatedPresentation, buildRunRecordPresentation } from './build.js';
+import { buildPhaseSixControllingArtifacts, buildPhaseSixPresentationMatrix } from './matrix.js';
 import {
   renderGuardianFallbackResponse,
   renderGuardianMarkdown,
@@ -76,6 +78,50 @@ describe('Phase 6 presentation schema', () => {
         proposal: ready.presentation.proposal,
       }),
     ).toThrow(/NO_SAFE_REMEDIATION must stop after two attempts/u);
+  });
+
+  it('rejects receipts and records that do not match the bound proposal and GitHub target', () => {
+    const { finding, proposal, createdReceipt } = buildPhaseSixControllingArtifacts();
+    expect(() =>
+      buildCreatedPresentation({
+        finding,
+        proposal,
+        receipt: {
+          ...createdReceipt,
+          proposal_hash_sha256: '0'.repeat(64),
+        },
+      }),
+    ).toThrow(/different proposal hash/u);
+    expect(() =>
+      buildCreatedPresentation({
+        finding,
+        proposal,
+        receipt: {
+          ...createdReceipt,
+          repository: 'someone-else/checkout',
+        },
+      }),
+    ).toThrow(/different GitHub target/u);
+    expect(() =>
+      buildCreatedPresentation({
+        finding,
+        proposal,
+        receipt: {
+          ...createdReceipt,
+          pr_url: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/2',
+        },
+      }),
+    ).toThrow(/mismatched pull-request URL/u);
+
+    const deniedRecord = structuredClone(runPhaseFiveScenario('denied-first-write'));
+    deniedRecord.proposal_hash_sha256 = '0'.repeat(64);
+    if (deniedRecord.action_receipt === null) {
+      throw new Error('Denied fixture must contain an action receipt.');
+    }
+    deniedRecord.action_receipt.proposal_hash_sha256 = '0'.repeat(64);
+    expect(() => buildRunRecordPresentation({ record: deniedRecord, finding, proposal })).toThrow(
+      /different proposal hash/u,
+    );
   });
 });
 

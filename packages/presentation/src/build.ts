@@ -1,6 +1,7 @@
 import {
   actionReceiptSchema,
   bindEligibleProposal,
+  PHASE_FOUR_TARGET,
   type ActionReceipt,
 } from '@guardian/github-write';
 import { investigationOutcomeSchema, type InvestigationOutcome } from '@guardian/investigation';
@@ -30,6 +31,7 @@ const proofStateDisplay: Record<
 };
 
 type PresentationEvidence = GuardianPresentation['evidence'];
+type SupportedFinding = Extract<InvestigationOutcome, { outcome: 'SUPPORTED_SECURITY_FINDING' }>;
 
 function unique(items: readonly string[]): string[] {
   return [...new Set(items)];
@@ -82,6 +84,29 @@ function bindPresentationProposal(proposal: EligibleProposal) {
   return result.binding.proposal;
 }
 
+function assertReceiptMatchesBoundProposal(
+  receipt: ActionReceipt,
+  proposal: EligibleProposal,
+): void {
+  if (receipt.proposal_hash_sha256 !== proposal.proposal_hash_sha256) {
+    throw new Error('Presentation rejected an action receipt for a different proposal hash.');
+  }
+  if (
+    receipt.repository !== PHASE_FOUR_TARGET.repository ||
+    receipt.base_branch !== PHASE_FOUR_TARGET.baseBranch ||
+    receipt.remediation_branch !== PHASE_FOUR_TARGET.remediationBranch
+  ) {
+    throw new Error('Presentation rejected an action receipt for a different GitHub target.');
+  }
+  if (
+    receipt.pr_number !== undefined &&
+    receipt.pr_url !==
+      `https://github.com/${PHASE_FOUR_TARGET.repository}/pull/${receipt.pr_number}`
+  ) {
+    throw new Error('Presentation rejected an action receipt with a mismatched pull-request URL.');
+  }
+}
+
 function proofRows(proof: FourStateProof) {
   return proof.states.map(({ state, result }) => ({
     state: proofStateDisplay[state],
@@ -105,6 +130,31 @@ function exactProposal(proposal: EligibleProposal): GuardianPresentation['propos
     proposal_id: proposal.proposal_id,
     proposal_hash_sha256: proposal.proposal_hash_sha256,
     exact_patch: proposal.canonical_diff,
+  };
+}
+
+function buildVerifiedPresentationSections(input: {
+  finding: SupportedFinding;
+  proposal: EligibleProposal;
+  receipt: ActionReceipt | null;
+  evidenceIds?: readonly string[];
+}): Pick<
+  GuardianPresentation,
+  'severity' | 'finding' | 'evidence' | 'verifier' | 'proposal' | 'limitations'
+> {
+  return {
+    severity: input.finding.severity,
+    finding: knownFinding(input.finding),
+    evidence: presentationEvidence(
+      input.evidenceIds ?? supportedEvidenceIds(input.finding, input.proposal),
+    ),
+    verifier: {
+      state: 'FOUR_STATE_VERIFIED',
+      execution_boundary: VERIFIER_BOUNDARY,
+      rows: proofRows(input.proposal.four_state_verifier_result),
+    },
+    proposal: exactProposal(input.proposal),
+    limitations: commonLimitations(input),
   };
 }
 
@@ -137,16 +187,7 @@ export function buildReadyPresentation(input: {
     schema_version: 1,
     terminal_status: 'SECURITY_REMEDIATION_READY',
     headline: 'Least-privilege remediation is verified and awaiting approval',
-    severity: finding.severity,
-    finding: knownFinding(finding),
-    evidence: presentationEvidence(supportedEvidenceIds(finding, proposal)),
-    verifier: {
-      state: 'FOUR_STATE_VERIFIED',
-      execution_boundary: VERIFIER_BOUNDARY,
-      rows: proofRows(proposal.four_state_verifier_result),
-    },
-    proposal: exactProposal(proposal),
-    limitations: commonLimitations({ finding, proposal, receipt: null }),
+    ...buildVerifiedPresentationSections({ finding, proposal, receipt: null }),
     action: {
       approval_state: 'REQUIRED',
       approval_boundary: APPROVAL_BOUNDARY,
@@ -249,6 +290,7 @@ export function buildRunRecordPresentation(input: {
   const proposal = bindPresentationProposal(input.proposal);
   const receipt = record.action_receipt;
   if (receipt === null) throw new Error(`${status} presentation requires an action receipt.`);
+  assertReceiptMatchesBoundProposal(receipt, proposal);
 
   const outcome = (() => {
     switch (status) {
@@ -297,19 +339,12 @@ export function buildRunRecordPresentation(input: {
     schema_version: 1,
     terminal_status: status,
     headline: outcome.headline,
-    severity: finding.severity,
-    finding: knownFinding(finding),
-    evidence: presentationEvidence([
-      ...record.evidence_ids,
-      ...supportedEvidenceIds(finding, proposal),
-    ]),
-    verifier: {
-      state: 'FOUR_STATE_VERIFIED',
-      execution_boundary: VERIFIER_BOUNDARY,
-      rows: proofRows(proposal.four_state_verifier_result),
-    },
-    proposal: exactProposal(proposal),
-    limitations: commonLimitations({ finding, proposal, receipt }),
+    ...buildVerifiedPresentationSections({
+      finding,
+      proposal,
+      receipt,
+      evidenceIds: [...record.evidence_ids, ...supportedEvidenceIds(finding, proposal)],
+    }),
     action: {
       approval_state: outcome.approvalState,
       approval_boundary: APPROVAL_BOUNDARY,
@@ -329,6 +364,7 @@ export function buildCreatedPresentation(input: {
     throw new Error('PR_CREATED presentation requires a created receipt and supported finding.');
   }
   const proposal = bindPresentationProposal(input.proposal);
+  assertReceiptMatchesBoundProposal(receipt, proposal);
   if (
     receipt.pr_number === undefined ||
     receipt.pr_url === undefined ||
@@ -340,16 +376,7 @@ export function buildCreatedPresentation(input: {
     schema_version: 1,
     terminal_status: 'PR_CREATED',
     headline: 'Approved remediation pull request created through official GitHub MCP',
-    severity: finding.severity,
-    finding: knownFinding(finding),
-    evidence: presentationEvidence(supportedEvidenceIds(finding, proposal)),
-    verifier: {
-      state: 'FOUR_STATE_VERIFIED',
-      execution_boundary: VERIFIER_BOUNDARY,
-      rows: proofRows(proposal.four_state_verifier_result),
-    },
-    proposal: exactProposal(proposal),
-    limitations: commonLimitations({ finding, proposal, receipt }),
+    ...buildVerifiedPresentationSections({ finding, proposal, receipt }),
     action: {
       approval_state: 'APPROVED',
       approval_boundary: APPROVAL_BOUNDARY,

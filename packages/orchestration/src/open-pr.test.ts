@@ -71,4 +71,41 @@ describe('unified OPEN_PR artifact gate', () => {
 
     expect(result.status).toBe('WRITE_CONFLICT');
   });
+
+  it('accepts the exact reusable PR when target_file is resolved from the proposal', () => {
+    const result = evaluateOpenPrArtifacts({
+      scope: { ...scope, target_file: undefined },
+      proposal: artifacts.proposal,
+      remote_snapshot: exactRemoteSnapshot(),
+    });
+
+    expect(result.status).toBe('PR_REUSED');
+  });
+
+  it('returns a typed conflict for malformed remote input but propagates programming errors', () => {
+    expect(
+      evaluateOpenPrArtifacts({
+        scope,
+        proposal: artifacts.proposal,
+        remote_snapshot: {} as RemoteSnapshot,
+      }),
+    ).toEqual({ status: 'WRITE_CONFLICT', reason: 'Remote snapshot failed typed validation.' });
+
+    const programmingError = new TypeError('remote probe exploded');
+    const explosiveSnapshot = new Proxy(
+      {},
+      {
+        get() {
+          throw programmingError;
+        },
+      },
+    ) as RemoteSnapshot;
+    expect(() =>
+      evaluateOpenPrArtifacts({
+        scope,
+        proposal: artifacts.proposal,
+        remote_snapshot: explosiveSnapshot,
+      }),
+    ).toThrow(programmingError);
+  });
 });

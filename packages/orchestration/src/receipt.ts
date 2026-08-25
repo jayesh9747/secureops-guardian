@@ -10,6 +10,25 @@ const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/u);
 
 const runtimeClaimSchema = z.enum(['Unknown', 'SupportedByOwnedSyntheticEvidence']);
 
+const githubReadTools = new Set([
+  'list_branches',
+  'list_commits',
+  'get_commit',
+  'get_file_contents',
+  'search_pull_requests',
+  'list_pull_requests',
+]);
+
+export const githubReadToolEventReferenceSchema = z.string().superRefine((reference, context) => {
+  const match = /^deterministic:tool:([^:]+):(evidence:github:.+)$/u.exec(reference);
+  if (match === null || !githubReadTools.has(match[1] ?? '')) {
+    context.addIssue({
+      code: 'custom',
+      message: 'Expected an official GitHub read-tool event reference.',
+    });
+  }
+});
+
 export const guardianRunReceiptSchema = z
   .object({
     schema_version: z.literal(1),
@@ -84,7 +103,9 @@ export const guardianRunReceiptSchema = z
         receipt.stages.github_action !== 'NOT_REACHED' ||
         receipt.proposal_hash_sha256 !== null ||
         receipt.action_receipt !== null ||
-        receipt.approval_event_references.length > 0
+        receipt.approval_event_references.length > 0 ||
+        receipt.runtime_claims.deployment !== 'Unknown' ||
+        receipt.runtime_claims.runtime_exposure !== 'Unknown'
       ) {
         context.addIssue({
           code: 'custom',
@@ -107,7 +128,10 @@ export const guardianRunReceiptSchema = z
         receipt.approval_event_references.length > 0 ||
         receipt.runtime_claims.deployment !== 'Unknown' ||
         receipt.runtime_claims.runtime_exposure !== 'Unknown' ||
-        receipt.evidence_ids.some((id) => !id.startsWith('evidence:github:'))
+        receipt.evidence_ids.some((id) => !id.startsWith('evidence:github:')) ||
+        receipt.tool_event_references.some(
+          (reference) => !githubReadToolEventReferenceSchema.safeParse(reference).success,
+        )
       ) {
         context.addIssue({
           code: 'custom',

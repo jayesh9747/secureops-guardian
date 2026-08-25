@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
 
-import { runCurrentFixtureJourney } from './journey.js';
+import { buildCurrentFixtureJourneyContext, runCurrentFixtureJourney } from './journey.js';
 import { buildGuardianRunReceipt } from './receipt.js';
 
 const scope = {
@@ -14,7 +14,11 @@ const scope = {
 };
 
 function coreOf(mode: 'ANALYSIS_ONLY' | 'PREPARE_REMEDIATION' | 'OPEN_PR') {
-  const { receipt_id: _receiptId, ...core } = runCurrentFixtureJourney({ mode, scope }).receipt;
+  const input = { mode, scope };
+  const { receipt_id: _receiptId, ...core } = runCurrentFixtureJourney(
+    input,
+    buildCurrentFixtureJourneyContext(input),
+  ).receipt;
   void _receiptId;
   return core;
 }
@@ -32,6 +36,31 @@ describe('Guardian run receipt cross-stage invariants', () => {
           ...core.runtime_claims,
           deployment: 'SupportedByOwnedSyntheticEvidence',
         },
+      }),
+    ).toThrow(/ANALYSIS_ONLY/u);
+  });
+
+  it('rejects Fixture tool-event references in ANALYSIS_ONLY', () => {
+    const core = coreOf('ANALYSIS_ONLY');
+
+    expect(() =>
+      buildGuardianRunReceipt({
+        ...core,
+        tool_event_references: [
+          ...core.tool_event_references,
+          'deterministic:tool:get_security_alert:evidence:deployment:synthetic',
+        ],
+      }),
+    ).toThrow(/ANALYSIS_ONLY/u);
+  });
+
+  it('rejects a Fixture tool disguised with a GitHub evidence suffix in ANALYSIS_ONLY', () => {
+    const core = coreOf('ANALYSIS_ONLY');
+
+    expect(() =>
+      buildGuardianRunReceipt({
+        ...core,
+        tool_event_references: ['deterministic:tool:get_security_alert:evidence:github:fake'],
       }),
     ).toThrow(/ANALYSIS_ONLY/u);
   });
@@ -72,8 +101,40 @@ describe('Guardian run receipt cross-stage invariants', () => {
         },
         missing_or_unsupported_requirements: ['Complete incident evidence is required.'],
         proposal_hash_sha256: null,
+        runtime_claims: {
+          ...core.runtime_claims,
+          deployment: 'Unknown',
+          runtime_exposure: 'Unknown',
+        },
       }).terminal_status,
     ).toBe('INCONCLUSIVE');
+  });
+
+  it('rejects synthetic runtime support in an INCONCLUSIVE receipt', () => {
+    const core = coreOf('PREPARE_REMEDIATION');
+
+    expect(() =>
+      buildGuardianRunReceipt({
+        ...core,
+        terminal_status: 'INCONCLUSIVE',
+        stages: {
+          ...core.stages,
+          scope_preflight: 'INCONCLUSIVE',
+          incident_evidence_join: 'MISSING',
+          deterministic_rule: 'NOT_RUN',
+          daytona_proof: 'NOT_RUN',
+          proposal: 'ABSENT',
+          github_action: 'NOT_REACHED',
+        },
+        missing_or_unsupported_requirements: ['Complete incident evidence is required.'],
+        proposal_hash_sha256: null,
+        runtime_claims: {
+          ...core.runtime_claims,
+          deployment: 'SupportedByOwnedSyntheticEvidence',
+          runtime_exposure: 'SupportedByOwnedSyntheticEvidence',
+        },
+      }),
+    ).toThrow(/INCONCLUSIVE/u);
   });
 
   it('rejects an action terminal state without a Phase 4 action receipt', () => {

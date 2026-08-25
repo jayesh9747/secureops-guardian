@@ -8,11 +8,12 @@ import { investigationOutcomeSchema, type InvestigationOutcome } from '@guardian
 import type { EligibleProposal, FourStateProof, ProofState } from '@guardian/policy-verifier';
 import { phaseFiveRunRecordSchema, type PhaseFiveRunRecord } from '@guardian/reliability';
 
-import { guardianPresentationSchema, type GuardianPresentation } from './schema.js';
-
-const APPROVAL_BOUNDARY =
-  'TrueForge requires separate human approval for each official GitHub MCP write.' as const;
-const VERIFIER_BOUNDARY = 'Daytona sandbox — deterministic static policy verifier' as const;
+import {
+  GUARDIAN_APPROVAL_BOUNDARY,
+  GUARDIAN_VERIFIER_BOUNDARY,
+  guardianPresentationSchema,
+  type GuardianPresentation,
+} from './schema.js';
 
 const proofStateDisplay: Record<
   ProofState,
@@ -39,13 +40,19 @@ function unique(items: readonly string[]): string[] {
 
 function presentationEvidence(evidenceIds: readonly string[]): PresentationEvidence {
   const ids = unique(evidenceIds);
-  return {
+  const evidence = {
     official_github_mcp: ids.filter((id) => id.startsWith('evidence:github:')),
     incident_fixture_mcp: ids.filter((id) =>
       /^evidence:(deployment|security-alert|reachability|dependency):/u.test(id),
     ),
     deterministic_rule: ids.filter((id) => id.startsWith('evidence:rule:')),
   };
+  const classified = new Set(Object.values(evidence).flat());
+  const unclassified = ids.filter((id) => !classified.has(id));
+  if (unclassified.length > 0) {
+    throw new Error(`Presentation rejected unclassified evidence ID: ${unclassified.join(', ')}`);
+  }
+  return evidence;
 }
 
 function supportedEvidenceIds(finding: InvestigationOutcome, proposal: EligibleProposal | null) {
@@ -124,6 +131,25 @@ function proofRows(proof: FourStateProof) {
   }));
 }
 
+function assertRunRecordProofMatchesProposal(
+  recordProof: NonNullable<PhaseFiveRunRecord['verifier_output']>['four_state'],
+  proposalProof: FourStateProof,
+): void {
+  if (recordProof === null) {
+    throw new Error('Presentation requires a run-record four-state proof.');
+  }
+  const expected = proposalProof.states.map(({ state, result }) => ({
+    state,
+    classification: result.classification,
+    eligible: result.eligible,
+    secure: result.secure,
+    functional: result.functional,
+  }));
+  if (JSON.stringify(recordProof) !== JSON.stringify(expected)) {
+    throw new Error('Presentation run-record four-state proof does not match the bound proposal.');
+  }
+}
+
 function exactProposal(proposal: EligibleProposal): GuardianPresentation['proposal'] {
   return {
     state: 'EXACT',
@@ -150,7 +176,7 @@ function buildVerifiedPresentationSections(input: {
     ),
     verifier: {
       state: 'FOUR_STATE_VERIFIED',
-      execution_boundary: VERIFIER_BOUNDARY,
+      execution_boundary: GUARDIAN_VERIFIER_BOUNDARY,
       rows: proofRows(input.proposal.four_state_verifier_result),
     },
     proposal: exactProposal(input.proposal),
@@ -190,7 +216,7 @@ export function buildReadyPresentation(input: {
     ...buildVerifiedPresentationSections({ finding, proposal, receipt: null }),
     action: {
       approval_state: 'REQUIRED',
-      approval_boundary: APPROVAL_BOUNDARY,
+      approval_boundary: GUARDIAN_APPROVAL_BOUNDARY,
       github_result: { state: 'NONE' },
     },
   });
@@ -204,6 +230,9 @@ export function buildRunRecordPresentation(input: {
   const record = phaseFiveRunRecordSchema.parse(input.record);
   const finding = parseFinding(input.finding);
   const status = record.actual_terminal_status;
+  if (finding.case_id === null || finding.case_id !== record.fixture_case_id) {
+    throw new Error('Presentation run record and finding refer to different fixture cases.');
+  }
   if (
     status !== 'INCONCLUSIVE' &&
     status !== 'NO_SAFE_REMEDIATION' &&
@@ -236,7 +265,7 @@ export function buildRunRecordPresentation(input: {
       limitations: commonLimitations({ finding, proposal: null, receipt: null }),
       action: {
         approval_state: 'NOT_REACHED',
-        approval_boundary: APPROVAL_BOUNDARY,
+        approval_boundary: GUARDIAN_APPROVAL_BOUNDARY,
         github_result: { state: 'NONE' },
       },
     });
@@ -249,6 +278,11 @@ export function buildRunRecordPresentation(input: {
   if (status === 'NO_SAFE_REMEDIATION') {
     if (input.proposal !== null || record.verifier_output === null) {
       throw new Error('NO_SAFE_REMEDIATION cannot contain an eligible proposal.');
+    }
+    if (record.verifier_output.attempts.some((attempt) => attempt.diagnostics.length === 0)) {
+      throw new Error(
+        'NO_SAFE_REMEDIATION presentation requires diagnostics for every verifier attempt.',
+      );
     }
     const attempts = record.verifier_output.attempts.map((attempt) => ({
       attempt: attempt.attempt,
@@ -268,7 +302,7 @@ export function buildRunRecordPresentation(input: {
       ]),
       verifier: {
         state: 'NO_SAFE_REMEDIATION',
-        execution_boundary: VERIFIER_BOUNDARY,
+        execution_boundary: GUARDIAN_VERIFIER_BOUNDARY,
         attempts,
       },
       proposal: {
@@ -278,16 +312,24 @@ export function buildRunRecordPresentation(input: {
       limitations: commonLimitations({ finding, proposal: null, receipt: null }),
       action: {
         approval_state: 'NOT_REACHED',
-        approval_boundary: APPROVAL_BOUNDARY,
+        approval_boundary: GUARDIAN_APPROVAL_BOUNDARY,
         github_result: { state: 'NONE' },
       },
     });
   }
 
-  if (input.proposal === null || record.verifier_output?.four_state === null) {
+  if (
+    input.proposal === null ||
+    record.verifier_output === null ||
+    record.verifier_output.four_state === null
+  ) {
     throw new Error(`${status} presentation requires the bound proposal and four-state proof.`);
   }
   const proposal = bindPresentationProposal(input.proposal);
+  assertRunRecordProofMatchesProposal(
+    record.verifier_output.four_state,
+    proposal.four_state_verifier_result,
+  );
   const receipt = record.action_receipt;
   if (receipt === null) throw new Error(`${status} presentation requires an action receipt.`);
   assertReceiptMatchesBoundProposal(receipt, proposal);
@@ -347,7 +389,7 @@ export function buildRunRecordPresentation(input: {
     }),
     action: {
       approval_state: outcome.approvalState,
-      approval_boundary: APPROVAL_BOUNDARY,
+      approval_boundary: GUARDIAN_APPROVAL_BOUNDARY,
       github_result: outcome.githubResult,
     },
   });
@@ -379,7 +421,7 @@ export function buildCreatedPresentation(input: {
     ...buildVerifiedPresentationSections({ finding, proposal, receipt }),
     action: {
       approval_state: 'APPROVED',
-      approval_boundary: APPROVAL_BOUNDARY,
+      approval_boundary: GUARDIAN_APPROVAL_BOUNDARY,
       github_result: {
         state: 'PR_CREATED',
         pr_number: receipt.pr_number,

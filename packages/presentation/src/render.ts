@@ -37,6 +37,10 @@ function markdownBullets(items: readonly string[]): string {
   return items.map((item) => `- \`${item}\``).join('\n');
 }
 
+function markdownTableCell(value: string): string {
+  return value.replaceAll('|', '\\|').replaceAll('\n', ' ');
+}
+
 function evidenceMarkdown(presentation: GuardianPresentation): string {
   const ruleEvidence =
     presentation.evidence.deterministic_rule.length === 0
@@ -62,7 +66,7 @@ function verifierMarkdown(presentation: GuardianPresentation): string {
 ${presentation.verifier.attempts
   .map(
     (attempt) =>
-      `| ${attempt.attempt} | ${attempt.outcome} | ${attempt.classification} | ${attempt.diagnostics.join('; ')} |`,
+      `| ${attempt.attempt} | ${attempt.outcome} | ${attempt.classification} | ${markdownTableCell(attempt.diagnostics.join('; '))} |`,
   )
   .join('\n')}
 
@@ -73,7 +77,7 @@ Execution boundary: ${presentation.verifier.execution_boundary}.`;
 ${presentation.verifier.rows
   .map(
     (row) =>
-      `| ${row.state} | ${row.classification} | ${row.legitimate_db_path} | ${row.forbidden_external_path} | ${row.decision} |`,
+      `| ${row.state} | ${row.classification} | ${row.legitimate_db_path} | ${row.forbidden_external_path} | ${markdownTableCell(row.decision)} |`,
   )
   .join('\n')}
 

@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+export const GUARDIAN_APPROVAL_BOUNDARY =
+  'TrueForge requires separate human approval for each official GitHub MCP write.' as const;
+export const GUARDIAN_VERIFIER_BOUNDARY =
+  'Daytona sandbox — deterministic static policy verifier' as const;
+
 export const guardianTerminalStatusSchema = z.enum([
   'SECURITY_REMEDIATION_READY',
   'DENIED',
@@ -51,14 +56,14 @@ const verifierPresentationSchema = z.discriminatedUnion('state', [
   z
     .object({
       state: z.literal('FOUR_STATE_VERIFIED'),
-      execution_boundary: z.literal('Daytona sandbox — deterministic static policy verifier'),
+      execution_boundary: z.literal(GUARDIAN_VERIFIER_BOUNDARY),
       rows: z.array(proofRowSchema).length(4),
     })
     .strict(),
   z
     .object({
       state: z.literal('NO_SAFE_REMEDIATION'),
-      execution_boundary: z.literal('Daytona sandbox — deterministic static policy verifier'),
+      execution_boundary: z.literal(GUARDIAN_VERIFIER_BOUNDARY),
       attempts: z.array(verifierAttemptSchema).length(2),
     })
     .strict(),
@@ -125,9 +130,7 @@ const actionPresentationSchema = z
       'NOT_REQUIRED_REUSE',
       'BLOCKED_CONFLICT',
     ]),
-    approval_boundary: z.literal(
-      'TrueForge requires separate human approval for each official GitHub MCP write.',
-    ),
+    approval_boundary: z.literal(GUARDIAN_APPROVAL_BOUNDARY),
     github_result: githubResultSchema,
   })
   .strict();

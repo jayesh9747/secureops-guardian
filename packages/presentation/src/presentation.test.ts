@@ -1,5 +1,6 @@
 import { PHASE_FOUR_AGENT_SPEC } from '@guardian/github-write';
-import { runPhaseFiveScenario } from '@guardian/reliability';
+import { phaseFiveRunRecordSchema, runPhaseFiveScenario } from '@guardian/reliability';
+import { MISSING_REACHABILITY_CASE_ID } from '@guardian/shared';
 import { describe, expect, it } from 'vitest';
 
 import { PHASE_SIX_AGENT_SPEC } from './agent.js';
@@ -123,6 +124,67 @@ describe('Phase 6 presentation schema', () => {
       /different proposal hash/u,
     );
   });
+
+  it('rejects a conclusive record with no four-state verifier output', () => {
+    const { finding, proposal } = buildPhaseSixControllingArtifacts();
+    const record = structuredClone(runPhaseFiveScenario('denied-first-write'));
+    record.verifier_output = null;
+    expect(phaseFiveRunRecordSchema.parse(record)).toEqual(record);
+    expect(() => buildRunRecordPresentation({ record, finding, proposal })).toThrow(
+      /requires the bound proposal and four-state proof/u,
+    );
+  });
+
+  it('rejects a run-record proof that differs from the bound proposal proof', () => {
+    const { finding, proposal } = buildPhaseSixControllingArtifacts();
+    const record = structuredClone(runPhaseFiveScenario('denied-first-write'));
+    if (record.verifier_output?.four_state === null || record.verifier_output === null) {
+      throw new Error('Denied fixture must contain a four-state proof.');
+    }
+    for (const row of record.verifier_output.four_state) {
+      row.classification = 'EXPOSED';
+      row.eligible = false;
+      row.secure = false;
+      row.functional = false;
+    }
+    expect(phaseFiveRunRecordSchema.parse(record)).toEqual(record);
+    expect(() => buildRunRecordPresentation({ record, finding, proposal })).toThrow(
+      /run-record four-state proof does not match the bound proposal/u,
+    );
+  });
+
+  it('rejects a run record for a different fixture case', () => {
+    const { finding, proposal } = buildPhaseSixControllingArtifacts();
+    const record = structuredClone(runPhaseFiveScenario('denied-first-write'));
+    record.fixture_case_id = MISSING_REACHABILITY_CASE_ID;
+    expect(phaseFiveRunRecordSchema.parse(record)).toEqual(record);
+    expect(() => buildRunRecordPresentation({ record, finding, proposal })).toThrow(
+      /run record and finding refer to different fixture cases/u,
+    );
+  });
+
+  it('rejects evidence IDs that the presentation cannot classify', () => {
+    const { finding, proposal } = buildPhaseSixControllingArtifacts();
+    const record = structuredClone(runPhaseFiveScenario('denied-first-write'));
+    record.evidence_ids.push('evidence:daytona:four-state-proof');
+    expect(phaseFiveRunRecordSchema.parse(record)).toEqual(record);
+    expect(() => buildRunRecordPresentation({ record, finding, proposal })).toThrow(
+      /unclassified evidence ID/u,
+    );
+  });
+
+  it('reports missing no-safe diagnostics through an explicit presentation error', () => {
+    const { finding } = buildPhaseSixControllingArtifacts();
+    const record = structuredClone(runPhaseFiveScenario('candidate-failure-two-attempts'));
+    if (record.verifier_output === null) {
+      throw new Error('No-safe fixture must contain verifier attempts.');
+    }
+    for (const attempt of record.verifier_output.attempts) attempt.diagnostics = [];
+    expect(phaseFiveRunRecordSchema.parse(record)).toEqual(record);
+    expect(() => buildRunRecordPresentation({ record, finding, proposal: null })).toThrowError(
+      'NO_SAFE_REMEDIATION presentation requires diagnostics for every verifier attempt.',
+    );
+  });
 });
 
 describe('stock TrueForge OpenUI rendering matrix', () => {
@@ -187,10 +249,39 @@ describe('stock TrueForge OpenUI rendering matrix', () => {
       expect(markdown).toContain(githubResult.pr_url);
     }
   });
+
+  it('escapes free-text pipe characters inside Markdown verifier tables', () => {
+    const noSafe = matrix.find(({ scenario }) => scenario === 'no-safe-remediation');
+    const ready = matrix.find(({ scenario }) => scenario === 'remediation-ready');
+    expect(noSafe).toBeDefined();
+    expect(ready).toBeDefined();
+    if (
+      noSafe?.presentation.verifier.state !== 'NO_SAFE_REMEDIATION' ||
+      ready?.presentation.verifier.state !== 'FOUR_STATE_VERIFIED'
+    ) {
+      return;
+    }
+    const firstAttempt = noSafe.presentation.verifier.attempts[0];
+    const firstRow = ready.presentation.verifier.rows[0];
+    if (firstAttempt === undefined || firstRow === undefined) return;
+    firstAttempt.diagnostics = ['broken | row | injection'];
+    firstRow.decision = 'secure | functional';
+    expect(renderGuardianMarkdown(noSafe.presentation)).toContain('broken \\| row \\| injection');
+    expect(renderGuardianMarkdown(ready.presentation)).toContain('secure \\| functional');
+  });
 });
 
 describe('Phase 6 TrueForge configuration and trace labels', () => {
   it('enables Generative UI without changing the Phase 4 tools or approval gates', () => {
+    expect(PHASE_SIX_AGENT_SPEC.manifest.mcp_servers).not.toBe(
+      PHASE_FOUR_AGENT_SPEC.manifest.mcp_servers,
+    );
+    expect(PHASE_SIX_AGENT_SPEC.manifest.config.sandbox).not.toBe(
+      PHASE_FOUR_AGENT_SPEC.manifest.config.sandbox,
+    );
+    expect(PHASE_SIX_AGENT_SPEC.manifest.config.dynamic_sub_agents).not.toBe(
+      PHASE_FOUR_AGENT_SPEC.manifest.config.dynamic_sub_agents,
+    );
     expect(PHASE_SIX_AGENT_SPEC.manifest.mcp_servers).toEqual(
       PHASE_FOUR_AGENT_SPEC.manifest.mcp_servers,
     );

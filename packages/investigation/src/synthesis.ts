@@ -1,8 +1,17 @@
 import { z } from 'zod';
 
-import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
+import {
+  DEMO_CASE_ID,
+  DEMO_REPOSITORY,
+  SUSPECT_COMMIT_SHA,
+  TARGET_NETWORK_POLICY_FILE,
+} from '@guardian/shared';
 
-import { type ChangeInvestigationResult, type ExposureInvestigationResult } from './contracts.js';
+import {
+  phaseTwoCaseIdSchema,
+  type ChangeInvestigationResult,
+  type ExposureInvestigationResult,
+} from './contracts.js';
 import { SECURITY_RULE_ID, evaluateSecNet001 } from './rule.js';
 import {
   validateChangeInvestigationResult,
@@ -25,6 +34,7 @@ const supportedClaimSchema = z
 export const supportedSecurityFindingSchema = z
   .object({
     outcome: z.literal('SUPPORTED_SECURITY_FINDING'),
+    case_id: z.literal(DEMO_CASE_ID),
     severity: z.literal('High'),
     asset: z.literal('checkout-api'),
     rule_id: z.literal(SECURITY_RULE_ID),
@@ -47,6 +57,7 @@ export const supportedSecurityFindingSchema = z
 export const inconclusiveFindingSchema = z
   .object({
     outcome: z.literal('INCONCLUSIVE'),
+    case_id: phaseTwoCaseIdSchema.nullable(),
     severity: z.literal('Unknown'),
     asset: z.literal('checkout-api'),
     rule_id: z.literal(SECURITY_RULE_ID),
@@ -69,9 +80,13 @@ const commonLimitations = [
   'Reachability does not establish data access or exfiltration.',
 ];
 
-function inconclusive(evidenceDefects: string[]): z.infer<typeof inconclusiveFindingSchema> {
+function inconclusive(
+  caseId: ExposureInvestigationResult['case_id'] | null,
+  evidenceDefects: string[],
+): z.infer<typeof inconclusiveFindingSchema> {
   return inconclusiveFindingSchema.parse({
     outcome: 'INCONCLUSIVE',
+    case_id: caseId,
     severity: 'Unknown',
     asset: 'checkout-api',
     rule_id: SECURITY_RULE_ID,
@@ -159,9 +174,11 @@ function synthesizeValidated(options: {
     Date.parse(alert.observed_at) > deploymentTime;
   if (!alertMatches) defects.push('Missing matching post-deployment forbidden-path alert.');
 
-  if (defects.length > 0) return inconclusive(defects);
+  if (defects.length > 0) return inconclusive(exposure.case_id, defects);
   if (forbiddenReachability === undefined) {
-    return inconclusive(['Missing post-deployment forbidden reachability observation.']);
+    return inconclusive(exposure.case_id, [
+      'Missing post-deployment forbidden reachability observation.',
+    ]);
   }
 
   const deploymentEvidenceIds = [deployment.evidence_id];
@@ -171,6 +188,7 @@ function synthesizeValidated(options: {
 
   return supportedSecurityFindingSchema.parse({
     outcome: 'SUPPORTED_SECURITY_FINDING',
+    case_id: exposure.case_id,
     severity: 'High',
     asset: 'checkout-api',
     rule_id: SECURITY_RULE_ID,
@@ -217,7 +235,9 @@ export function synthesizeSecurityFinding(options: {
   const defects: string[] = [];
   if (!change.success) defects.push('Change-investigation result failed schema validation.');
   if (!exposure.success) defects.push('Exposure-investigation result failed schema validation.');
-  if (!change.success || !exposure.success) return inconclusive(defects);
+  if (!change.success || !exposure.success) {
+    return inconclusive(exposure.success ? exposure.data.case_id : null, defects);
+  }
 
   return synthesizeValidated({ change: change.data, exposure: exposure.data });
 }

@@ -20,10 +20,10 @@ Do not claim that dynamic child roles are authorization boundaries, that the Fix
 export const PHASE_SIX_AGENT_SPEC = {
   name: PHASE_SIX_AGENT_NAME,
   manifest: {
-    ...PHASE_FOUR_AGENT_SPEC.manifest,
+    ...structuredClone(PHASE_FOUR_AGENT_SPEC.manifest),
     instructions: `${PHASE_FOUR_AGENT_INSTRUCTIONS}\n\n${PHASE_SIX_PRESENTATION_INSTRUCTIONS}`,
     config: {
-      ...PHASE_FOUR_AGENT_SPEC.manifest.config,
+      ...structuredClone(PHASE_FOUR_AGENT_SPEC.manifest.config),
       generative_ui: { enabled: true },
     },
   },

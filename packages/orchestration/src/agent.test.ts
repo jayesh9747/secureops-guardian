@@ -65,6 +65,10 @@ describe('unified TrueForge manifest', () => {
       'Do not print a Journey Trace & Execution Log',
       'exactly one primary rendering',
       'Run receipt',
+      'main chat is a decision surface',
+      'Finding — what security problem was found',
+      'Keep the always-visible summary under 120 words',
+      'Use stock OpenUI as the primary rendering for every terminal mode',
       'Never merge, deploy, access a cluster',
     ]) {
       expect(instructions).toContain(requirement);

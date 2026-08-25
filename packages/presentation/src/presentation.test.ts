@@ -211,8 +211,16 @@ describe('stock TrueForge OpenUI rendering matrix', () => {
       expect(openui).toContain(testCase.presentation.terminal_status);
       expect(openui).toContain('Actual data access Unknown');
       expect(openui).not.toContain('undefined');
-      expect(openui).toContain('findingTable, evidenceDetail, verifierSection, detailsTabs');
-      expect(openui).toContain('detailsTabs = Tabs([proposalTab, limitationsTab])');
+      expect(openui).toContain(
+        'findingTable, workCallout, nextActionCallout, detailsTabs, actionCallout',
+      );
+      expect(openui).toContain(
+        'detailsTabs = Tabs([evidenceTab, verifierTab, proposalTab, limitationsTab])',
+      );
+      expect(openui).toContain('"What Guardian did"');
+      expect(openui).toContain('"Next action"');
+      expect(openui).toContain('TabItem("evidence", "Evidence"');
+      expect(openui).toContain('TabItem("verification", "Verification"');
 
       const componentNames = [...openui.matchAll(/\b([A-Z][A-Za-z]+)\(/gu)].map(
         (match) => match[1],

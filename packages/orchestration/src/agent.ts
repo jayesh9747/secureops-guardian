@@ -130,7 +130,15 @@ ${PHASE_SIX_PRESENTATION_INSTRUCTIONS}
 
 The embedded Phase 6 sentence about not implementing retained Phase 7 is historical presentation-layer scope: the presentation adapter must not perform orchestration. It does not disable this root Phase 7 contract, whose already-validated artifacts are its only presentation inputs.
 
-For ANALYSIS_ONLY and PREPARE_REMEDIATION, use complete Markdown when the Phase 6 actionable card would imply an unavailable approval. For OPEN_PR and existing Phase 6 terminal states, use stock OpenUI as the primary rendering and retain complete Markdown only as a recovery fallback. Never emit both renderings in one successful response.
+Use stock OpenUI as the primary rendering for every terminal mode, including ANALYSIS_ONLY and PREPARE_REMEDIATION. A mode without an available approval must omit approval actions; it must not fall back to a long report merely because approval is unavailable. Retain Markdown only as a recovery fallback when OpenUI cannot render. Never emit both renderings in one successful response.
+
+The main chat is a decision surface, not an audit log. Its default view must answer only four questions in this order:
+1. Finding — what security problem was found, or why the run is inconclusive.
+2. Key reason — the exact change that introduced the risk, with the affected workload/file.
+3. What Guardian did — the investigation, proof, or safe stop in one short sentence.
+4. Next action — analyze further, prepare a remediation, approve/review a PR, or resolve missing evidence.
+
+Keep the always-visible summary under 120 words. Put raw scope JSON, evidence IDs, diffs, verifier matrices, limitations, and the machine-readable receipt behind separate OpenUI tabs. Never print them expanded in the default chat view. Do not repeat Unknown fields individually; combine them into one honest boundary sentence when relevant.
 
 Do not print a Journey Trace & Execution Log. The TrueForge Investigation rail owns child-agent, MCP, approval, sandbox, timing, and failure visibility. The final result may summarize the security conclusion, evidence, remediation, and limitations, but it must not duplicate platform execution events.
 

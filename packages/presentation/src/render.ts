@@ -100,6 +100,43 @@ function actionMarkdown(presentation: GuardianPresentation): string {
   return `Approval state: **${presentation.action.approval_state}**. ${presentation.action.approval_boundary} ${githubResult}`;
 }
 
+function workSummary(presentation: GuardianPresentation): string {
+  switch (presentation.terminal_status) {
+    case 'SECURITY_REMEDIATION_READY':
+      return 'Guardian reproduced the unsafe policy state, rejected deny-all because it breaks checkout, and verified a least-privilege repair.';
+    case 'DENIED':
+      return 'Guardian verified the repair, but the requested GitHub write was denied. The repository was not changed.';
+    case 'PR_CREATED':
+      return 'Guardian verified the repair and created the approved remediation pull request.';
+    case 'PR_REUSED':
+      return 'Guardian verified the existing remediation and reused its matching pull request without another write.';
+    case 'INCONCLUSIVE':
+      return 'Guardian stopped safely because the available evidence could not establish the change, exposure, or both.';
+    case 'WRITE_CONFLICT':
+      return 'Guardian detected remote drift and stopped without overwriting the repository.';
+    case 'NO_SAFE_REMEDIATION':
+      return 'Guardian tested two candidates, but neither closed the exposure while preserving checkout traffic.';
+  }
+}
+
+function nextAction(presentation: GuardianPresentation): string {
+  switch (presentation.terminal_status) {
+    case 'SECURITY_REMEDIATION_READY':
+      return 'Review the exact patch and approve the GitHub write when ready.';
+    case 'DENIED':
+      return 'Revise the proposal or leave the repository unchanged.';
+    case 'PR_CREATED':
+    case 'PR_REUSED':
+      return 'Review the remediation pull request; Guardian does not merge or deploy it.';
+    case 'INCONCLUSIVE':
+      return 'Provide the missing or conflicting evidence, then start a new run.';
+    case 'WRITE_CONFLICT':
+      return 'Review the remote changes and start a new run against the updated revision.';
+    case 'NO_SAFE_REMEDIATION':
+      return 'Escalate for manual remediation design; Guardian will not propose an unsafe patch.';
+  }
+}
+
 export function renderGuardianMarkdown(untrustedPresentation: GuardianPresentation): string {
   const presentation = guardianPresentationSchema.parse(untrustedPresentation);
   const proposal =
@@ -216,11 +253,11 @@ function renderGuardianOpenUiWithOptions(
   }
   const detailTabs =
     receiptJson === undefined
-      ? '[proposalTab, limitationsTab]'
-      : '[proposalTab, limitationsTab, receiptTab]';
+      ? '[evidenceTab, verifierTab, proposalTab, limitationsTab]'
+      : '[evidenceTab, verifierTab, proposalTab, limitationsTab, receiptTab]';
   const lines = [
     'root = Stack([guardianCard], "column", "m")',
-    'guardianCard = Card([header, statusRow, terminalCallout, findingTable, evidenceDetail, verifierSection, detailsTabs, actionCallout, githubLink], "card", "column", "m")',
+    'guardianCard = Card([header, statusRow, terminalCallout, findingTable, workCallout, nextActionCallout, detailsTabs, actionCallout, githubLink], "card", "column", "m")',
     `header = CardHeader("SecureOps Guardian", ${openUiString(presentation.headline)})`,
     'statusRow = Stack([statusTag, severityTag, dataAccessTag], "row", "s", "center", "start", true)',
     `statusTag = Tag(${openUiString(status.label)}, null, "md", "${status.tagVariant}")`,
@@ -228,7 +265,7 @@ function renderGuardianOpenUiWithOptions(
     'dataAccessTag = Tag("Actual data access Unknown", null, "md", "warning")',
     `terminalCallout = Callout("${status.calloutVariant}", ${openUiString(presentation.terminal_status)}, ${openUiString(presentation.headline)})`,
     'findingTable = Table([Col("Finding", findingLabels), Col("Value", findingValues)])',
-    'findingLabels = ["Affected asset", "Causal commit", "Changed file", "Exposure path"]',
+    'findingLabels = ["Affected workload", "Introduced by", "Changed configuration", "Security impact"]',
     `findingValues = ${JSON.stringify([
       presentation.finding.affected_asset,
       knownValue(presentation.finding.causal_commit),
@@ -239,6 +276,10 @@ function renderGuardianOpenUiWithOptions(
     `evidenceDetail = MarkDownRenderer(${openUiString(evidenceMarkdown(presentation))}, "clear")`,
     ...proposalOpenUiLines(presentation),
     `limitationsDetail = MarkDownRenderer(${openUiString(presentation.limitations.map((limitation) => `- ${limitation}`).join('\n'))}, "clear")`,
+    `workCallout = Callout("${status.calloutVariant}", "What Guardian did", ${openUiString(workSummary(presentation))})`,
+    `nextActionCallout = Callout("${status.calloutVariant}", "Next action", ${openUiString(nextAction(presentation))})`,
+    'evidenceTab = TabItem("evidence", "Evidence", [evidenceDetail])',
+    'verifierTab = TabItem("verification", "Verification", [verifierSection])',
     'proposalTab = TabItem("proposal", "Exact proposal", proposalContent)',
     'limitationsTab = TabItem("limitations", "Limitations", [limitationsDetail])',
     ...(receiptJson === undefined

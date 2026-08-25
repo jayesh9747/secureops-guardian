@@ -1,3 +1,5 @@
-import { runPhaseFiveMatrix } from './harness.js';
+import { phaseFiveRecordPassed, runPhaseFiveMatrix } from './harness.js';
 
-process.stdout.write(`${JSON.stringify(runPhaseFiveMatrix(), null, 2)}\n`);
+const records = runPhaseFiveMatrix();
+process.stdout.write(`${JSON.stringify(records, null, 2)}\n`);
+if (!records.every(phaseFiveRecordPassed)) process.exitCode = 1;

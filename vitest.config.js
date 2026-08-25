@@ -18,9 +18,6 @@ export default defineConfig({
       '@guardian/investigation': fileURLToPath(
         new URL('./packages/investigation/src/index.ts', import.meta.url),
       ),
-      '@guardian/reliability': fileURLToPath(
-        new URL('./packages/reliability/src/index.ts', import.meta.url),
-      ),
     },
   },
   test: {

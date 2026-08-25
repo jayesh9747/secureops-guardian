@@ -1,3 +1,7 @@
+import { createHash } from 'node:crypto';
+
+import { actionReceiptSchema } from '@guardian/github-write';
+import { canonicalJson } from '@guardian/policy-verifier';
 import { z } from 'zod';
 
 export const phaseFiveScenarioIdSchema = z.enum([
@@ -13,11 +17,16 @@ export const phaseFiveScenarioIdSchema = z.enum([
 
 export const phaseFiveTerminalStatusSchema = z.enum([
   'INCONCLUSIVE',
+  'SECURITY_REMEDIATION_READY',
+  'WRITE_REQUIRED',
   'NO_SAFE_REMEDIATION',
   'DENIED',
   'PR_REUSED',
   'WRITE_CONFLICT',
 ]);
+
+const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/u);
+const gitShaSchema = z.string().regex(/^[0-9a-f]{40}$/u);
 
 const verifierAttemptSchema = z
   .object({
@@ -60,7 +69,7 @@ export const checkpointValuesSchema = z
   .object({
     case_id: z.string().min(1),
     evidence_ids: z.array(z.string().min(1)).min(1),
-    proposal_hash_sha256: z.string().regex(/^[0-9a-f]{64}$/u),
+    proposal_hash_sha256: sha256Schema,
     pending_action: z.enum(['CREATE_BRANCH', 'UPDATE_FILE', 'CREATE_PR']),
   })
   .strict();
@@ -69,19 +78,17 @@ const persistenceProofSchema = z
   .object({
     before_reconnect: checkpointValuesSchema,
     after_reconnect: checkpointValuesSchema,
-    serialized_checkpoint_sha256: z.string().regex(/^[0-9a-f]{64}$/u),
-    same_case_id: z.literal(true),
-    same_evidence_ids: z.literal(true),
-    same_proposal_hash: z.literal(true),
-    same_pending_action: z.literal(true),
+    serialized_checkpoint_sha256: sha256Schema,
   })
   .strict()
   .superRefine((proof, context) => {
-    if (JSON.stringify(proof.before_reconnect) !== JSON.stringify(proof.after_reconnect)) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Reconnect values must be byte-semantically identical.',
-      });
+    const before = canonicalJson(proof.before_reconnect);
+    if (before !== canonicalJson(proof.after_reconnect)) {
+      context.addIssue({ code: 'custom', message: 'Reconnect checkpoint values changed.' });
+    }
+    const expectedHash = createHash('sha256').update(before).digest('hex');
+    if (proof.serialized_checkpoint_sha256 !== expectedHash) {
+      context.addIssue({ code: 'custom', message: 'Reconnect checkpoint hash is invalid.' });
     }
   });
 
@@ -89,8 +96,8 @@ const remoteResultSchema = z.discriminatedUnion('status', [
   z
     .object({
       status: z.literal('PR_REUSED'),
-      remote_commit_sha: z.string().regex(/^[0-9a-f]{40}$/u),
-      candidate_git_blob_sha: z.string().regex(/^[0-9a-f]{40}$/u),
+      remote_commit_sha: gitShaSchema,
+      candidate_git_blob_sha: gitShaSchema,
       pr_number: z.number().int().positive(),
       pr_url: z.url(),
     })
@@ -99,11 +106,64 @@ const remoteResultSchema = z.discriminatedUnion('status', [
     .object({
       status: z.literal('WRITE_CONFLICT'),
       reason: z.string().min(1),
-      observed_remote_commit_sha: z.string().regex(/^[0-9a-f]{40}$/u),
-      observed_git_blob_sha: z.string().regex(/^[0-9a-f]{40}$/u),
+      observed_remote_commit_sha: gitShaSchema,
+      observed_git_blob_sha: gitShaSchema,
     })
     .strict(),
 ]);
+
+export const mutationObservationSchema = z
+  .discriminatedUnion('status', [
+    z
+      .object({
+        status: z.literal('ABSENT'),
+        confirmed_absent: z.literal(true),
+        confirmation_basis: z.enum(['NO_MUTATION_CAPABILITY', 'PRE_POST_SNAPSHOT']),
+        before_state_sha256: sha256Schema.nullable(),
+        after_state_sha256: sha256Schema.nullable(),
+        observed_mutation_events: z.array(z.string()).max(0),
+        verification: z.string().min(1),
+      })
+      .strict(),
+    z
+      .object({
+        status: z.literal('OBSERVED'),
+        confirmed_absent: z.literal(false),
+        before_state_sha256: sha256Schema.nullable(),
+        after_state_sha256: sha256Schema.nullable(),
+        observed_mutation_events: z.array(z.string().min(1)).min(1),
+        verification: z.string().min(1),
+      })
+      .strict(),
+  ])
+  .superRefine((observation, context) => {
+    const hashNullnessMatches =
+      (observation.before_state_sha256 === null) === (observation.after_state_sha256 === null);
+    if (!hashNullnessMatches) {
+      context.addIssue({ code: 'custom', message: 'Mutation observation requires paired hashes.' });
+      return;
+    }
+    if (observation.status !== 'ABSENT') return;
+    if (
+      observation.confirmation_basis === 'NO_MUTATION_CAPABILITY' &&
+      observation.before_state_sha256 !== null
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'No-capability proof cannot claim pre/post state observations.',
+      });
+    }
+    if (
+      observation.confirmation_basis === 'PRE_POST_SNAPSHOT' &&
+      (observation.before_state_sha256 === null ||
+        observation.before_state_sha256 !== observation.after_state_sha256)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Absent pre/post observation requires equal before/after state hashes.',
+      });
+    }
+  });
 
 export const phaseFiveRunRecordSchema = z
   .object({
@@ -114,111 +174,147 @@ export const phaseFiveRunRecordSchema = z
     trueforge_agent_id: z.null(),
     trueforge_session_id: z.null(),
     evidence_ids: z.array(z.string().min(1)).min(1),
+    evidence_defects: z.array(z.string().min(1)),
     tool_event_references: z.array(z.string().min(1)).min(1),
     approval_event_references: z.array(z.string().min(1)),
     verifier_output: verifierOutputSchema.nullable(),
-    proposal_hash_sha256: z
-      .string()
-      .regex(/^[0-9a-f]{64}$/u)
-      .nullable(),
+    proposal_hash_sha256: sha256Schema.nullable(),
     expected_terminal_status: phaseFiveTerminalStatusSchema,
     actual_terminal_status: phaseFiveTerminalStatusSchema,
     sandbox_started: z.boolean(),
     write_approval_requested: z.boolean(),
     persistence: persistenceProofSchema.nullable(),
     remote_result: remoteResultSchema.nullable(),
-    unsupported_github_mutation: z
-      .object({
-        confirmed_absent: z.literal(true),
-        before_state_sha256: z
-          .string()
-          .regex(/^[0-9a-f]{64}$/u)
-          .nullable(),
-        after_state_sha256: z
-          .string()
-          .regex(/^[0-9a-f]{64}$/u)
-          .nullable(),
-        observed_mutation_events: z.array(z.string()).max(0),
-        verification: z.string().min(1),
-      })
-      .strict(),
+    action_receipt: actionReceiptSchema.nullable(),
+    unsupported_github_mutation: mutationObservationSchema,
   })
   .strict()
   .superRefine((record, context) => {
-    if (record.actual_terminal_status !== record.expected_terminal_status) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Actual terminal status must equal the expected terminal status.',
-      });
-    }
-    if (record.actual_terminal_status === 'INCONCLUSIVE') {
+    const status = record.actual_terminal_status;
+    const receipt = record.action_receipt;
+    const receiptReferencesAreRecorded = (references: string[]) =>
+      references.every((reference) => record.tool_event_references.includes(reference));
+
+    if (status === 'INCONCLUSIVE') {
       if (
         record.sandbox_started ||
         record.write_approval_requested ||
         record.verifier_output !== null ||
-        record.proposal_hash_sha256 !== null
+        record.proposal_hash_sha256 !== null ||
+        record.evidence_defects.length === 0 ||
+        receipt !== null
       ) {
         context.addIssue({
           code: 'custom',
-          message: 'INCONCLUSIVE must stop before verifier, proposal, sandbox, and approval.',
+          message:
+            'INCONCLUSIVE must record defects and stop before verifier, proposal, sandbox, receipt, and approval.',
         });
       }
+    } else if (record.evidence_defects.length > 0) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Conclusive records cannot contain evidence defects.',
+      });
     }
-    if (record.actual_terminal_status === 'NO_SAFE_REMEDIATION') {
+
+    if (status === 'NO_SAFE_REMEDIATION') {
+      const attempts = record.verifier_output?.attempts;
       if (
         !record.sandbox_started ||
         record.write_approval_requested ||
         record.proposal_hash_sha256 !== null ||
-        record.verifier_output?.attempts.length !== 2
+        receipt !== null ||
+        attempts?.length !== 2 ||
+        attempts[0]?.outcome !== 'CORRECTION_REQUIRED' ||
+        attempts[1]?.outcome !== 'NO_SAFE_REMEDIATION'
       ) {
         context.addIssue({
           code: 'custom',
-          message: 'NO_SAFE_REMEDIATION requires exactly two attempts and no proposal or approval.',
+          message:
+            'NO_SAFE_REMEDIATION requires the bounded two-attempt terminal workflow and no proposal, receipt, or approval.',
         });
       }
     }
-    if (record.actual_terminal_status === 'PR_REUSED') {
-      if (
-        record.write_approval_requested ||
-        record.approval_event_references.length > 0 ||
-        record.remote_result?.status !== 'PR_REUSED'
-      ) {
-        context.addIssue({
-          code: 'custom',
-          message: 'PR_REUSED cannot contain a write approval event.',
-        });
-      }
-    }
+
     if (
-      record.actual_terminal_status === 'WRITE_CONFLICT' &&
-      record.remote_result?.status !== 'WRITE_CONFLICT'
+      (status === 'SECURITY_REMEDIATION_READY' || status === 'WRITE_REQUIRED') &&
+      (receipt !== null ||
+        record.write_approval_requested ||
+        record.approval_event_references.length > 0)
     ) {
       context.addIssue({
         code: 'custom',
-        message: 'WRITE_CONFLICT requires remote conflict proof.',
+        message: `${status} observation cannot claim a completed receipt or approval event.`,
       });
     }
-    if (
-      record.actual_terminal_status !== 'PR_REUSED' &&
-      record.actual_terminal_status !== 'WRITE_CONFLICT' &&
-      record.remote_result !== null
-    ) {
+
+    if (status === 'PR_REUSED') {
+      const remote = record.remote_result?.status === 'PR_REUSED' ? record.remote_result : null;
+      if (
+        record.write_approval_requested ||
+        record.approval_event_references.length > 0 ||
+        receipt?.status !== 'PR_REUSED' ||
+        remote === null ||
+        receipt.proposal_hash_sha256 !== record.proposal_hash_sha256 ||
+        receipt.remote_commit_sha !== remote.remote_commit_sha ||
+        receipt.pr_number !== remote.pr_number ||
+        receipt.pr_url !== remote.pr_url ||
+        !receiptReferencesAreRecorded(receipt.github_result_references)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          message:
+            'PR_REUSED record must agree with its read-only action receipt and contain no approval.',
+        });
+      }
+    }
+
+    if (status === 'WRITE_CONFLICT') {
+      const remote =
+        record.remote_result?.status === 'WRITE_CONFLICT' ? record.remote_result : null;
+      if (
+        record.write_approval_requested ||
+        record.approval_event_references.length > 0 ||
+        receipt?.status !== 'WRITE_CONFLICT' ||
+        remote === null ||
+        receipt.proposal_hash_sha256 !== record.proposal_hash_sha256 ||
+        receipt.write_conflict_reason !== remote.reason ||
+        !receiptReferencesAreRecorded(receipt.github_result_references)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          message:
+            'WRITE_CONFLICT record must agree with its action receipt and contain no approval.',
+        });
+      }
+    }
+
+    if (status === 'DENIED') {
+      if (
+        !record.sandbox_started ||
+        !record.write_approval_requested ||
+        record.approval_event_references.length !== 1 ||
+        record.proposal_hash_sha256 === null ||
+        receipt?.status !== 'DENIED' ||
+        receipt.proposal_hash_sha256 !== record.proposal_hash_sha256 ||
+        !receiptReferencesAreRecorded(receipt.denied_tool_call_references) ||
+        !receiptReferencesAreRecorded(receipt.github_result_references)
+      ) {
+        context.addIssue({
+          code: 'custom',
+          message:
+            'DENIED requires exactly one denied approval event and an agreeing denied action receipt.',
+        });
+      }
+    }
+
+    if (status !== 'PR_REUSED' && status !== 'WRITE_CONFLICT' && record.remote_result !== null) {
       context.addIssue({
         code: 'custom',
         message: 'Terminal state cannot carry this remote result.',
       });
     }
-    const mutation = record.unsupported_github_mutation;
-    if (
-      (mutation.before_state_sha256 === null) !== (mutation.after_state_sha256 === null) ||
-      (mutation.before_state_sha256 !== null &&
-        mutation.before_state_sha256 !== mutation.after_state_sha256)
-    ) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Confirmed mutation absence requires equal before/after state hashes.',
-      });
-    }
+
     if (record.scenario_id === 'reconnect-pending-action' && record.persistence === null) {
       context.addIssue({
         code: 'custom',
@@ -233,6 +329,7 @@ export const phaseFiveRunRecordSchema = z
     }
   });
 
+export type MutationObservation = z.infer<typeof mutationObservationSchema>;
 export type PhaseFiveRunRecord = z.infer<typeof phaseFiveRunRecordSchema>;
 export type PhaseFiveScenarioId = z.infer<typeof phaseFiveScenarioIdSchema>;
 export type PhaseFiveTerminalStatus = z.infer<typeof phaseFiveTerminalStatusSchema>;

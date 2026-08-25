@@ -15,8 +15,8 @@ import { synthesizeSecurityFinding } from '@guardian/investigation';
 import {
   buildEligibleProposal,
   canonicalJson,
-  evaluateCandidateAttempt,
   parsePolicyContract,
+  runBoundedCandidateWorkflow,
   verifyFourStates,
   type CandidateAttemptOutcome,
   type FourStateProof,
@@ -41,6 +41,7 @@ import {
   type PhaseFiveRunRecord,
   type PhaseFiveScenarioId,
   type PhaseFiveTerminalStatus,
+  type MutationObservation,
 } from './records.js';
 
 const BASE_COMMIT_SHA = '7b2f2ad51f9ef97334176fbfed3138465b62fcdb';
@@ -67,6 +68,18 @@ const expectedStatus: Record<PhaseFiveScenarioId, PhaseFiveTerminalStatus> = {
   'candidate-failure-two-attempts': 'NO_SAFE_REMEDIATION',
   'mismatched-remote-branch-content': 'WRITE_CONFLICT',
   'reconnect-pending-action': 'DENIED',
+};
+
+const expectedEvidenceDefects: Partial<Record<PhaseFiveScenarioId, readonly string[]>> = {
+  'missing-deployment-evidence': [
+    'Missing deployment revision in evidence:deployment:checkout-api:001:missing-deployment-revision.',
+  ],
+  'missing-reachability-evidence': [
+    'Missing post-deployment forbidden reachability observation from checkout-api.',
+  ],
+  'conflicting-deployment-revision': [
+    'Conflicting deployment revisions in evidence:deployment:checkout-api:001:conflicting-revision: ledger 7b2f2ad51f9ef97334176fbfed3138465b62fcdb, annotation a6d177b43396c7b4b45aa98cb2970d0489a7a4f9.',
+  ],
 };
 
 function caseIdForScenario(
@@ -147,33 +160,59 @@ function stateSha256(snapshot: RemoteSnapshot): string {
   return createHash('sha256').update(canonicalJson(snapshot)).digest('hex');
 }
 
-function observedNoMutationProof(input: {
+class DeterministicRemoteState {
+  readonly #snapshot: RemoteSnapshot;
+  readonly #mutationEvents: string[] = [];
+
+  constructor(snapshot: RemoteSnapshot) {
+    this.#snapshot = structuredClone(snapshot);
+  }
+
+  readSnapshot(): RemoteSnapshot {
+    return structuredClone(this.#snapshot);
+  }
+
+  readMutationEvents(): string[] {
+    return [...this.#mutationEvents];
+  }
+}
+
+export function observeMutation(input: {
   before: RemoteSnapshot | null;
   after: RemoteSnapshot | null;
   mutationEvents: string[];
   detail: string;
-}) {
+}): MutationObservation {
   const beforeStateSha256 = input.before === null ? null : stateSha256(input.before);
   const afterStateSha256 = input.after === null ? null : stateSha256(input.after);
-  if (
-    input.mutationEvents.length > 0 ||
-    beforeStateSha256 !== afterStateSha256 ||
-    (input.before === null) !== (input.after === null)
-  ) {
-    throw new Error('Observed deterministic remote mutation.');
+  if (input.mutationEvents.length > 0 || beforeStateSha256 !== afterStateSha256) {
+    return {
+      status: 'OBSERVED',
+      confirmed_absent: false,
+      before_state_sha256: beforeStateSha256,
+      after_state_sha256: afterStateSha256,
+      observed_mutation_events: [...input.mutationEvents],
+      verification: input.detail,
+    };
   }
   return {
+    status: 'ABSENT',
     confirmed_absent: true as const,
+    confirmation_basis:
+      input.before === null && input.after === null
+        ? ('NO_MUTATION_CAPABILITY' as const)
+        : ('PRE_POST_SNAPSHOT' as const),
     before_state_sha256: beforeStateSha256,
     after_state_sha256: afterStateSha256,
     observed_mutation_events: [],
-    verification: `Pure deterministic harness has no network or GitHub client; ${input.detail}`,
+    verification: input.detail,
   };
 }
 
 type RecordFields = Pick<
   PhaseFiveRunRecord,
   | 'evidence_ids'
+  | 'evidence_defects'
   | 'tool_event_references'
   | 'approval_event_references'
   | 'verifier_output'
@@ -182,15 +221,16 @@ type RecordFields = Pick<
   | 'write_approval_requested'
   | 'persistence'
   | 'remote_result'
+  | 'action_receipt'
   | 'unsupported_github_mutation'
 >;
 
 function buildRecord(
   scenarioId: PhaseFiveScenarioId,
   caseId: ReturnType<typeof caseIdForScenario>,
+  actualStatus: PhaseFiveTerminalStatus,
   fields: RecordFields,
 ): PhaseFiveRunRecord {
-  const terminalStatus = expectedStatus[scenarioId];
   return phaseFiveRunRecordSchema.parse({
     schema_version: 1,
     scenario_id: scenarioId,
@@ -199,8 +239,8 @@ function buildRecord(
     trueforge_agent_id: null,
     trueforge_session_id: null,
     ...fields,
-    expected_terminal_status: terminalStatus,
-    actual_terminal_status: terminalStatus,
+    expected_terminal_status: expectedStatus[scenarioId],
+    actual_terminal_status: actualStatus,
   });
 }
 
@@ -209,11 +249,11 @@ export function assertApprovalMatchesCheckpoint(
   approval: { proposal_hash_sha256: string; pending_action: string },
 ) {
   const checkpoint = checkpointValuesSchema.parse(untrustedCheckpoint);
-  if (
-    approval.proposal_hash_sha256 !== checkpoint.proposal_hash_sha256 ||
-    approval.pending_action !== checkpoint.pending_action
-  ) {
-    throw new Error('Reconnect approval does not match the persisted proposal and pending action.');
+  if (approval.proposal_hash_sha256 !== checkpoint.proposal_hash_sha256) {
+    throw new Error('Reconnect approval proposal hash does not match the persisted proposal.');
+  }
+  if (approval.pending_action !== checkpoint.pending_action) {
+    throw new Error('Reconnect approval pending action does not match the persisted action.');
   }
   return checkpoint;
 }
@@ -222,10 +262,12 @@ function inconclusiveRecord(input: {
   scenarioId: PhaseFiveScenarioId;
   caseId: ReturnType<typeof caseIdForScenario>;
   evidenceIds: string[];
+  evidenceDefects: string[];
   toolReferences: string[];
 }): PhaseFiveRunRecord {
-  return buildRecord(input.scenarioId, input.caseId, {
+  return buildRecord(input.scenarioId, input.caseId, 'INCONCLUSIVE', {
     evidence_ids: input.evidenceIds,
+    evidence_defects: input.evidenceDefects,
     tool_event_references: input.toolReferences,
     approval_event_references: [],
     verifier_output: null,
@@ -234,16 +276,21 @@ function inconclusiveRecord(input: {
     write_approval_requested: false,
     persistence: null,
     remote_result: null,
-    unsupported_github_mutation: observedNoMutationProof({
+    action_receipt: null,
+    unsupported_github_mutation: observeMutation({
       before: null,
       after: null,
       mutationEvents: [],
-      detail: 'the evidence gate returned before candidate or write construction.',
+      detail:
+        'The evidence gate returned before constructing any mutation-capable operation or client.',
     }),
   });
 }
 
-export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFiveRunRecord {
+export function runPhaseFiveScenario(
+  scenarioId: PhaseFiveScenarioId,
+  options: { remoteSnapshot?: RemoteSnapshot } = {},
+): PhaseFiveRunRecord {
   const caseId = caseIdForScenario(scenarioId);
   const change = buildDeterministicChangeResult();
   const exposure = buildDeterministicExposureResult(caseId);
@@ -255,24 +302,24 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
   });
 
   if (finding.outcome === 'INCONCLUSIVE') {
-    if (expectedStatus[scenarioId] !== 'INCONCLUSIVE') {
-      throw new Error(`Unexpected INCONCLUSIVE result for ${scenarioId}.`);
-    }
-    return inconclusiveRecord({ scenarioId, caseId, evidenceIds, toolReferences });
+    return inconclusiveRecord({
+      scenarioId,
+      caseId,
+      evidenceIds,
+      evidenceDefects: [...finding.evidence_defects],
+      toolReferences,
+    });
   }
 
   const contract = parsePolicyContract(POLICY_CONTRACT_JSON);
   if (scenarioId === 'candidate-failure-two-attempts') {
-    const firstAttempt = evaluateCandidateAttempt(DENY_ALL_NETWORK_POLICY_YAML, contract, 1);
-    const secondAttempt = evaluateCandidateAttempt(DENY_ALL_NETWORK_POLICY_YAML, contract, 2);
-    if (
-      firstAttempt.outcome !== 'CORRECTION_REQUIRED' ||
-      secondAttempt.outcome !== 'NO_SAFE_REMEDIATION'
-    ) {
-      throw new Error('Bounded candidate workflow did not terminate after two failed attempts.');
-    }
-    return buildRecord(scenarioId, caseId, {
+    const workflow = runBoundedCandidateWorkflow(
+      [DENY_ALL_NETWORK_POLICY_YAML, DENY_ALL_NETWORK_POLICY_YAML],
+      contract,
+    );
+    return buildRecord(scenarioId, caseId, workflow.outcome, {
       evidence_ids: evidenceIds,
+      evidence_defects: [],
       tool_event_references: [
         ...toolReferences,
         'deterministic:verifier:attempt-1',
@@ -280,7 +327,7 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
       ],
       approval_event_references: [],
       verifier_output: {
-        attempts: [attemptRecord(firstAttempt), attemptRecord(secondAttempt)],
+        attempts: workflow.attempts.map(attemptRecord),
         four_state: null,
       },
       proposal_hash_sha256: null,
@@ -288,19 +335,23 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
       write_approval_requested: false,
       persistence: null,
       remote_result: null,
-      unsupported_github_mutation: observedNoMutationProof({
+      action_receipt: null,
+      unsupported_github_mutation: observeMutation({
         before: null,
         after: null,
         mutationEvents: [],
-        detail: 'two failed verifier attempts produced no eligible proposal or write request.',
+        detail:
+          'The bounded verifier terminated without constructing any mutation-capable operation or client.',
       }),
     });
   }
 
-  const candidateAttempt = evaluateCandidateAttempt(VERIFIED_CANDIDATE_YAML, contract, 1);
-  if (candidateAttempt.outcome !== 'SECURITY_REMEDIATION_READY') {
-    throw new Error('Pinned Phase 3 candidate unexpectedly failed verification.');
-  }
+  const candidateWorkflow = runBoundedCandidateWorkflow(
+    [VERIFIED_CANDIDATE_YAML, VERIFIED_CANDIDATE_YAML],
+    contract,
+  );
+  const candidateAttempt = candidateWorkflow.attempts[0];
+  if (candidateAttempt === undefined) throw new Error('Candidate workflow emitted no attempt.');
   const proof = verifyFourStates(
     {
       lastGoodYaml: VERIFIED_CANDIDATE_YAML,
@@ -331,146 +382,146 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
     'deterministic:verifier:four-state',
   ];
 
-  if (scenarioId === 'existing-pr-reuse') {
-    const remoteSnapshot: RemoteSnapshot = {
-      ...baseSnapshot(),
-      branch: {
-        commitSha: CANDIDATE_COMMIT_SHA,
-        targetFileGitBlobSha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
-        commitMessage: binding.commitMessage,
-      },
-      pullRequest: {
-        number: 1,
-        url: FIXTURE_PR_URL,
-        title: binding.pullRequestTitle,
-        base: PHASE_FOUR_TARGET.baseBranch,
-        head: PHASE_FOUR_TARGET.remediationBranch,
-        body: binding.pullRequestBody,
-      },
-    };
-    const decision = evaluateRemoteSnapshot(binding, remoteSnapshot);
-    if (decision.status !== 'PR_REUSED') throw new Error('Expected exact PR reuse decision.');
-    const afterSnapshot = structuredClone(remoteSnapshot);
-    buildActionReceipt(binding, {
-      status: 'PR_REUSED',
-      githubResultReferences: ['deterministic:github:exact-open-base-head-pr-1'],
-      remoteCandidateVerified: true,
-      baseBranchUnchanged: true,
-      remoteCommitSha: decision.remoteCommitSha,
-      prNumber: decision.prNumber,
-      prUrl: decision.prUrl,
-    });
-    return buildRecord(scenarioId, caseId, {
-      evidence_ids: [...proposal.supporting_evidence_ids],
-      tool_event_references: [
-        ...verifierTools,
-        'deterministic:github:list_branches',
-        'deterministic:github:list_pull_requests:open:main:guardian/fix-checkout-egress',
-        'deterministic:github:get_file_contents:main',
-        'deterministic:github:get_commit:main',
-        'deterministic:github:get_file_contents:remediation',
-        'deterministic:github:get_commit:remediation',
-      ],
+  if (scenarioId === 'existing-pr-reuse' || scenarioId === 'mismatched-remote-branch-content') {
+    const defaultSnapshot: RemoteSnapshot =
+      scenarioId === 'existing-pr-reuse'
+        ? {
+            ...baseSnapshot(),
+            branch: {
+              commitSha: CANDIDATE_COMMIT_SHA,
+              targetFileGitBlobSha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
+              commitMessage: binding.commitMessage,
+            },
+            pullRequest: {
+              number: 1,
+              url: FIXTURE_PR_URL,
+              title: binding.pullRequestTitle,
+              base: PHASE_FOUR_TARGET.baseBranch,
+              head: PHASE_FOUR_TARGET.remediationBranch,
+              body: binding.pullRequestBody,
+            },
+          }
+        : {
+            ...baseSnapshot(),
+            branch: {
+              commitSha: 'd'.repeat(40),
+              targetFileGitBlobSha: 'f'.repeat(40),
+              commitMessage: 'unrelated remote work',
+            },
+          };
+    const remoteState = new DeterministicRemoteState(options.remoteSnapshot ?? defaultSnapshot);
+    const beforeSnapshot = remoteState.readSnapshot();
+    const decision = evaluateRemoteSnapshot(binding, beforeSnapshot);
+    const githubResultReferences = [
+      'deterministic:github:list_branches',
+      'deterministic:github:list_pull_requests:open:main:guardian/fix-checkout-egress',
+      'deterministic:github:get_file_contents:main',
+      'deterministic:github:get_commit:main',
+      ...(beforeSnapshot.branch === null
+        ? []
+        : [
+            'deterministic:github:get_file_contents:remediation',
+            'deterministic:github:get_commit:remediation',
+          ]),
+    ];
+    const afterSnapshot = remoteState.readSnapshot();
+    const commonFields = {
+      evidence_ids: evidenceIds,
+      evidence_defects: [],
+      tool_event_references: [...verifierTools, ...githubResultReferences],
       approval_event_references: [],
       verifier_output: verifierOutput,
       proposal_hash_sha256: proposal.proposal_hash_sha256,
       sandbox_started: true,
       write_approval_requested: false,
       persistence: null,
-      remote_result: {
-        status: 'PR_REUSED',
-        remote_commit_sha: decision.remoteCommitSha,
-        candidate_git_blob_sha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
-        pr_number: decision.prNumber,
-        pr_url: decision.prUrl,
-      },
-      unsupported_github_mutation: observedNoMutationProof({
-        before: remoteSnapshot,
+      unsupported_github_mutation: observeMutation({
+        before: beforeSnapshot,
         after: afterSnapshot,
-        mutationEvents: [],
-        detail:
-          'exact existing branch and PR returned PR_REUSED without constructing a write call.',
+        mutationEvents: remoteState.readMutationEvents(),
+        detail: `Independent reads of the deterministic remote-state probe surround the ${decision.status} decision; the probe recorded no mutation event and performed no overwrite.`,
       }),
-    });
-  }
-
-  if (scenarioId === 'mismatched-remote-branch-content') {
-    const remoteSnapshot: RemoteSnapshot = {
-      ...baseSnapshot(),
-      branch: {
-        commitSha: 'd'.repeat(40),
-        targetFileGitBlobSha: 'f'.repeat(40),
-        commitMessage: 'unrelated remote work',
-      },
     };
-    const decision = evaluateRemoteSnapshot(binding, remoteSnapshot);
-    if (decision.status !== 'WRITE_CONFLICT') throw new Error('Expected WRITE_CONFLICT.');
-    const afterSnapshot = structuredClone(remoteSnapshot);
-    buildActionReceipt(binding, {
-      status: 'WRITE_CONFLICT',
+    if (decision.status === 'WRITE_REQUIRED') {
+      return buildRecord(scenarioId, caseId, decision.status, {
+        ...commonFields,
+        remote_result: null,
+        action_receipt: null,
+      });
+    }
+    if (decision.status === 'PR_REUSED') {
+      const branch = beforeSnapshot.branch;
+      if (branch === null) throw new Error('PR_REUSED observation is missing its branch.');
+      const receipt = buildActionReceipt(binding, {
+        status: decision.status,
+        githubResultReferences,
+        remoteCandidateVerified: true,
+        baseBranchUnchanged: true,
+        remoteCommitSha: decision.remoteCommitSha,
+        prNumber: decision.prNumber,
+        prUrl: decision.prUrl,
+      });
+      return buildRecord(scenarioId, caseId, decision.status, {
+        ...commonFields,
+        remote_result: {
+          status: decision.status,
+          remote_commit_sha: decision.remoteCommitSha,
+          candidate_git_blob_sha: branch.targetFileGitBlobSha,
+          pr_number: decision.prNumber,
+          pr_url: decision.prUrl,
+        },
+        action_receipt: receipt,
+      });
+    }
+    const branch = beforeSnapshot.branch;
+    if (branch === null) throw new Error('WRITE_CONFLICT observation is missing its branch.');
+    const receipt = buildActionReceipt(binding, {
+      status: decision.status,
       reason: decision.reason,
-      githubResultReferences: ['deterministic:github:mismatched-branch-read'],
+      githubResultReferences,
       remoteCandidateVerified: false,
       baseBranchUnchanged: true,
     });
-    return buildRecord(scenarioId, caseId, {
-      evidence_ids: [...proposal.supporting_evidence_ids],
-      tool_event_references: [
-        ...verifierTools,
-        'deterministic:github:list_branches',
-        'deterministic:github:get_file_contents:mismatched-remediation',
-        'deterministic:github:get_commit:mismatched-remediation',
-      ],
-      approval_event_references: [],
-      verifier_output: verifierOutput,
-      proposal_hash_sha256: proposal.proposal_hash_sha256,
-      sandbox_started: true,
-      write_approval_requested: false,
-      persistence: null,
+    return buildRecord(scenarioId, caseId, decision.status, {
+      ...commonFields,
       remote_result: {
-        status: 'WRITE_CONFLICT',
+        status: decision.status,
         reason: decision.reason,
-        observed_remote_commit_sha: 'd'.repeat(40),
-        observed_git_blob_sha: 'f'.repeat(40),
+        observed_remote_commit_sha: branch.commitSha,
+        observed_git_blob_sha: branch.targetFileGitBlobSha,
       },
-      unsupported_github_mutation: observedNoMutationProof({
-        before: remoteSnapshot,
-        after: afterSnapshot,
-        mutationEvents: [],
-        detail:
-          'mismatched deterministic-branch content returned WRITE_CONFLICT without overwrite.',
-      }),
+      action_receipt: receipt,
     });
   }
 
   if (scenarioId !== 'denied-first-write' && scenarioId !== 'reconnect-pending-action') {
     throw new Error(`No conclusive scenario handler exists for ${scenarioId}.`);
   }
-  const initialSnapshot = baseSnapshot();
+  const remoteState = new DeterministicRemoteState(baseSnapshot());
+  const initialSnapshot = remoteState.readSnapshot();
   const decision = evaluateRemoteSnapshot(binding, initialSnapshot);
   if (decision.status !== 'WRITE_REQUIRED' || decision.step !== 'CREATE_BRANCH') {
     throw new Error('Expected the first deterministic write to be CREATE_BRANCH.');
   }
-  const afterSnapshot = structuredClone(initialSnapshot);
   const deniedCallReference = `deterministic:github:create_branch:${scenarioId}:denied`;
-  buildActionReceipt(binding, {
+  const preDenialReference = `deterministic:github:${scenarioId}:pre-denial-read`;
+  const postDenialReference = `deterministic:github:${scenarioId}:post-denial-read`;
+  const receipt = buildActionReceipt(binding, {
     status: 'DENIED',
     deniedToolCallReferences: [deniedCallReference],
-    githubResultReferences: [
-      `deterministic:github:${scenarioId}:pre-denial-read`,
-      `deterministic:github:${scenarioId}:post-denial-read`,
-    ],
+    githubResultReferences: [preDenialReference, postDenialReference],
     remoteCandidateVerified: false,
     baseBranchUnchanged: true,
     deterministicBranchAbsent: true,
     matchingPullRequestAbsent: true,
   });
+  if (receipt.status !== 'DENIED') throw new Error('Receipt status changed during parsing.');
 
   let persistence = null;
   if (scenarioId === 'reconnect-pending-action') {
     const beforeReconnect = checkpointValuesSchema.parse({
       case_id: caseId,
-      evidence_ids: proposal.supporting_evidence_ids,
+      evidence_ids: evidenceIds,
       proposal_hash_sha256: proposal.proposal_hash_sha256,
       pending_action: decision.step,
     });
@@ -484,26 +535,22 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
       before_reconnect: beforeReconnect,
       after_reconnect: afterReconnect,
       serialized_checkpoint_sha256: createHash('sha256').update(serialized).digest('hex'),
-      same_case_id: true as const,
-      same_evidence_ids: true as const,
-      same_proposal_hash: true as const,
-      same_pending_action: true as const,
     };
-    if (canonicalJson(beforeReconnect) !== canonicalJson(afterReconnect)) {
-      throw new Error('Reconnect changed the persisted checkpoint.');
-    }
   }
 
-  return buildRecord(scenarioId, caseId, {
-    evidence_ids: [...proposal.supporting_evidence_ids],
+  const afterSnapshot = remoteState.readSnapshot();
+  return buildRecord(scenarioId, caseId, receipt.status, {
+    evidence_ids: evidenceIds,
+    evidence_defects: [],
     tool_event_references: [
       ...verifierTools,
       'deterministic:github:list_branches',
       'deterministic:github:list_pull_requests:open:main:guardian/fix-checkout-egress',
       'deterministic:github:get_file_contents:main',
       'deterministic:github:get_commit:main',
+      preDenialReference,
       deniedCallReference,
-      `deterministic:github:${scenarioId}:post-denial-read`,
+      postDenialReference,
     ],
     approval_event_references: [`deterministic:approval:${scenarioId}:create_branch:denied`],
     verifier_output: verifierOutput,
@@ -512,19 +559,26 @@ export function runPhaseFiveScenario(scenarioId: PhaseFiveScenarioId): PhaseFive
     write_approval_requested: true,
     persistence,
     remote_result: null,
-    unsupported_github_mutation: observedNoMutationProof({
+    action_receipt: receipt,
+    unsupported_github_mutation: observeMutation({
       before: initialSnapshot,
       after: afterSnapshot,
-      mutationEvents: [],
-      detail: 'the denied first-write request left the pre/post remote snapshots byte-identical.',
+      mutationEvents: remoteState.readMutationEvents(),
+      detail:
+        'Independent reads of the deterministic remote-state probe surround the denied call; the probe recorded no mutation event.',
     }),
   });
 }
 
 export function runPhaseFiveMatrix(): PhaseFiveRunRecord[] {
-  const records = scenarioOrder.map((scenarioId) => runPhaseFiveScenario(scenarioId));
-  if (new Set(records.map((record) => record.scenario_id)).size !== scenarioOrder.length) {
-    throw new Error('Phase 5 matrix must contain every scenario exactly once.');
-  }
-  return records;
+  return scenarioOrder.map((scenarioId) => runPhaseFiveScenario(scenarioId));
+}
+
+export function phaseFiveRecordPassed(record: PhaseFiveRunRecord): boolean {
+  const expectedDefects = expectedEvidenceDefects[record.scenario_id] ?? [];
+  return (
+    record.actual_terminal_status === record.expected_terminal_status &&
+    record.unsupported_github_mutation.status === 'ABSENT' &&
+    canonicalJson(record.evidence_defects) === canonicalJson(expectedDefects)
+  );
 }

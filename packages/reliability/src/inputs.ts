@@ -1,5 +1,4 @@
 import { getFixture } from '@guardian/fixture-mcp/fixtures';
-import { VERIFIED_CANDIDATE_YAML } from '@guardian/github-write';
 import {
   GITHUB_EVIDENCE_IDS,
   GITHUB_SOURCE_REFS,
@@ -21,55 +20,35 @@ import {
   type IncidentFixture,
 } from '@guardian/shared';
 
-export const SUSPECT_NETWORK_POLICY_YAML = `${VERIFIED_CANDIDATE_YAML}    - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
-`;
+export const PHASE_THREE_FIXTURE_SHA256 = {
+  suspect: '7209dbcc30d389e671307cd92d6fd6b5133781d090181cd56116594e616613d7',
+  denyAll: 'ff123d62fa5f5b110ae4f6a2c27c88f180ef272a34fc9373ed4f87e41e66088a',
+  contract: 'a78eca23e3fb80f8922f227cc544811cd0c0fc8c23961efa8ee392cbed909a7b',
+} as const;
 
-export const DENY_ALL_NETWORK_POLICY_YAML = `apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: checkout-egress
-  namespace: payments
-spec:
-  podSelector:
-    matchLabels:
-      app: checkout-api
-  policyTypes:
-    - Egress
-  egress: []
-`;
+function readPinnedFixture(url: URL, expectedSha256: string): string {
+  const contents = readFileSync(url, 'utf8');
+  const actualSha256 = createHash('sha256').update(contents).digest('hex');
+  if (actualSha256 !== expectedSha256) {
+    throw new Error(`Phase 3 fixture hash mismatch: expected ${expectedSha256}.`);
+  }
+  return contents;
+}
 
-export const POLICY_CONTRACT_JSON = JSON.stringify({
-  schema_version: 1,
-  target: {
-    api_version: 'networking.k8s.io/v1',
-    kind: 'NetworkPolicy',
-    name: 'checkout-egress',
-    namespace: 'payments',
-    pod_selector: { app: 'checkout-api' },
-  },
-  required_paths: {
-    dns: {
-      namespace_selector: { 'kubernetes.io/metadata.name': 'kube-system' },
-      pod_selector: { 'k8s-app': 'kube-dns' },
-      ports: [
-        { protocol: 'UDP', port: 53 },
-        { protocol: 'TCP', port: 53 },
-      ],
-    },
-    postgresql: {
-      namespace_selector: { 'kubernetes.io/metadata.name': 'payments-data' },
-      pod_selector: { app: 'postgres' },
-      ports: [{ protocol: 'TCP', port: 5432 }],
-    },
-  },
-  forbidden: {
-    unrestricted_ipv4_cidr: '0.0.0.0/0',
-    destination_host: 'forbidden.example.test',
-    destination_ipv4: '203.0.113.10',
-  },
-});
+export const SUSPECT_NETWORK_POLICY_YAML = readPinnedFixture(
+  new URL('../../policy-verifier/fixtures/suspect.yaml', import.meta.url),
+  PHASE_THREE_FIXTURE_SHA256.suspect,
+);
+
+export const DENY_ALL_NETWORK_POLICY_YAML = readPinnedFixture(
+  new URL('../../policy-verifier/fixtures/deny-all.yaml', import.meta.url),
+  PHASE_THREE_FIXTURE_SHA256.denyAll,
+);
+
+export const POLICY_CONTRACT_JSON = readPinnedFixture(
+  new URL('../../policy-verifier/fixtures/expected-contract.json', import.meta.url),
+  PHASE_THREE_FIXTURE_SHA256.contract,
+);
 
 function githubRecord(options: {
   evidenceId: ChangeInvestigationResult['evidence_records'][number]['evidence_id'];
@@ -227,3 +206,5 @@ export function buildDeterministicExposureResult(
     limitations: ['Owned synthetic observations; no live cluster was accessed.'],
   };
 }
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';

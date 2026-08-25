@@ -196,8 +196,28 @@ function githubLinkMarkdown(presentation: GuardianPresentation): string {
 }
 
 export function renderGuardianOpenUi(untrustedPresentation: GuardianPresentation): string {
+  return renderGuardianOpenUiWithOptions(untrustedPresentation);
+}
+
+export interface GuardianResponseOptions {
+  runReceipt?: unknown;
+}
+
+function renderGuardianOpenUiWithOptions(
+  untrustedPresentation: GuardianPresentation,
+  options?: GuardianResponseOptions,
+): string {
   const presentation = guardianPresentationSchema.parse(untrustedPresentation);
   const status = statusPresentation[presentation.terminal_status];
+  const receiptJson =
+    options?.runReceipt === undefined ? undefined : JSON.stringify(options.runReceipt, null, 2);
+  if (options?.runReceipt !== undefined && receiptJson === undefined) {
+    throw new Error('Run receipt could not be serialized for presentation.');
+  }
+  const detailTabs =
+    receiptJson === undefined
+      ? '[proposalTab, limitationsTab]'
+      : '[proposalTab, limitationsTab, receiptTab]';
   const lines = [
     'root = Stack([guardianCard], "column", "m")',
     'guardianCard = Card([header, statusRow, terminalCallout, findingTable, evidenceDetail, verifierSection, detailsTabs, actionCallout, githubLink], "card", "column", "m")',
@@ -221,17 +241,26 @@ export function renderGuardianOpenUi(untrustedPresentation: GuardianPresentation
     `limitationsDetail = MarkDownRenderer(${openUiString(presentation.limitations.map((limitation) => `- ${limitation}`).join('\n'))}, "clear")`,
     'proposalTab = TabItem("proposal", "Exact proposal", proposalContent)',
     'limitationsTab = TabItem("limitations", "Limitations", [limitationsDetail])',
-    'detailsTabs = Tabs([proposalTab, limitationsTab])',
+    ...(receiptJson === undefined
+      ? []
+      : [
+          `receiptCode = CodeBlock("json", ${openUiString(receiptJson)})`,
+          'receiptTab = TabItem("receipt", "Run receipt", [receiptCode])',
+        ]),
+    `detailsTabs = Tabs(${detailTabs})`,
     `actionCallout = Callout("${status.calloutVariant}", ${openUiString(`Approval: ${presentation.action.approval_state}`)}, ${openUiString(presentation.action.approval_boundary)})`,
     `githubLink = MarkDownRenderer(${openUiString(githubLinkMarkdown(presentation))}, "clear")`,
   ];
   return lines.join('\n');
 }
 
-export function renderGuardianResponse(untrustedPresentation: GuardianPresentation): string {
+export function renderGuardianResponse(
+  untrustedPresentation: GuardianPresentation,
+  options?: GuardianResponseOptions,
+): string {
   const presentation = guardianPresentationSchema.parse(untrustedPresentation);
   return `\`\`\`openui
-${renderGuardianOpenUi(presentation)}
+${renderGuardianOpenUiWithOptions(presentation, options)}
 \`\`\``;
 }
 

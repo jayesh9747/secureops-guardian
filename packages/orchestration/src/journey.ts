@@ -423,7 +423,7 @@ ${proposal.canonical_diff}\`\`\``;
       daytona_proof: 'COMPLETED',
       proposal: 'CREATED',
       github_action: artifactDecision.status,
-      presentation: 'OPENUI_AND_MARKDOWN',
+      presentation: 'OPENUI_WITH_MARKDOWN_FALLBACK',
     },
     evidence_ids: record.evidence_ids,
     tool_event_references: record.tool_event_references,
@@ -439,7 +439,7 @@ ${proposal.canonical_diff}\`\`\``;
   return {
     receipt,
     presentation,
-    openui: renderGuardianResponse(presentation),
+    openui: renderGuardianResponse(presentation, { runReceipt: receipt }),
     markdown: renderGuardianMarkdown(presentation),
   };
 }

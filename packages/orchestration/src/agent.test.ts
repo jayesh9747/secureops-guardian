@@ -1,7 +1,14 @@
+import { readFile } from 'node:fs/promises';
+
+import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
 
 import { SECUREOPS_GUARDIAN_AGENT_SPEC } from './agent.js';
 import { GITHUB_WRITE_TOOLS } from './plan.js';
+
+const portableExportSchema = z.object({
+  manifest: z.object({ instructions: z.string() }),
+});
 
 describe('unified TrueForge manifest', () => {
   it('exports one secureops-guardian_v0 with every retained Phase 2-6 capability', () => {
@@ -55,6 +62,9 @@ describe('unified TrueForge manifest', () => {
       'create_branch, create_or_update_file, and create_pull_request',
       'not atomic',
       'historical presentation-layer scope',
+      'Do not print a Journey Trace & Execution Log',
+      'exactly one primary rendering',
+      'Run receipt',
       'Never merge, deploy, access a cluster',
     ]) {
       expect(instructions).toContain(requirement);
@@ -72,6 +82,21 @@ describe('unified TrueForge manifest', () => {
     );
     expect(instructions.indexOf('## Conversation-only requests')).toBeLessThan(
       instructions.indexOf('## Mandatory request contract'),
+    );
+  });
+
+  it('keeps the portable saved-agent instructions synchronized', async () => {
+    const exported = portableExportSchema.parse(
+      JSON.parse(
+        await readFile(
+          new URL('../../../exports/secureops-guardian.trueforge.json', import.meta.url),
+          'utf8',
+        ),
+      ),
+    );
+
+    expect(exported.manifest.instructions).toBe(
+      SECUREOPS_GUARDIAN_AGENT_SPEC.manifest.instructions,
     );
   });
 });

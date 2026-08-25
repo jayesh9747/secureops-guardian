@@ -63,7 +63,7 @@ export const guardianRunReceiptSchema = z
           'PR_REUSED',
           'WRITE_CONFLICT',
         ]),
-        presentation: z.enum(['OPENUI_AND_MARKDOWN', 'MARKDOWN']),
+        presentation: z.enum(['OPENUI_WITH_MARKDOWN_FALLBACK', 'OPENUI_AND_MARKDOWN', 'MARKDOWN']),
       })
       .strict(),
     evidence_ids: z.array(z.string().min(1)),

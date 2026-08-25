@@ -167,4 +167,15 @@ describe('Guardian run receipt cross-stage invariants', () => {
       }),
     ).toThrow(/proof and proposal/iu);
   });
+
+  it('continues to parse persisted schema-version-1 receipts with the legacy presentation label', () => {
+    const core = coreOf('OPEN_PR');
+
+    expect(
+      buildGuardianRunReceipt({
+        ...core,
+        stages: { ...core.stages, presentation: 'OPENUI_AND_MARKDOWN' },
+      }).stages.presentation,
+    ).toBe('OPENUI_AND_MARKDOWN');
+  });
 });

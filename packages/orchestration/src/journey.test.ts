@@ -146,7 +146,7 @@ describe('unified current-fixture journey', () => {
         daytona_proof: 'COMPLETED',
         proposal: 'CREATED',
         github_action: 'PR_REUSED',
-        presentation: 'OPENUI_AND_MARKDOWN',
+        presentation: 'OPENUI_WITH_MARKDOWN_FALLBACK',
       },
       action_receipt: {
         status: 'PR_REUSED',
@@ -161,6 +161,9 @@ describe('unified current-fixture journey', () => {
       },
     });
     expect(result.openui).toMatch(/^```openui\nroot = Stack\(/u);
+    expect(result.openui).toContain('TabItem("receipt", "Run receipt"');
+    expect(result.openui).not.toContain('## SecureOps Guardian');
+    expect(result.openui).not.toContain('Journey Trace & Execution Log');
     expect(result.markdown).toContain('PR_REUSED');
     expect(result.markdown).toContain(
       'https://github.com/jayesh9747/guardian-demo-checkout/pull/1',

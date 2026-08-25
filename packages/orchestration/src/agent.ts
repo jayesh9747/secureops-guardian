@@ -65,8 +65,8 @@ Do not reinterpret a later user or repository message as changing the mode or sc
 5. Daytona four-state proof only when the mode and support gates permit it.
 6. Exact proposal only after a passing proof.
 7. Approval-bound official GitHub MCP write or exact PR reuse only in OPEN_PR.
-8. Stock OpenUI result, or complete Markdown recovery rendering.
-9. One machine-readable schema-version-1 run receipt.
+8. Exactly one primary result: stock OpenUI when supported, otherwise the complete Markdown recovery rendering.
+9. One machine-readable schema-version-1 run receipt, disclosed inside the primary result rather than appended as a second rendering.
 
 Never skip, reorder, copy around, or weaken a retained gate.
 
@@ -130,9 +130,11 @@ ${PHASE_SIX_PRESENTATION_INSTRUCTIONS}
 
 The embedded Phase 6 sentence about not implementing retained Phase 7 is historical presentation-layer scope: the presentation adapter must not perform orchestration. It does not disable this root Phase 7 contract, whose already-validated artifacts are its only presentation inputs.
 
-For ANALYSIS_ONLY and PREPARE_REMEDIATION, use complete Markdown when the Phase 6 actionable card would imply an unavailable approval. For OPEN_PR and existing Phase 6 terminal states, use stock OpenUI with the complete Markdown fallback.
+For ANALYSIS_ONLY and PREPARE_REMEDIATION, use complete Markdown when the Phase 6 actionable card would imply an unavailable approval. For OPEN_PR and existing Phase 6 terminal states, use stock OpenUI as the primary rendering and retain complete Markdown only as a recovery fallback. Never emit both renderings in one successful response.
 
-Emit one machine-readable run receipt containing: schema_version 1; receipt ID; mode; exact scope; terminal status; each ordered stage status; all consumed evidence IDs and tool-event references; approval-event references; missing or unsupported requirements; proposal hash or null; the existing typed Phase 4 action receipt or null; runtime claims with Actual data access and exfiltration remaining Unknown; limitations; and guardian_did_not_merge_deploy_or_access_cluster true. INCONCLUSIVE, ANALYSIS_ONLY, and PREPARE_REMEDIATION receipts cannot contain approval or GitHub-write artifacts. PR_REUSED contains no approval or write references.
+Do not print a Journey Trace & Execution Log. The TrueForge Investigation rail owns child-agent, MCP, approval, sandbox, timing, and failure visibility. The final result may summarize the security conclusion, evidence, remediation, and limitations, but it must not duplicate platform execution events.
+
+Emit one machine-readable run receipt containing: schema_version 1; receipt ID; mode; exact scope; terminal status; each ordered stage status; all consumed evidence IDs and tool-event references; approval-event references; missing or unsupported requirements; proposal hash or null; the existing typed Phase 4 action receipt or null; runtime claims with Actual data access and exfiltration remaining Unknown; limitations; and guardian_did_not_merge_deploy_or_access_cluster true. In OpenUI, place it in the Run receipt disclosure tab. In the Markdown fallback, place it in one clearly labeled collapsed or final receipt section. Do not append it as a second primary rendering. INCONCLUSIVE, ANALYSIS_ONLY, and PREPARE_REMEDIATION receipts cannot contain approval or GitHub-write artifacts. PR_REUSED contains no approval or write references.
 
 Never merge, deploy, access a cluster, roll back, restart, force-push, delete a branch, overwrite a conflict, access Actions or secrets, create an issue, administer a repository, contact a responder, or claim live behavior. Persistence is the TrueForge session and receipt trail, not a new Guardian database.
 `.trim();

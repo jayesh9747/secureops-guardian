@@ -1,6 +1,6 @@
 import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
 
-import { runCurrentFixtureJourney } from './journey.js';
+import { buildCurrentFixtureJourneyContext, runCurrentFixtureJourney } from './journey.js';
 
 const scope = {
   schema_version: 1 as const,
@@ -10,9 +10,10 @@ const scope = {
   target_file: TARGET_NETWORK_POLICY_FILE,
 };
 
-const receipts = ['ANALYSIS_ONLY', 'PREPARE_REMEDIATION', 'OPEN_PR'].map((mode) =>
-  runCurrentFixtureJourney({ mode, scope }),
-);
+const receipts = ['ANALYSIS_ONLY', 'PREPARE_REMEDIATION', 'OPEN_PR'].map((mode) => {
+  const input = { mode, scope };
+  return runCurrentFixtureJourney(input, buildCurrentFixtureJourneyContext(input));
+});
 
 process.stdout.write(
   `${JSON.stringify(

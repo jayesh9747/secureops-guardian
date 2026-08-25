@@ -1,19 +1,18 @@
-import { PHASE_THREE_PROPOSAL_HASH, VERIFIED_CANDIDATE_YAML } from '@guardian/github-write';
-import { synthesizeSecurityFinding } from '@guardian/investigation';
 import {
-  buildEligibleProposal,
-  parsePolicyContract,
-  verifyFourStates,
-} from '@guardian/policy-verifier';
+  PHASE_FOUR_TARGET,
+  PHASE_THREE_PROPOSAL_HASH,
+  SUSPECT_CANDIDATE_GIT_BLOB_SHA,
+  VERIFIED_CANDIDATE_GIT_BLOB_SHA,
+  bindEligibleProposal,
+  type RemoteSnapshot,
+} from '@guardian/github-write';
 import {
+  buildPhaseSixControllingArtifacts,
   buildRunRecordPresentation,
   renderGuardianMarkdown,
   renderGuardianResponse,
 } from '@guardian/presentation';
 import {
-  DENY_ALL_NETWORK_POLICY_YAML,
-  POLICY_CONTRACT_JSON,
-  SUSPECT_NETWORK_POLICY_YAML,
   buildDeterministicChangeResult,
   buildDeterministicExposureResult,
   runPhaseFiveScenario,
@@ -25,21 +24,45 @@ import {
   SUSPECT_COMMIT_SHA,
   TARGET_NETWORK_POLICY_FILE,
 } from '@guardian/shared';
+import { z } from 'zod';
 
-import { evaluatePreflight } from './preflight.js';
+import {
+  evaluatePreflight,
+  preflightObservationSchema,
+  type PreflightEvaluation,
+} from './preflight.js';
 import { planGuardianRun } from './plan.js';
-import { buildGuardianRunReceipt } from './receipt.js';
+import { evaluateOpenPrArtifacts } from './open-pr.js';
+import { buildGuardianRunReceipt, githubReadToolEventReferenceSchema } from './receipt.js';
 
-function buildCurrentFixtureFinding() {
-  const change = buildDeterministicChangeResult();
-  const exposure = buildDeterministicExposureResult(DEMO_CASE_ID);
-  const finding = synthesizeSecurityFinding({
-    change_result: change,
-    exposure_result: exposure,
-  });
+const githubAnalysisEvidenceSchema = z
+  .object({
+    evidence_ids: z.array(z.string().startsWith('evidence:github:')),
+    tool_event_references: z.array(githubReadToolEventReferenceSchema),
+    limitations: z.array(z.string().min(1)).min(1),
+  })
+  .strict();
+
+const journeyContextSchema = z
+  .object({
+    preflight_observation: preflightObservationSchema,
+    github_analysis: githubAnalysisEvidenceSchema,
+    remote_snapshot: z.unknown().optional(),
+  })
+  .strict();
+
+export type GuardianJourneyContext = z.input<typeof journeyContextSchema>;
+
+function buildCurrentFixtureArtifacts() {
+  const { finding, proposal } = buildPhaseSixControllingArtifacts();
   if (finding.outcome !== 'SUPPORTED_SECURITY_FINDING') {
     throw new Error('The current fixture did not reproduce the supported finding.');
   }
+  if (proposal.proposal_hash_sha256 !== PHASE_THREE_PROPOSAL_HASH) {
+    throw new Error('The current fixture did not reproduce the exact eligible proposal.');
+  }
+  const change = buildDeterministicChangeResult();
+  const exposure = buildDeterministicExposureResult(DEMO_CASE_ID);
   const evidenceIds = [
     ...change.evidence_records.map((record) => record.evidence_id),
     exposure.alert.evidence_id,
@@ -56,72 +79,199 @@ function buildCurrentFixtureFinding() {
     `deterministic:tool:get_reachability_observations:${exposure.case_id}`,
     `deterministic:tool:get_service_dependencies:${exposure.case_id}`,
   ];
-  return { finding, evidenceIds, toolEventReferences };
+  return { finding, proposal, evidenceIds, toolEventReferences };
 }
 
-function buildCurrentFixtureProposal() {
-  const contract = parsePolicyContract(POLICY_CONTRACT_JSON);
-  const proof = verifyFourStates(
-    {
-      lastGoodYaml: VERIFIED_CANDIDATE_YAML,
-      suspectYaml: SUSPECT_NETWORK_POLICY_YAML,
-      denyAllYaml: DENY_ALL_NETWORK_POLICY_YAML,
-      candidateYaml: VERIFIED_CANDIDATE_YAML,
-    },
-    contract,
-  );
-  const proposal = buildEligibleProposal({
-    candidateYaml: VERIFIED_CANDIDATE_YAML,
-    suspectYaml: SUSPECT_NETWORK_POLICY_YAML,
-    proof,
-  });
-  if (proposal === undefined || proposal.proposal_hash_sha256 !== PHASE_THREE_PROPOSAL_HASH) {
-    throw new Error('The current fixture did not reproduce the exact eligible proposal.');
+function exactFixtureRemoteSnapshot(): RemoteSnapshot {
+  const { proposal } = buildPhaseSixControllingArtifacts();
+  const binding = bindEligibleProposal(proposal);
+  if (binding.status !== 'BOUND') {
+    throw new Error(binding.reason);
   }
-  return proposal;
+  return {
+    base: {
+      commitSha: SUSPECT_COMMIT_SHA,
+      targetFileGitBlobSha: SUSPECT_CANDIDATE_GIT_BLOB_SHA,
+    },
+    branch: {
+      commitSha: '44fb8c7f5e99f835c6779f5e7b777c1b016af5b3',
+      targetFileGitBlobSha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
+      commitMessage: binding.binding.commitMessage,
+    },
+    pullRequest: {
+      number: 1,
+      url: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/1',
+      title: binding.binding.pullRequestTitle,
+      base: PHASE_FOUR_TARGET.baseBranch,
+      head: PHASE_FOUR_TARGET.remediationBranch,
+      body: binding.binding.pullRequestBody,
+    },
+  };
 }
 
-export function runCurrentFixtureJourney(input: unknown) {
+export function buildCurrentFixtureJourneyContext(input: unknown): GuardianJourneyContext {
   const plan = planGuardianRun(input);
+  if (plan.scope.repository !== DEMO_REPOSITORY) {
+    throw new Error('Current-fixture context is only valid for the owned demo repository.');
+  }
   const observedSuspect =
     plan.scope.suspect.kind === 'commit'
       ? {
           kind: 'commit' as const,
-          commit_sha: SUSPECT_COMMIT_SHA,
-          parent_sha: LAST_GOOD_COMMIT_SHA,
+          commit_sha: plan.scope.suspect.commit_sha,
+          parent_sha:
+            plan.scope.suspect.commit_sha === SUSPECT_COMMIT_SHA ? LAST_GOOD_COMMIT_SHA : null,
         }
       : {
           kind: 'comparison' as const,
-          base_sha: LAST_GOOD_COMMIT_SHA,
-          head_sha: SUSPECT_COMMIT_SHA,
+          base_sha: plan.scope.suspect.base_sha,
+          head_sha: plan.scope.suspect.head_sha,
         };
-  const preflight = evaluatePreflight(plan, {
-    repository: DEMO_REPOSITORY,
-    base_branch: 'main',
-    suspect: observedSuspect,
-    resolved_target_file: TARGET_NETWORK_POLICY_FILE,
-    target_kind: 'KUBERNETES_NETWORK_POLICY',
-    verifier_subset: 'SUPPORTED',
-    incident_evidence: 'AVAILABLE',
-    conflicts: [],
+  const resolvedTargetFile =
+    plan.scope.target_file ??
+    (plan.scope.suspect.kind === 'commit' && plan.scope.suspect.commit_sha === SUSPECT_COMMIT_SHA
+      ? TARGET_NETWORK_POLICY_FILE
+      : plan.scope.suspect.kind === 'comparison' &&
+          plan.scope.suspect.base_sha === LAST_GOOD_COMMIT_SHA &&
+          plan.scope.suspect.head_sha === SUSPECT_COMMIT_SHA
+        ? TARGET_NETWORK_POLICY_FILE
+        : null);
+  const targetIsSupported = resolvedTargetFile === TARGET_NETWORK_POLICY_FILE;
+  const change = buildDeterministicChangeResult();
+  return {
+    preflight_observation: {
+      repository: plan.scope.repository,
+      base_branch: plan.scope.base_branch,
+      suspect: observedSuspect,
+      resolved_target_file: resolvedTargetFile,
+      target_kind: targetIsSupported ? 'KUBERNETES_NETWORK_POLICY' : 'MISSING',
+      verifier_subset: targetIsSupported ? 'SUPPORTED' : 'UNKNOWN',
+      incident_evidence: plan.mode === 'ANALYSIS_ONLY' ? 'MISSING' : 'AVAILABLE',
+      conflicts: [],
+    },
+    github_analysis: {
+      evidence_ids: change.evidence_records.map((record) => record.evidence_id),
+      tool_event_references: change.evidence_records.map(
+        (record) => `deterministic:tool:${record.tool}:${record.evidence_id}`,
+      ),
+      limitations: change.limitations,
+    },
+    remote_snapshot: plan.mode === 'OPEN_PR' ? exactFixtureRemoteSnapshot() : undefined,
+  };
+}
+
+function scopeMarkdownLines(
+  scope: ReturnType<typeof planGuardianRun>['scope'],
+  resolvedTargetFile: string | null,
+): string {
+  const suspectLines =
+    scope.suspect.kind === 'commit'
+      ? [`- Suspect commit: \`${scope.suspect.commit_sha}\``]
+      : [
+          `- Comparison base: \`${scope.suspect.base_sha}\``,
+          `- Comparison head: \`${scope.suspect.head_sha}\``,
+        ];
+  return [
+    `- Repository: \`${scope.repository}\``,
+    `- Base branch: \`${scope.base_branch}\``,
+    ...suspectLines,
+    `- Target file: ${resolvedTargetFile === null ? '**Not supplied or resolved**' : `\`${resolvedTargetFile}\``}`,
+  ].join('\n');
+}
+
+function buildInconclusiveResult(options: {
+  plan: ReturnType<typeof planGuardianRun>;
+  preflight: Extract<PreflightEvaluation, { outcome: 'INCONCLUSIVE' }>;
+  context: z.output<typeof journeyContextSchema>;
+  additionalRequirements?: string[];
+}) {
+  const requirements = [
+    ...options.preflight.missing_or_unsupported_requirements,
+    ...(options.additionalRequirements ?? []),
+  ];
+  const isAnalysisOnly = options.plan.mode === 'ANALYSIS_ONLY';
+  const receipt = buildGuardianRunReceipt({
+    schema_version: 1,
+    execution_basis: 'DETERMINISTIC_INTEGRATION',
+    mode: options.plan.mode,
+    terminal_status: 'INCONCLUSIVE',
+    scope: options.plan.scope,
+    stages: {
+      scope_preflight: 'INCONCLUSIVE',
+      github_investigation: 'COMPLETED',
+      incident_evidence_join: isAnalysisOnly
+        ? 'NOT_RUN'
+        : options.context.preflight_observation.incident_evidence === 'AVAILABLE'
+          ? 'COMPLETED'
+          : 'MISSING',
+      deterministic_rule: 'NOT_RUN',
+      daytona_proof: isAnalysisOnly ? 'NOT_PERMITTED' : 'NOT_RUN',
+      proposal: 'ABSENT',
+      github_action: 'NOT_REACHED',
+      presentation: 'MARKDOWN',
+    },
+    evidence_ids: options.context.github_analysis.evidence_ids,
+    tool_event_references: options.context.github_analysis.tool_event_references,
+    approval_event_references: [],
+    missing_or_unsupported_requirements: requirements,
+    proposal_hash_sha256: null,
+    action_receipt: null,
+    runtime_claims: options.preflight.runtime_claims,
+    limitations: [
+      ...options.context.github_analysis.limitations,
+      'Preflight failed closed before sandbox, proposal, approval, or GitHub action.',
+    ],
+    guardian_did_not_merge_deploy_or_access_cluster: true,
   });
+  const markdown = `## SecureOps Guardian — inconclusive
+
+- Terminal status: \`INCONCLUSIVE\`
+${scopeMarkdownLines(options.plan.scope, options.context.preflight_observation.resolved_target_file)}
+
+### Missing or unsupported requirements
+
+${requirements.map((requirement) => `- ${requirement}`).join('\n')}
+
+No sandbox, proposal, approval, or GitHub action was reached.`;
+  return { receipt, presentation: null, openui: null, markdown };
+}
+
+function stopReadyPreflight(
+  preflight: Exclude<PreflightEvaluation, { outcome: 'INCONCLUSIVE' }>,
+): Extract<PreflightEvaluation, { outcome: 'INCONCLUSIVE' }> {
+  return {
+    ...preflight,
+    outcome: 'INCONCLUSIVE',
+    missing_or_unsupported_requirements: [],
+    sandbox_permitted: false,
+    proposal_permitted: false,
+    approval_permitted: false,
+    github_writes_permitted: [],
+  };
+}
+
+export function runCurrentFixtureJourney(input: unknown, untrustedContext: GuardianJourneyContext) {
+  const plan = planGuardianRun(input);
+  const context = journeyContextSchema.parse(untrustedContext);
+  const preflight = evaluatePreflight(plan, context.preflight_observation);
   if (preflight.outcome === 'INCONCLUSIVE') {
-    throw new Error('The current-fixture journey requires an exact eligible scope.');
+    return buildInconclusiveResult({ plan, preflight, context });
   }
 
-  if (plan.mode === 'ANALYSIS_ONLY') {
-    const change = buildDeterministicChangeResult();
-    const evidenceIds = change.evidence_records.map((record) => record.evidence_id);
-    const toolEventReferences = change.evidence_records.map(
-      (record) => `deterministic:tool:${record.tool}:${record.evidence_id}`,
-    );
+  if (preflight.outcome === 'ANALYSIS_READY') {
+    if (
+      preflight.sandbox_permitted ||
+      preflight.proposal_permitted ||
+      preflight.approval_permitted ||
+      preflight.github_writes_permitted.length > 0
+    ) {
+      throw new Error('ANALYSIS_READY contradicts the plan capability ceiling.');
+    }
     const markdown = `## SecureOps Guardian — GitHub-only analysis
 
 - Terminal status: \`ANALYSIS_COMPLETE\`
-- Repository: \`${plan.scope.repository}\`
-- Suspect commit: \`${SUSPECT_COMMIT_SHA}\`
-- Changed file: \`${TARGET_NETWORK_POLICY_FILE}\`
-- Repository signal: unrestricted IPv4 egress was introduced in the inspected diff
+${scopeMarkdownLines(plan.scope, context.preflight_observation.resolved_target_file)}
+- Repository signal: official GitHub evidence for the requested revision was inspected
 - Deployment: **Unknown**
 - Runtime exposure: **Unknown**
 - Actual data access: **Unknown**
@@ -145,26 +295,27 @@ GitHub-only analysis does not establish deployment, runtime exposure, data acces
         github_action: 'NOT_PERMITTED',
         presentation: 'MARKDOWN',
       },
-      evidence_ids: evidenceIds,
-      tool_event_references: toolEventReferences,
+      evidence_ids: context.github_analysis.evidence_ids,
+      tool_event_references: context.github_analysis.tool_event_references,
       approval_event_references: [],
       missing_or_unsupported_requirements: [],
       proposal_hash_sha256: null,
       action_receipt: null,
-      runtime_claims: {
-        deployment: 'Unknown',
-        runtime_exposure: 'Unknown',
-        data_access: 'Unknown',
-        exfiltration: 'Unknown',
-        live_cluster_behavior: 'Unknown',
-      },
-      limitations: [...change.limitations, 'ANALYSIS_ONLY permits official GitHub reads only.'],
+      runtime_claims: preflight.runtime_claims,
+      limitations: [
+        ...context.github_analysis.limitations,
+        'ANALYSIS_ONLY permits official GitHub reads only.',
+      ],
       guardian_did_not_merge_deploy_or_access_cluster: true,
     });
     return { receipt, presentation: null, openui: null, markdown };
   }
 
-  const { finding, evidenceIds, toolEventReferences } = buildCurrentFixtureFinding();
+  if (!preflight.sandbox_permitted || !preflight.proposal_permitted) {
+    throw new Error('Remediation readiness contradicts the plan capability ceiling.');
+  }
+
+  const { finding, proposal, evidenceIds, toolEventReferences } = buildCurrentFixtureArtifacts();
   const sharedReceipt = {
     schema_version: 1 as const,
     execution_basis: 'DETERMINISTIC_INTEGRATION' as const,
@@ -184,15 +335,15 @@ GitHub-only analysis does not establish deployment, runtime exposure, data acces
     guardian_did_not_merge_deploy_or_access_cluster: true as const,
   };
 
-  const proposal = buildCurrentFixtureProposal();
-  if (plan.mode === 'PREPARE_REMEDIATION') {
+  if (preflight.outcome === 'REMEDIATION_PREPARATION_READY') {
+    if (preflight.approval_permitted || preflight.github_writes_permitted.length > 0) {
+      throw new Error('PREPARE_REMEDIATION contradicts the plan capability ceiling.');
+    }
     const markdown = `## SecureOps Guardian — remediation prepared
 
 - Terminal status: \`SECURITY_REMEDIATION_READY\`
 - Proposal SHA-256: \`${proposal.proposal_hash_sha256}\`
-- Repository: \`${proposal.target.repository}\`
-- Base branch: \`${proposal.target.base_branch}\`
-- Target file: \`${proposal.target.file}\`
+${scopeMarkdownLines(plan.scope, context.preflight_observation.resolved_target_file)}
 - Actual data access: **Unknown**
 
 No GitHub write or approval is permitted in this mode.
@@ -222,14 +373,48 @@ ${proposal.canonical_diff}\`\`\``;
     return { receipt, presentation: null, openui: null, markdown };
   }
 
-  const record = runPhaseFiveScenario('existing-pr-reuse');
-  if (record.actual_terminal_status !== 'PR_REUSED' || record.action_receipt === null) {
-    throw new Error('The current fixture did not produce the expected PR_REUSED receipt.');
+  if (
+    !preflight.approval_permitted ||
+    preflight.github_writes_permitted.length !== plan.capability_ceiling.github_writes.length
+  ) {
+    throw new Error('OPEN_PR_READY contradicts the plan capability ceiling.');
+  }
+  if (context.remote_snapshot === undefined) {
+    return buildInconclusiveResult({
+      plan,
+      preflight: stopReadyPreflight(preflight),
+      context,
+      additionalRequirements: ['A validated remote snapshot is required before OPEN_PR action.'],
+    });
+  }
+  const remoteSnapshot = context.remote_snapshot as RemoteSnapshot;
+  const artifactDecision = evaluateOpenPrArtifacts({
+    scope: plan.scope,
+    proposal,
+    remote_snapshot: remoteSnapshot,
+  });
+  if (artifactDecision.status === 'WRITE_REQUIRED') {
+    return buildInconclusiveResult({
+      plan,
+      preflight: stopReadyPreflight(preflight),
+      context,
+      additionalRequirements: [
+        `The deterministic integration journey stopped before live approval step ${artifactDecision.step}.`,
+      ],
+    });
+  }
+  const scenario =
+    artifactDecision.status === 'PR_REUSED'
+      ? ('existing-pr-reuse' as const)
+      : ('mismatched-remote-branch-content' as const);
+  const record = runPhaseFiveScenario(scenario, { remoteSnapshot });
+  if (record.actual_terminal_status !== artifactDecision.status || record.action_receipt === null) {
+    throw new Error('The retained Phase 5 result disagrees with the OPEN_PR artifact gate.');
   }
   const presentation = buildRunRecordPresentation({ record, finding, proposal });
   const receipt = buildGuardianRunReceipt({
     ...sharedReceipt,
-    terminal_status: 'PR_REUSED',
+    terminal_status: artifactDecision.status,
     stages: {
       scope_preflight: 'COMPLETED',
       github_investigation: 'COMPLETED',
@@ -237,7 +422,7 @@ ${proposal.canonical_diff}\`\`\``;
       deterministic_rule: 'COMPLETED',
       daytona_proof: 'COMPLETED',
       proposal: 'CREATED',
-      github_action: 'PR_REUSED',
+      github_action: artifactDecision.status,
       presentation: 'OPENUI_AND_MARKDOWN',
     },
     evidence_ids: record.evidence_ids,

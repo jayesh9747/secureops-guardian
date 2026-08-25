@@ -21,6 +21,12 @@ export default defineConfig({
       '@guardian/reliability': fileURLToPath(
         new URL('./packages/reliability/src/index.ts', import.meta.url),
       ),
+      '@guardian/presentation': fileURLToPath(
+        new URL('./packages/presentation/src/index.ts', import.meta.url),
+      ),
+      '@guardian/orchestration': fileURLToPath(
+        new URL('./packages/orchestration/src/index.ts', import.meta.url),
+      ),
     },
   },
   test: {

@@ -1,0 +1,85 @@
+import { describe, expect, it } from 'vitest';
+
+import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
+
+import { runCurrentFixtureJourney } from './journey.js';
+import { buildGuardianRunReceipt } from './receipt.js';
+
+const scope = {
+  schema_version: 1 as const,
+  repository: DEMO_REPOSITORY,
+  base_branch: 'main',
+  suspect: { kind: 'commit' as const, commit_sha: SUSPECT_COMMIT_SHA },
+  target_file: TARGET_NETWORK_POLICY_FILE,
+};
+
+function coreOf(mode: 'ANALYSIS_ONLY' | 'PREPARE_REMEDIATION' | 'OPEN_PR') {
+  const { receipt_id: _receiptId, ...core } = runCurrentFixtureJourney({ mode, scope }).receipt;
+  return core;
+}
+
+describe('Guardian run receipt cross-stage invariants', () => {
+  it('rejects Fixture evidence and runtime claims in ANALYSIS_ONLY', () => {
+    const core = coreOf('ANALYSIS_ONLY');
+
+    expect(() =>
+      buildGuardianRunReceipt({
+        ...core,
+        stages: { ...core.stages, incident_evidence_join: 'COMPLETED' },
+        evidence_ids: [...core.evidence_ids, 'evidence:deployment:synthetic'],
+        runtime_claims: {
+          ...core.runtime_claims,
+          deployment: 'SupportedByOwnedSyntheticEvidence',
+        },
+      }),
+    ).toThrow(/ANALYSIS_ONLY/u);
+  });
+
+  it('allows a fail-closed ANALYSIS_ONLY preflight receipt', () => {
+    const core = coreOf('ANALYSIS_ONLY');
+
+    expect(
+      buildGuardianRunReceipt({
+        ...core,
+        terminal_status: 'INCONCLUSIVE',
+        stages: {
+          ...core.stages,
+          scope_preflight: 'INCONCLUSIVE',
+          deterministic_rule: 'NOT_RUN',
+          github_action: 'NOT_REACHED',
+        },
+        missing_or_unsupported_requirements: ['Observed repository identity was incomplete.'],
+      }).terminal_status,
+    ).toBe('INCONCLUSIVE');
+  });
+
+  it('allows a fail-closed PREPARE_REMEDIATION preflight receipt', () => {
+    const core = coreOf('PREPARE_REMEDIATION');
+
+    expect(
+      buildGuardianRunReceipt({
+        ...core,
+        terminal_status: 'INCONCLUSIVE',
+        stages: {
+          ...core.stages,
+          scope_preflight: 'INCONCLUSIVE',
+          incident_evidence_join: 'MISSING',
+          deterministic_rule: 'NOT_RUN',
+          daytona_proof: 'NOT_RUN',
+          proposal: 'ABSENT',
+          github_action: 'NOT_REACHED',
+        },
+        missing_or_unsupported_requirements: ['Complete incident evidence is required.'],
+        proposal_hash_sha256: null,
+      }).terminal_status,
+    ).toBe('INCONCLUSIVE');
+  });
+
+  it('rejects an action terminal state without a Phase 4 action receipt', () => {
+    const core = coreOf('OPEN_PR');
+
+    expect(() => buildGuardianRunReceipt({ ...core, action_receipt: null })).toThrow(
+      /action receipt/iu,
+    );
+  });
+});

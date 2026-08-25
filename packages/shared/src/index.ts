@@ -29,6 +29,8 @@ export interface GuardianAgentDefinition {
   mcpServers?: readonly GuardianMcpServerSpec[];
   sandbox?: { enabled: boolean; file_downloads?: boolean };
   dynamicSubAgents?: boolean;
+  generativeUi?: boolean;
+  askUserQuestions?: boolean;
   iterationLimit: number;
 }
 
@@ -48,8 +50,8 @@ export function defineGuardianAgent(definition: GuardianAgentDefinition) {
       })),
       config: {
         sandbox: definition.sandbox ?? { enabled: false },
-        generative_ui: { enabled: false },
-        ask_user_questions: { enabled: false },
+        generative_ui: { enabled: definition.generativeUi ?? false },
+        ask_user_questions: { enabled: definition.askUserQuestions ?? false },
         dynamic_sub_agents: { enabled: definition.dynamicSubAgents ?? false },
         iteration_limit: definition.iterationLimit,
       },

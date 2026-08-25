@@ -4,8 +4,8 @@ import { SECUREOPS_GUARDIAN_AGENT_SPEC } from './agent.js';
 import { GITHUB_WRITE_TOOLS } from './plan.js';
 
 describe('unified TrueForge manifest', () => {
-  it('exports one secureops-guardian with every retained Phase 2-6 capability', () => {
-    expect(SECUREOPS_GUARDIAN_AGENT_SPEC.name).toBe('secureops-guardian');
+  it('exports one secureops-guardian_v0 with every retained Phase 2-6 capability', () => {
+    expect(SECUREOPS_GUARDIAN_AGENT_SPEC.name).toBe('secureops-guardian_v0');
     const manifest = SECUREOPS_GUARDIAN_AGENT_SPEC.manifest;
     const github = manifest.mcp_servers.find((server) => server.name === 'github');
     const fixture = manifest.mcp_servers.find((server) => server.name === 'guardian-fixture');

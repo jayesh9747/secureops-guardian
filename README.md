@@ -4,7 +4,7 @@ SecureOps Guardian is one saved TrueForge agent that helps an on-call platform/s
 
 The demo joins real GitHub commit evidence from the public [`guardian-demo-checkout`](https://github.com/jayesh9747/guardian-demo-checkout) repository with explicitly synthetic incident observations. Unlike a generic incident summary, Guardian identifies one changed NetworkPolicy rule, rejects deny-all containment because it breaks checkout's database path, proves an exact replacement against four policy states, and creates or deterministically reuses one reviewable pull request only at the approval boundary.
 
-Users select only `secureops-guardian` and supply a schema-version-1 repository scope. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. Guardian can inspect any authorized GitHub repository in read-only mode; proven remediation currently supports Kubernetes NetworkPolicy cases inside its documented static verifier subset.
+Users select only `secureops-guardian_v0` and supply a schema-version-1 repository scope. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. Guardian can inspect any authorized GitHub repository in read-only mode; proven remediation currently supports Kubernetes NetworkPolicy cases inside its documented static verifier subset.
 
 ## Judge-visible result
 
@@ -20,7 +20,7 @@ Users select only `secureops-guardian` and supply a schema-version-1 repository 
 ## Architecture and TrueForge capabilities
 
 ```text
-Engineer -> saved TrueForge agent secureops-guardian
+Engineer -> saved TrueForge agent secureops-guardian_v0
   +-- parameterized scope preflight -> official GitHub MCP reads
   +-- exact supported case
   |     +-- change-security-investigator -> official GitHub MCP reads
@@ -43,7 +43,7 @@ TrueForge is the sole agent harness. [`@guardian/orchestration`](./packages/orch
 | Persistence | Reconnect/retry preserves proposal and pending action |
 | Generative UI | Stock OpenUI card; no frontend fork or dashboard |
 
-Saved agent: `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json).
+Saved agent: `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json). The immutable predecessor `secureops-guardian` remains saved so existing reference sessions keep resolving.
 
 ## Prerequisites
 

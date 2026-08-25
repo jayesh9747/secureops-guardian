@@ -2,7 +2,7 @@
 
 ## Goal
 
-Replace the phase-wise user experience with one saved TrueForge agent named `secureops-guardian` while composing, not weakening, the Phase 2-6 typed contracts.
+Replace the phase-wise user experience with one saved TrueForge agent named `secureops-guardian_v0` while composing, not weakening, the Phase 2-6 typed contracts.
 
 ## Entry gate
 
@@ -24,7 +24,7 @@ Replace the phase-wise user experience with one saved TrueForge agent named `sec
 
 ## Exit gate
 
-- One exported and saved agent named `secureops-guardian`, with ID recorded.
+- One exported and saved agent named `secureops-guardian_v0`, with ID recorded.
 - Current fixture, arbitrary analysis, and safe `OPEN_PR` prompt templates.
 - Required Phase 7 adversarial/mode tests plus all Phase 2-6 suites and matrices pass.
 - README, architecture, status, migration, and Phase 7 evidence are current.

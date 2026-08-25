@@ -1,6 +1,6 @@
 {
-  "id": "01m0vvphezaejvtcxgf9z972ed",
-  "name": "secureops-guardian",
+  "id": "01m0w6s2eyqtzyb6q4y6ppsta9",
+  "name": "secureops-guardian_v0",
   "manifest": {
     "model": {
       "name": "google-gemini/gemini-3-6-flash",

@@ -4,10 +4,10 @@ Updated: 25 August 2026.
 
 ## User-facing system
 
-`secureops-guardian` is the only saved TrueForge agent a user selects. Phase-named agent specifications remain repository test fixtures and reference configurations; they are not separate product entry points.
+`secureops-guardian_v0` is the only saved TrueForge agent a user selects for new sessions. The immutable predecessor remains registered only so existing reference sessions continue to resolve. Phase-named agent specifications remain repository test fixtures and reference configurations; they are not separate product entry points.
 
 ```text
-User -> saved TrueForge agent secureops-guardian
+User -> saved TrueForge agent secureops-guardian_v0
           |
           +-- scope preflight -> official GitHub MCP reads
           |

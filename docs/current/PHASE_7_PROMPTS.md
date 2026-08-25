@@ -1,6 +1,6 @@
 # Unified Guardian prompt templates
 
-These prompts target the one saved TrueForge agent named `secureops-guardian`. Keep the JSON scope intact. Replace only values explicitly marked as placeholders.
+These prompts target the one saved TrueForge agent named `secureops-guardian_v0`. Keep the JSON scope intact. Replace only values explicitly marked as placeholders.
 
 ## Current fixture first run
 

@@ -98,7 +98,7 @@ The sandbox verifier is a deterministic policy model for this owned fixture, not
 
 ### Phase 7 unified entry point
 
-Users interact only with the saved TrueForge agent `secureops-guardian`. Phase-named saved agents and exported specifications are retained as test fixtures/reference configurations, not product choices.
+Users interact only with the saved TrueForge agent `secureops-guardian_v0`. Phase-named saved agents and exported specifications are retained as test fixtures/reference configurations, not product choices.
 
 Every run starts with a schema-version-1 scope containing repository, base branch, an exact full-SHA suspect commit or comparison range, and an optional target file. `ANALYSIS_ONLY` is the default and permits GitHub reads only; `PREPARE_REMEDIATION` may use Daytona and create an exact proposal but cannot request approval or write; `OPEN_PR` may reach the separately approval-gated GitHub write sequence after all retained gates pass.
 

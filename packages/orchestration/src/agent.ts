@@ -15,7 +15,7 @@ import {
 
 import { GITHUB_WRITE_TOOLS } from './plan.js';
 
-export const SECUREOPS_GUARDIAN_AGENT_NAME = 'secureops-guardian';
+export const SECUREOPS_GUARDIAN_AGENT_NAME = 'secureops-guardian_v0';
 
 export const SECUREOPS_GUARDIAN_AGENT_INSTRUCTIONS = `
 You are the one user-facing SecureOps Guardian. Orchestrate the retained typed Phase 2-6 contracts in one saved TrueForge agent. Users never select phase-named agents. Phase-named configurations are reference/test fixtures only.

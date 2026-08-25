@@ -18,7 +18,7 @@ This file is navigation and handoff state, not a product specification. The acti
 - Remediation PR `jayesh9747/guardian-demo-checkout#1` is open and unmerged at commit `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
 - Saved TrueForge agent `01m0t4gpvz34x60qz6fxqz214d` now byte-matches the merged Phase 4 instructions, enables direct `list_pull_requests`, and separately approval-gates all three writes.
-- Saved TrueForge agent `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, now contains the unified Phase 7 manifest: official GitHub MCP reads/writes, Fixture MCP reads, Daytona, dynamic children, all three write approvals, stock Generative UI, and ask-user support restricted by instruction to missing scope before tools.
+- Saved TrueForge agent `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`, contains the unified Phase 7 manifest: official GitHub MCP reads/writes, Fixture MCP reads, Daytona, dynamic children, all three write approvals, stock Generative UI, and ask-user support restricted by instruction to missing scope before tools. Its immutable predecessor `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, remains saved so existing reference sessions keep resolving.
 - Phase-named saved agents remain only as historical test fixtures/reference configurations.
 - The TrueForge worktree has an operator-owned `docker-compose.yml` change. Preserve it and keep it out of product commits.
 

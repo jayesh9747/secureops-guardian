@@ -15,6 +15,9 @@ export default defineConfig({
       '@guardian/github-write': fileURLToPath(
         new URL('./packages/github-write/src/index.ts', import.meta.url),
       ),
+      '@guardian/investigation': fileURLToPath(
+        new URL('./packages/investigation/src/index.ts', import.meta.url),
+      ),
     },
   },
   test: {

@@ -8,7 +8,7 @@ Scope: Phase 5 only
 
 ## Result
 
-Phase 5 passes the deterministic reliability matrix and every live proof permitted by the preserved remote state. The integration harness composes the Phase 2 evidence gate, Phase 3 bounded verifier/proposal flow, and Phase 4 remote decision/receipt contracts. All eight required scenarios return the expected safe state and record their case, evidence, tools, approvals, verifier result, proposal hash, and mutation proof. Remote-state scenarios include typed remote results and independently computed before/after snapshot hashes; the record schema rejects unequal hashes or reconnect values hidden behind affirmative booleans.
+Phase 5 passes the deterministic reliability matrix and every live proof permitted by the preserved remote state. The integration harness composes the Phase 2 evidence gate, Phase 3 bounded verifier/proposal flow, and Phase 4 remote decision/receipt contracts. All eight required scenarios return the expected safe state and record their case, consumed evidence, evidence defects, tools, approvals, verifier result, proposal hash, action receipt, and mutation observation. Expected state comes from scenario policy; actual state comes from the observed finding, bounded workflow, remote decision, or receipt. A mismatch remains serializable and makes the matrix command fail.
 
 Three consecutive live TrueForge rehearsals used the preserved open fixture PR and returned `PR_REUSED` in 38.029, 45.847, and 42.190 seconds. Every rehearsal used `list_pull_requests` with exact open base/head filtering, made six GitHub reads, emitted no write tool call, emitted no approval event, and returned fixture PR #1 at the unchanged remediation commit.
 
@@ -56,7 +56,7 @@ Run:
 pnpm phase5:matrix
 ```
 
-The command emits strict JSON records. The Zod record gate rejects mismatched expected/actual states, claimed mutation events, unequal before/after remote hashes, `INCONCLUSIVE` records that reached verifier/proposal/approval, `NO_SAFE_REMEDIATION` records without exactly two attempts, `PR_REUSED` records with approvals or without an exact remote result, `WRITE_CONFLICT` records without observed conflicting commit/blob values, and reconnect records with absent or changed persistence values. A reconnect approval is accepted only when its proposal hash and pending action match the parsed checkpoint.
+The command emits strict JSON records and exits nonzero if actual state differs from expected state, an exact expected defect differs, or a mutation is observed. The record schema deliberately permits those failure artifacts so the audit trail is not limited to successful proofs. It rejects internally inconsistent `INCONCLUSIVE`, bounded-workflow, `DENIED`, `PR_REUSED`, `WRITE_CONFLICT`, receipt, remote-result, mutation, or reconnect data. A reconnect approval is accepted only when its proposal hash and pending action independently match the canonical parsed checkpoint.
 
 Deterministic records intentionally use `null` TrueForge agent/session IDs because no TrueForge run is claimed. The Phase 2 causal input retains its historical remediation-evidence tool name, `search_pull_requests`; every Phase 4 remote decision and every live retry uses direct exact-head `list_pull_requests`.
 
@@ -67,20 +67,20 @@ The table below uses these exact bundles to keep repeated records readable:
 - `EVIDENCE-NORMAL`: `deterministic:tool:get_commit:evidence:github:commit:suspect`, `deterministic:tool:get_commit:evidence:github:commit:parent`, `deterministic:tool:list_commits:evidence:github:commit-history:checkout-networkpolicy`, `deterministic:tool:get_commit:evidence:github:diff:checkout-networkpolicy`, `deterministic:tool:get_file_contents:evidence:github:manifest:checkout-networkpolicy:suspect`, `deterministic:tool:list_branches:evidence:github:remediation-branches`, `deterministic:tool:search_pull_requests:evidence:github:remediation-pull-requests`, `deterministic:tool:get_security_alert:evidence:security-alert:checkout-egress:001`, `deterministic:tool:get_deployment:evidence:deployment:checkout-api:001`, `deterministic:tool:get_reachability_observations:checkout-networkpolicy-egress-exposure`, and `deterministic:tool:get_service_dependencies:checkout-networkpolicy-egress-exposure`.
 - `VERIFY-PASS`: `deterministic:verifier:attempt-1` and `deterministic:verifier:four-state`.
 - `REMOTE-INITIAL`: `deterministic:github:list_branches`, `deterministic:github:list_pull_requests:open:main:guardian/fix-checkout-egress`, `deterministic:github:get_file_contents:main`, and `deterministic:github:get_commit:main`.
-- `REMOTE-REUSE`: `REMOTE-INITIAL` plus `deterministic:github:get_file_contents:remediation` and `deterministic:github:get_commit:remediation`.
+- `REMOTE-BRANCH`: `REMOTE-INITIAL` plus `deterministic:github:get_file_contents:remediation` and `deterministic:github:get_commit:remediation`.
 
 ### Scenario records
 
 | Scenario | Fixture/case ID | Agent / session | Tool and approval references | Verifier output | Proposal hash | Expected / actual | Unsupported GitHub mutation |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Existing PR reuse | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-REUSE`; approvals `[]` | Attempt 1 `SECURITY_REMEDIATION_READY`; four-state pass | `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15` | `PR_REUSED` / `PR_REUSED`; remote commit `44fb8c5…`, blob `1eddb23…`, PR #1 | Confirmed absent; pre/post snapshot SHA-256 `78ea55baced142575255b3680c22af1c299fb8450657490d743ad2478a888e4`; no write call |
-| Denied first write | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-INITIAL`, `deterministic:github:create_branch:denied-first-write:denied`, `deterministic:github:denied-first-write:post-denial-read`; approval `deterministic:approval:denied-first-write:create_branch:denied` | Attempt 1 ready; four-state pass | same controlling hash | `DENIED` / `DENIED` | Confirmed absent; pre/post snapshot SHA-256 `46e365b7f512d0f9547ad94dff04e1163495bcc026fb0157d00154736f7e6ca9` |
+| Existing PR reuse | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-BRANCH`; approvals `[]`; agreeing `PR_REUSED` receipt | Attempt 1 `SECURITY_REMEDIATION_READY`; four-state pass | `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15` | `PR_REUSED` / `PR_REUSED`; remote commit `44fb8c5…`, blob `1eddb23…`, PR #1 | `ABSENT`; independent immutable-probe reads hash to `78ea55baced142575255b3680c22af1c299fb8450657490d743ad2478a888e4`; event ledger empty |
+| Denied first write | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-INITIAL`, pre/post reads, denied tool call; exactly one denial approval; agreeing `DENIED` receipt | Attempt 1 ready; four-state pass | same controlling hash | `DENIED` / `DENIED` | `ABSENT`; independent probe reads hash to `46e365b7f512d0f9547ad94dff04e1163495bcc026fb0157d00154736f7e6ca9`; event ledger empty |
 | Missing deployment | `checkout-networkpolicy-egress-exposure-missing-deployment-revision` | `null` / `null` | GitHub evidence refs plus fixture refs suffixed `missing-deployment-revision`; approvals `[]` | `null`; verifier was not entered | `null` | `INCONCLUSIVE` / `INCONCLUSIVE` | Confirmed absent; stopped before candidate, sandbox, proposal, or approval |
 | Missing reachability | `checkout-networkpolicy-egress-exposure-missing-reachability` | `null` / `null` | GitHub evidence refs plus fixture refs suffixed `missing-reachability`; approvals `[]` | `null`; verifier was not entered | `null` | `INCONCLUSIVE` / `INCONCLUSIVE` | Confirmed absent; stopped before candidate, sandbox, proposal, or approval |
 | Conflicting revision | `checkout-networkpolicy-egress-exposure-conflicting-revision` | `null` / `null` | GitHub evidence refs plus fixture refs suffixed `conflicting-revision`; approvals `[]` | `null`; verifier was not entered | `null` | `INCONCLUSIVE` / `INCONCLUSIVE` | Confirmed absent; stopped before candidate, sandbox, proposal, or approval |
 | Candidate failure twice | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `deterministic:verifier:attempt-1`, `deterministic:verifier:attempt-2`; approvals `[]` | Attempt 1 `CORRECTION_REQUIRED`; attempt 2 `NO_SAFE_REMEDIATION`; both cite `DNS_REQUIRED_PATH` and `POSTGRES_REQUIRED_PATH` | `null` | `NO_SAFE_REMEDIATION` / `NO_SAFE_REMEDIATION` | Confirmed absent; no eligible proposal or write request |
-| Mismatched branch/content | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `deterministic:github:list_branches`, `deterministic:github:get_file_contents:mismatched-remediation`, `deterministic:github:get_commit:mismatched-remediation`; approvals `[]` | Attempt 1 ready; four-state pass | same controlling hash | `WRITE_CONFLICT` / `WRITE_CONFLICT`; observed commit `dddd…`, blob `ffff…` | Confirmed absent; pre/post snapshot SHA-256 `0e4e2ba53f213a463344c7c0288e1079b2268add8f0f7b10aacb55b160d51a8f`; no overwrite |
-| Reconnect pending action | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-INITIAL`, `deterministic:github:create_branch:reconnect-pending-action:denied`, `deterministic:github:reconnect-pending-action:post-denial-read`; approval `deterministic:approval:reconnect-pending-action:create_branch:denied` | Attempt 1 ready; four-state pass | same controlling hash | `DENIED` / `DENIED` | Confirmed absent; restored pending call was denied; pre/post snapshot SHA-256 `46e365b7f512d0f9547ad94dff04e1163495bcc026fb0157d00154736f7e6ca9` |
+| Mismatched branch/content | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-BRANCH`; approvals `[]`; agreeing `WRITE_CONFLICT` receipt | Attempt 1 ready; four-state pass | same controlling hash | `WRITE_CONFLICT` / `WRITE_CONFLICT`; commit/blob read from evaluated snapshot as `dddd…` / `ffff…` | `ABSENT`; independent probe reads hash to `0e4e2ba53f213a463344c7c0288e1079b2268add8f0f7b10aacb55b160d51a8f`; event ledger empty |
+| Reconnect pending action | `checkout-networkpolicy-egress-exposure` | `null` / `null` | `EVIDENCE-NORMAL`, `VERIFY-PASS`, `REMOTE-INITIAL`, pre/post reads, denied tool call; exactly one denial approval; agreeing `DENIED` receipt | Attempt 1 ready; four-state pass | same controlling hash | `DENIED` / `DENIED` | `ABSENT`; restored pending call denied; independent probe reads hash to `46e365b7f512d0f9547ad94dff04e1163495bcc026fb0157d00154736f7e6ca9` |
 
 The common four-state verifier output is:
 
@@ -91,7 +91,7 @@ The common four-state verifier output is:
 | Deny-all | `SECURE_BUT_OPERATIONALLY_REJECTED` | Yes | No |
 | Candidate | `SECURE_AND_FUNCTIONAL` | Yes | Yes |
 
-The reconnect checkpoint is canonicalized, serialized, parsed, and revalidated. Before and after values contain the same case ID, the same nine proposal evidence IDs, proposal hash `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`, and pending action `CREATE_BRANCH`. The serialized checkpoint SHA-256 is `ca3b77fc2f9a5d4f85d5d62f028d9627abf658d3f6ca2583f8c25b81972dbafa`.
+Every conclusive deterministic record cites all 13 evidence IDs consumed from the change and exposure inputs; the eligible proposal remains bound to its narrower nine supporting evidence IDs. The reconnect checkpoint is canonicalized, serialized, parsed, and revalidated. Before and after values contain the same case ID, the same 13 consumed evidence IDs, proposal hash `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`, and pending action `CREATE_BRANCH`. The serialized checkpoint SHA-256 is `9a9d3adfb784ac4a8c7137e26245eb1e7d4e076c0a95b055ccef8245f09ce887`.
 
 ## Live TrueForge rehearsals
 
@@ -124,7 +124,24 @@ After all live runs:
 
 Development PR [jayesh9747/secureops-guardian#6](https://github.com/jayesh9747/secureops-guardian/pull/6) is open, non-draft, and unmerged. Qodo attempted an automatic review and was manually invoked with `/review`; both responses reported that reviews are paused for this user. Qodo produced no findings and no approval, so none is claimed.
 
-The alternate two-axis review found four applicable issues: duplicated record construction, mutation absence asserted without state observations, reconnect booleans not tied to the saved values, and a missing release checklist/handoff record. Commit `fce34f3ac80a989591e061079d944e6b3a6f62d5` resolves them with a common record builder, typed remote results, before/after snapshot hashes, strict checkpoint comparison, approval/checkpoint binding, and adversarial tests. Two proposed live-only findings were not applied: recreating the deny/create sequence or an approval-paused reconnect would require resetting the protected fixture state and would contradict the operator's safe-state constraint. Operator acceptance of this alternate review remains required before merge.
+The first alternate two-axis review was remediated in `fce34f3ac80a989591e061079d944e6b3a6f62d5`. A deeper follow-up review of handoff head `1dcd687ef8f2b50016370ea5f535b2ff8c70eefc` then identified a common root cause: several audit fields were constructed from expected constants while the actual phase artifacts were discarded or could not represent failure. The focused regression loop reproduced eight failures before the fix. Review-remediation commit `263e6a27307a667f08bfa832b436a754c0848a2e` resolves every numbered finding:
+
+| Finding | Root cause | Resolution |
+| --- | --- | --- |
+| 1 — expected equaled actual by construction | One lookup populated both fields | Expected remains scenario policy; actual is derived from finding/workflow/decision/receipt. Mismatches serialize and fail the CLI gate. |
+| 2 — self-clone mutation hashes | Snapshots never crossed the decision seam | Independent reads from an immutable remote-state probe now surround the evaluated decision and include an event ledger. This remains deterministic proof, not a live-GitHub observation. |
+| 3 — discarded action receipts | Phase 4 return values were ignored | Receipts are recorded and schema-cross-checked against proposal hash, remote commit/PR/conflict, denied tool references, and result references. Approval-event IDs remain distinct because they identify approvals, not tool calls. |
+| 4 — constant evidence IDs | Proposal-support IDs were reused as run-consumption IDs | Records now cite all 13 evidence IDs actually consumed; the proposal retains its nine supporting IDs. |
+| 5 — absent inconclusive reasons | The finding object was discarded after its outcome check | Exact evidence defects are emitted and scenario-checked by the matrix gate. |
+| 6 — unconstrained `DENIED` | No terminal-state refinement covered denial | `DENIED` now requires sandbox entry, one approval event, a proposal, and an agreeing denied receipt whose call/result references appear in the record. |
+| 7 — retyped conflict SHAs | Conflict values were duplicated literals | Commit and blob are read from the exact evaluated branch snapshot. |
+| 8 — copied Phase 3 fixtures | Reliability owned inline copies outside the frozen fixture pins | It now reads the canonical suspect, deny-all, and contract files and verifies their frozen SHA-256 values at load time. |
+| 9 — mutation failures unrepresentable | The schema only admitted affirmative absence | An `ABSENT`/`OBSERVED` discriminated union records either outcome; changed state/events produce an `OBSERVED` artifact and fail the matrix. |
+| 10 — inconsistent equality | Schema used `JSON.stringify`; harness used canonical JSON | One canonical comparison and a recomputed serialized-checkpoint hash enforce persistence. Redundant affirmative booleans were removed. |
+| 11 — ambiguous approval errors | One message covered two comparisons | Proposal-hash and pending-action mismatches now throw distinct exact messages and tests. |
+| 12 — no retry owner | The harness manually invoked a per-attempt function twice | A tuple-bounded workflow driver owns termination and is the only retry path used by the harness. |
+
+The same remediation removes the unreachable uniqueness check, redundant reconnect comparison, and unused reliability test alias. The two live-only requests from the earlier review remain intentionally unapplied because recreating first-write/PR-creation or an approval-paused reconnect would require resetting the protected fixture state. Operator acceptance of the completed alternate reviews remains required before merge.
 
 Final verification commands:
 
@@ -134,7 +151,7 @@ Final verification commands:
 | `pnpm format:check` | Pass |
 | `pnpm lint` | Pass |
 | `pnpm typecheck` | Pass |
-| `pnpm test` | Pass — 11 files, 88 tests |
+| `pnpm test` | Pass — 11 files, 96 tests |
 | `pnpm build` | Pass |
 | `pnpm bundle:verifier` plus candidate replay | Pass |
 | `pnpm phase5:matrix` | Pass — eight expected/actual matches |
@@ -148,7 +165,7 @@ The frozen references and passing bundle are also captured in [`PHASE_5_RELEASE_
 
 | Role | Frozen commit |
 | --- | --- |
-| Product Phase 5 review-remediated core | `fce34f3ac80a989591e061079d944e6b3a6f62d5` |
+| Product Phase 5 review-remediated core | `263e6a27307a667f08bfa832b436a754c0848a2e` |
 | Product merged Phase 4 base | `12cafa71769fd180afbaa246508cf4d74ac38902` |
 | Fixture suspect base | `7b2f2ad51f9ef97334176fbfed3138465b62fcdb` |
 | Fixture remediation candidate | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |

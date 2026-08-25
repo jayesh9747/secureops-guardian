@@ -14,7 +14,7 @@ This file is navigation and handoff state, not a product specification. The acti
 - Phase 5 deterministic integration, safe-state TrueForge persistence/retry rehearsals, and local gates pass. Development PR [#6](https://github.com/jayesh9747/secureops-guardian/pull/6) is open, non-draft, and unmerged.
 - Current product branch: `phase-5/reliability-persistence`, created from updated `main` at `12cafa71769fd180afbaa246508cf4d74ac38902`.
 - Product `main`: `12cafa71769fd180afbaa246508cf4d74ac38902` after Phase 4 merge and contains reviewed Phase 4 head `b442a9d3765a4063bf98e7f429b8272686dac645`.
-- Frozen Phase 5 review-remediated core: `fce34f3ac80a989591e061079d944e6b3a6f62d5`.
+- Frozen Phase 5 review-remediated core: `263e6a27307a667f08bfa832b436a754c0848a2e`.
 - Controlling proposal hash: `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
 - Remediation PR `jayesh9747/guardian-demo-checkout#1` is open and unmerged at commit `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
@@ -39,7 +39,7 @@ The Phase 5 branch adds one deterministic integration package and no Phase 6 beh
 
 Three consecutive live TrueForge runs against preserved fixture PR #1 returned `PR_REUSED` with six reads, zero write calls, and zero approvals. The middle run reloaded the running session through a fresh connection and preserved the proposal/evidence input and pending reuse-verification instruction. The exact approval-pending reconnect is deterministic integration proof because the current safe remote state already contains the branch and PR.
 
-Qodo's automatic and manual `/review` attempts on PR #6 both reported reviews paused. Qodo supplied no findings or approval. An alternate two-axis standards/spec review completed; applicable findings were resolved in `fce34f3ac80a989591e061079d944e6b3a6f62d5`. Explicit operator acceptance of that alternate review remains required before merge. See the [Phase 5 release checklist](../evidence/PHASE_5_RELEASE_CHECKLIST.md).
+Qodo's automatic and manual `/review` attempts on PR #6 both reported reviews paused. Qodo supplied no findings or approval. An alternate two-axis standards/spec review and a deeper follow-up review completed; all applicable findings were resolved in `263e6a27307a667f08bfa832b436a754c0848a2e`. Explicit operator acceptance of those alternate reviews remains required before merge. See the [Phase 5 release checklist](../evidence/PHASE_5_RELEASE_CHECKLIST.md).
 
 ## Implemented capability boundary
 
@@ -53,7 +53,7 @@ The repository currently contains:
 - A successful post-review TrueForge/Daytona trace in which the supported Phase 2 finding precedes sandbox creation, the model writes the candidate at the exact required path before verification, and the eligible proposal is created only after both candidate and four-state verification pass. The canonical proposal targets the Phase 4 contract branch `guardian/fix-checkout-egress`. See [`PHASE_3_SANDBOX_PROOF.md`](../evidence/PHASE_3_SANDBOX_PROOF.md).
 - Phase 4 exact proposal and candidate-byte binding, deterministic write-call construction, remote-state conflict/reuse decisions, pre-mutation presentation, truthful machine-readable receipts, and minimum-tool TrueForge agent configuration. The repository contains no GitHub client; TrueForge calls the official GitHub MCP directly.
 - Accepted TrueForge denial, approved, and retry traces. Denial writes nothing; approval creates the exact fixture remediation branch, commit, and open PR through three separately approved calls; retry uses reads only and returns the same PR. See [`PHASE_4_APPROVAL_GITHUB_WRITE.md`](../evidence/PHASE_4_APPROVAL_GITHUB_WRITE.md).
-- Phase 5 strict audit records and deterministic orchestration across the evidence, candidate, proposal, remote decision, receipt, and persistence boundaries. Unsafe evidence stops before verifier/proposal/approval, two failed candidates terminate, remote mismatch cannot overwrite, and checkpoint restoration requires the same case, evidence IDs, proposal hash, and pending action. Typed remote results and independently computed before/after snapshot hashes make no-mutation claims schema-checkable; reconnect approval is rejected for a different proposal or pending action.
+- Phase 5 strict audit records and deterministic orchestration across the evidence, candidate, proposal, remote decision, receipt, and persistence boundaries. Actual terminal status is observed independently from expected scenario policy; mismatches remain serializable and fail the CLI gate. Records retain all consumed evidence IDs, exact defects, Phase 4 receipts, typed remote results, and `ABSENT`/`OBSERVED` mutation artifacts. Unsafe evidence stops before verifier/proposal/approval, the tuple-bounded driver terminates after two failed candidates, remote mismatch cannot overwrite, and canonical checkpoint restoration requires the same case, evidence IDs, proposal hash, and pending action.
 - Three safe-state live retry rehearsals plus one native running-session reconnect proof. All use direct exact-head PR listing and preserve the fixture remote state.
 
 The repository does not contain merge/deployment behavior, cluster access, a Guardian persistence database, later-phase UI, or Phase 6 behavior.
@@ -98,7 +98,7 @@ The Phase 5 integration matrix and three safe-state live rehearsals pass. A new 
 - Qodo automatically attempted Phase 4 PR #5 and reported reviews paused for this user. No Phase 4 Qodo findings or approval exist; do not recast its later merge as Qodo approval.
 - The live Phase 5 remote is intentionally not clean: exact fixture PR #1 must remain open. Live rehearsals can prove reuse and running-session persistence, but cannot reach first-write approval or creation without a destructive reset. Do not claim a new live denial/creation proof.
 - Deterministic reconnect proves an approval-pending `CREATE_BRANCH` checkpoint. The live reconnect proves the narrower preserved running-session input and pending reuse-verification action. Do not recast the live run as an approval pause.
-- Qodo's automatic and manual Phase 5 PR #6 attempts reported reviews paused. No Qodo findings or approval exist. The alternate review is complete and remediated, but explicit operator acceptance remains a merge blocker.
+- Qodo's automatic and manual Phase 5 PR #6 attempts reported reviews paused. No Qodo findings or approval exist. Both alternate reviews are complete and remediated, but explicit operator acceptance remains a merge blocker.
 
 ## Handoff update protocol
 

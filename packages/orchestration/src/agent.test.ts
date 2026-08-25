@@ -39,6 +39,9 @@ describe('unified TrueForge manifest', () => {
     const instructions = SECUREOPS_GUARDIAN_AGENT_SPEC.manifest.instructions;
 
     expect(instructions).toContain('ANALYSIS_ONLY permits official GitHub MCP reads only.');
+    expect(instructions).toContain(
+      'call get_commit with full_patch for every descendant after that base through the head',
+    );
 
     for (const requirement of [
       'ANALYSIS_ONLY',

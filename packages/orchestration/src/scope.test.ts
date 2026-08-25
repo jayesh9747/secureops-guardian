@@ -69,4 +69,40 @@ describe('repository scope', () => {
       }),
     ).toThrow('Expected a full Git commit SHA');
   });
+
+  it.each(['../..', './repository', '-owner/repository', 'owner/..'])(
+    'rejects unsafe repository identity %s',
+    (repository) => {
+      expect(() =>
+        parseGuardianRequest({
+          scope: {
+            schema_version: 1,
+            repository,
+            base_branch: 'main',
+            suspect: { kind: 'commit', commit_sha: 'c'.repeat(40) },
+          },
+        }),
+      ).toThrow('Expected an owner/repository pair');
+    },
+  );
+
+  it.each([
+    '..\\..\\etc\\passwd',
+    'k8s/%2e%2e/%2e%2e/secret',
+    'k8s/%252e%252e/secret',
+    'k8s/%252525252e%252525252e/secret',
+    'k8s/a\nb.yaml',
+  ])('rejects unsafe target path %s', (targetFile) => {
+    expect(() =>
+      parseGuardianRequest({
+        scope: {
+          schema_version: 1,
+          repository: 'acme/payments',
+          base_branch: 'main',
+          suspect: { kind: 'commit', commit_sha: 'c'.repeat(40) },
+          target_file: targetFile,
+        },
+      }),
+    ).toThrow('Expected a repository-relative target file');
+  });
 });

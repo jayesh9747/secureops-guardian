@@ -3,9 +3,47 @@ import { z } from 'zod';
 
 export const guardianModeSchema = z.enum(['ANALYSIS_ONLY', 'PREPARE_REMEDIATION', 'OPEN_PR']);
 
-const repositorySchema = z
+export const repositorySchema = z
   .string()
-  .regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u, 'Expected an owner/repository pair.');
+  .max(140)
+  .regex(
+    /^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/u,
+    'Expected an owner/repository pair.',
+  );
+
+function isSafeRepositoryRelativePath(rawPath: string): boolean {
+  let decodedPath = rawPath;
+  for (let pass = 0; pass < rawPath.length; pass += 1) {
+    let nextPath: string;
+    try {
+      nextPath = decodeURIComponent(decodedPath);
+    } catch {
+      return false;
+    }
+    if (nextPath === decodedPath) break;
+    decodedPath = nextPath;
+  }
+
+  if (
+    decodedPath.startsWith('/') ||
+    decodedPath.includes('\\') ||
+    [...decodedPath].some((character) => {
+      const codePoint = character.codePointAt(0) ?? 0;
+      return codePoint <= 31 || (codePoint >= 127 && codePoint <= 159);
+    })
+  ) {
+    return false;
+  }
+
+  const segments = decodedPath.split('/');
+  return segments.every((segment) => segment.length > 0 && segment !== '.' && segment !== '..');
+}
+
+export const repositoryRelativePathSchema = z
+  .string()
+  .min(1)
+  .max(1024)
+  .refine(isSafeRepositoryRelativePath, 'Expected a repository-relative target file.');
 
 const suspectRevisionSchema = z.discriminatedUnion('kind', [
   z
@@ -29,14 +67,7 @@ export const repositoryScopeSchema = z
     repository: repositorySchema,
     base_branch: z.string().min(1),
     suspect: suspectRevisionSchema,
-    target_file: z
-      .string()
-      .min(1)
-      .refine(
-        (path) => !path.startsWith('/') && !path.split('/').includes('..'),
-        'Expected a repository-relative target file.',
-      )
-      .optional(),
+    target_file: repositoryRelativePathSchema.optional(),
   })
   .strict();
 

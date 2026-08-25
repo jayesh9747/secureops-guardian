@@ -7,7 +7,8 @@ import {
 } from '@guardian/shared';
 import { z } from 'zod';
 
-import { GITHUB_WRITE_TOOLS, type GuardianRunPlan } from './plan.js';
+import type { GuardianRunPlan } from './plan.js';
+import { repositorySchema } from './scope.js';
 
 export const REMEDIATION_REPOSITORY_ALLOWLIST = [DEMO_REPOSITORY] as const;
 
@@ -16,7 +17,7 @@ const observedSuspectSchema = z.discriminatedUnion('kind', [
     .object({
       kind: z.literal('commit'),
       commit_sha: fullGitShaSchema,
-      parent_sha: fullGitShaSchema,
+      parent_sha: fullGitShaSchema.nullable(),
     })
     .strict(),
   z
@@ -30,7 +31,7 @@ const observedSuspectSchema = z.discriminatedUnion('kind', [
 
 export const preflightObservationSchema = z
   .object({
-    repository: z.string().min(1),
+    repository: repositorySchema,
     base_branch: z.string().min(1),
     suspect: observedSuspectSchema,
     resolved_target_file: z.string().min(1).nullable(),
@@ -92,28 +93,33 @@ export function evaluatePreflight(plan: GuardianRunPlan, input: unknown) {
   }
   requirements.push(...observation.conflicts);
 
-  const repositorySupported = REMEDIATION_REPOSITORY_ALLOWLIST.includes(
-    observation.repository as (typeof REMEDIATION_REPOSITORY_ALLOWLIST)[number],
-  );
-  if (!repositorySupported) {
-    requirements.push(`Remediation is not supported for repository ${observation.repository}.`);
-  }
-  if (!fixtureRevisionMatches(observation.suspect)) {
-    requirements.push('The revision is not the documented supported NetworkPolicy fixture.');
-  }
-  if (observation.resolved_target_file !== TARGET_NETWORK_POLICY_FILE) {
-    requirements.push(`The supported remediation target is ${TARGET_NETWORK_POLICY_FILE}.`);
-  }
-  if (
-    observation.target_kind !== 'KUBERNETES_NETWORK_POLICY' ||
-    observation.verifier_subset !== 'SUPPORTED'
-  ) {
-    requirements.push(
-      'The target is missing or outside the documented Kubernetes NetworkPolicy verifier subset.',
+  if (plan.mode !== 'ANALYSIS_ONLY') {
+    const repositorySupported = REMEDIATION_REPOSITORY_ALLOWLIST.includes(
+      observation.repository as (typeof REMEDIATION_REPOSITORY_ALLOWLIST)[number],
     );
-  }
-  if (observation.incident_evidence !== 'AVAILABLE') {
-    requirements.push('Complete, non-conflicting incident evidence is required for remediation.');
+    if (!repositorySupported) {
+      requirements.push(`Remediation is not supported for repository ${observation.repository}.`);
+    }
+    if (observation.base_branch !== 'main') {
+      requirements.push('The supported remediation base branch is main.');
+    }
+    if (!fixtureRevisionMatches(observation.suspect)) {
+      requirements.push('The revision is not the documented supported NetworkPolicy fixture.');
+    }
+    if (observation.resolved_target_file !== TARGET_NETWORK_POLICY_FILE) {
+      requirements.push(`The supported remediation target is ${TARGET_NETWORK_POLICY_FILE}.`);
+    }
+    if (
+      observation.target_kind !== 'KUBERNETES_NETWORK_POLICY' ||
+      observation.verifier_subset !== 'SUPPORTED'
+    ) {
+      requirements.push(
+        'The target is missing or outside the documented Kubernetes NetworkPolicy verifier subset.',
+      );
+    }
+    if (observation.incident_evidence !== 'AVAILABLE') {
+      requirements.push('Complete, non-conflicting incident evidence is required for remediation.');
+    }
   }
 
   if (requirements.length > 0) {
@@ -128,32 +134,18 @@ export function evaluatePreflight(plan: GuardianRunPlan, input: unknown) {
     };
   }
 
-  const modeState = {
-    ANALYSIS_ONLY: {
-      outcome: 'ANALYSIS_READY' as const,
-      sandbox_permitted: false,
-      proposal_permitted: false,
-      approval_permitted: false,
-      github_writes_permitted: [] as string[],
-    },
-    PREPARE_REMEDIATION: {
-      outcome: 'REMEDIATION_PREPARATION_READY' as const,
-      sandbox_permitted: true,
-      proposal_permitted: true,
-      approval_permitted: false,
-      github_writes_permitted: [] as string[],
-    },
-    OPEN_PR: {
-      outcome: 'OPEN_PR_READY' as const,
-      sandbox_permitted: true,
-      proposal_permitted: true,
-      approval_permitted: true,
-      github_writes_permitted: [...GITHUB_WRITE_TOOLS],
-    },
+  const outcome = {
+    ANALYSIS_ONLY: 'ANALYSIS_READY' as const,
+    PREPARE_REMEDIATION: 'REMEDIATION_PREPARATION_READY' as const,
+    OPEN_PR: 'OPEN_PR_READY' as const,
   }[plan.mode];
 
   return {
-    ...modeState,
+    outcome,
+    sandbox_permitted: plan.capability_ceiling.daytona_sandbox,
+    proposal_permitted: plan.capability_ceiling.proposal_creation,
+    approval_permitted: plan.capability_ceiling.approval_request,
+    github_writes_permitted: [...plan.capability_ceiling.github_writes],
     missing_or_unsupported_requirements: [] as string[],
     runtime_claims: UNKNOWN_RUNTIME_CLAIMS,
   };

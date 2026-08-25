@@ -45,6 +45,8 @@ describe('Guardian run planning', () => {
     expect(plan.capability_ceiling).toEqual({
       incident_fixture_reads: false,
       daytona_sandbox: false,
+      proposal_creation: false,
+      approval_request: false,
       github_writes: [],
     });
   });
@@ -55,7 +57,47 @@ describe('Guardian run planning', () => {
     expect(plan.capability_ceiling).toEqual({
       incident_fixture_reads: true,
       daytona_sandbox: true,
+      proposal_creation: true,
+      approval_request: false,
       github_writes: [],
+    });
+  });
+
+  it('plans a comparison as an enumerated range instead of two point-commit patches', () => {
+    const baseSha = 'a'.repeat(40);
+    const headSha = 'b'.repeat(40);
+    const plan = planGuardianRun({
+      scope: {
+        ...arbitraryScope,
+        suspect: { kind: 'comparison', base_sha: baseSha, head_sha: headSha },
+      },
+    });
+
+    expect(plan.preflight.github_reads).toContainEqual({
+      tool: 'list_commits',
+      arguments: {
+        owner: 'octo-org',
+        repo: 'arbitrary-repository',
+        sha: headSha,
+        perPage: 100,
+      },
+    });
+    expect(
+      plan.preflight.github_reads.some(
+        (read) => read.tool === 'get_commit' && read.arguments.sha === baseSha,
+      ),
+    ).toBe(false);
+    expect(plan.preflight.comparison_range).toEqual({
+      base_sha: baseSha,
+      head_sha: headSha,
+      fetch_each_descendant_patch_with: {
+        tool: 'get_commit',
+        arguments: {
+          owner: 'octo-org',
+          repo: 'arbitrary-repository',
+          detail: 'full_patch',
+        },
+      },
     });
   });
 });

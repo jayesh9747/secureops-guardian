@@ -10,16 +10,16 @@ This file is navigation and handoff state, not a product specification. The acti
 
 ## Current state
 
-- Completed and merged: Phase 0 through Phase 5. Phase 5 PR [#6](https://github.com/jayesh9747/secureops-guardian/pull/6) merged without Qodo approval after its paused responses and the recorded alternate review.
-- Phase 6 presentation implementation, visual verification, public documentation, demo narrative, and submission preparation are complete on open development PR [#7](https://github.com/jayesh9747/secureops-guardian/pull/7). Operator recording, upload, alternate-review acceptance, and submission remain.
-- Current product branch: `phase-6/ui-quality-submission`, created from updated `main` at `fce4424be5461b2272dfbdd15c3d545d0c1e06e1`.
-- Product `main`: `fce4424be5461b2272dfbdd15c3d545d0c1e06e1` after the Phase 5 merge and contains documentation head `1777bfd070ac1ebd34e23a604767ae2e703c36ad`.
+- Completed and merged: Phase 0 through Phase 6. Phase 6 PR [#7](https://github.com/jayesh9747/secureops-guardian/pull/7) merged as `8fde66dfcd7f537f70192246ee3a7eb7173f53ba` after the operator's alternate-review remediation and acceptance.
+- Phase 7 unified-agent implementation is in progress on `phase-7/unified-guardian`, created from updated `main` at `8fde66dfcd7f537f70192246ee3a7eb7173f53ba`.
+- Product `main`: `8fde66dfcd7f537f70192246ee3a7eb7173f53ba` after the Phase 6 merge.
 - Frozen Phase 5 review-remediated core: `263e6a27307a667f08bfa832b436a754c0848a2e`.
 - Controlling proposal hash: `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
 - Remediation PR `jayesh9747/guardian-demo-checkout#1` is open and unmerged at commit `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
 - Saved TrueForge agent `01m0t4gpvz34x60qz6fxqz214d` now byte-matches the merged Phase 4 instructions, enables direct `list_pull_requests`, and separately approval-gates all three writes.
-- Saved Phase 6 TrueForge agent `01m0vvphezaejvtcxgf9z972ed` inherits the Phase 4 tools and approvals and enables stock Generative UI.
+- Saved TrueForge agent `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, now contains the unified Phase 7 manifest: official GitHub MCP reads/writes, Fixture MCP reads, Daytona, dynamic children, all three write approvals, stock Generative UI, and ask-user support restricted by instruction to missing scope before tools.
+- Phase-named saved agents remain only as historical test fixtures/reference configurations.
 - The TrueForge worktree has an operator-owned `docker-compose.yml` change. Preserve it and keep it out of product commits.
 
 ## Completed gates
@@ -32,16 +32,17 @@ This file is navigation and handoff state, not a product specification. The acti
 | 3 — sandbox proof | `jayesh9747/secureops-guardian#4` | Operator accepted Claude review after Qodo remained unavailable; review-remediated head `ae6e75236bbc8ccfb17fe563837b944d9d5fdb2c` | `382e57da8e2b6aae1ed6f0fee19ffd12c017cbac` | [`PHASE_3_SANDBOX_PROOF.md`](../evidence/PHASE_3_SANDBOX_PROOF.md) |
 | 4 — approval and GitHub write | `jayesh9747/secureops-guardian#5` | `b442a9d3765a4063bf98e7f429b8272686dac645` | `12cafa71769fd180afbaa246508cf4d74ac38902` | [`PHASE_4_APPROVAL_GITHUB_WRITE.md`](../evidence/PHASE_4_APPROVAL_GITHUB_WRITE.md) |
 | 5 — reliability and persistence | `jayesh9747/secureops-guardian#6` | `263e6a27307a667f08bfa832b436a754c0848a2e` | `fce4424be5461b2272dfbdd15c3d545d0c1e06e1` | [`PHASE_5_RELIABILITY_PERSISTENCE.md`](../evidence/PHASE_5_RELIABILITY_PERSISTENCE.md) |
+| 6 — UI, quality, submission | `jayesh9747/secureops-guardian#7` | `71835c282406d001e945243717c37068c441ed01` | `8fde66dfcd7f537f70192246ee3a7eb7173f53ba` | [`PHASE_6_UI_QUALITY_SUBMISSION.md`](../evidence/PHASE_6_UI_QUALITY_SUBMISSION.md) |
 
 Read a completed phase's plan or evidence only when verifying its prerequisite, reproducing its trace, or diagnosing a regression.
 
-## Active Phase 6 gate
+## Active Phase 7 gate
 
-Phase 6 consumes the frozen structured outputs without changing the evidence, verifier, proposal, approval, receipt, mutation, or persistence gates. The presentation schema covers ready, denied, created, reused, inconclusive, conflict, and no-safe terminal results. Action receipts must match the bound proposal hash, fixed GitHub target, and pull-request URL before presentation. The stock OpenUI renderer has a separate complete Markdown recovery rendering and is exercised by a nine-case matrix. See [`PHASE_6_UI_QUALITY_SUBMISSION.md`](../evidence/PHASE_6_UI_QUALITY_SUBMISSION.md).
+Phase 7 replaces phase selection with one saved root agent. The new `@guardian/orchestration` package validates a stable repository scope, establishes the `ANALYSIS_ONLY`, `PREPARE_REMEDIATION`, and `OPEN_PR` capability ceilings, parameterizes arbitrary-repository read-only preflight, composes the frozen Phase 2-6 modules for the exact supported fixture, and emits a cross-stage machine-readable run receipt.
 
-The Phase 6 TrueForge manifest inherits the exact Phase 4 MCP tool and approval lists and enables only presentation-related Generative UI behavior. No custom frontend, dashboard, or new agent workflow is introduced.
+The current deterministic Phase 7 suite proves the three modes, arbitrary repository parameterization, unsupported/missing-evidence fail-closed behavior, prompt-injection non-influence, source-identity mismatches, exact proposal and remote-content conflicts, exact PR reuse, retained approval selectors, and the current-fixture composed journey. See [`PHASE_7_UNIFIED_GUARDIAN.md`](../../plans/secureops-guardian-hackathon/PHASE_7_UNIFIED_GUARDIAN.md); the final evidence record is [`PHASE_7_UNIFIED_GUARDIAN.md`](../evidence/PHASE_7_UNIFIED_GUARDIAN.md).
 
-Phase 6 visual verification, available public-link validation, official-rules reconciliation, and alternate review are recorded. The required README Qodo evidence section links merged PR #3 and its two completed review passes. Phase 6's official `/agentic_review` request remained paused and supplied no approval. Recording/upload, submission-form access, and final operator acceptance remain open in the Phase 6 checklist.
+The entry gate is satisfied: Phase 6 is merged, fixture PR #1 remains open/unmerged at the exact remediation head, updated `main` was used, and the operator-owned TrueForge compose change remains untouched. Full verification, review, evidence completion, and the non-draft Phase 7 PR remain.
 
 ## Implemented capability boundary
 
@@ -58,8 +59,9 @@ The repository currently contains:
 - Phase 5 strict audit records and deterministic orchestration across the evidence, candidate, proposal, remote decision, receipt, and persistence boundaries. Actual terminal status is observed independently from expected scenario policy; mismatches remain serializable and fail the CLI gate. Records retain all consumed evidence IDs, exact defects, Phase 4 receipts, typed remote results, and `ABSENT`/`OBSERVED` mutation artifacts. Unsafe evidence stops before verifier/proposal/approval, the tuple-bounded driver terminates after two failed candidates, remote mismatch cannot overwrite, and canonical checkpoint restoration requires the same case, evidence IDs, proposal hash, and pending action.
 - Three safe-state live retry rehearsals plus one native running-session reconnect proof. All use direct exact-head PR listing and preserve the fixture remote state.
 - Phase 6 strict presentation schema and adapters that consume the existing investigation, proof, proposal binding, receipt, and Phase 5 run records; receipt-to-proposal/target cross-checks; stock OpenUI and Markdown recovery renderers; a nine-case presentation matrix; exact trace captions; and public README/demo/submission artifacts.
+- Phase 7 stable request/scope schemas, parameterized read-only preflight, hard mode ceilings, fail-closed support evaluation, exact OPEN_PR artifact composition, cross-stage receipt hashing/validation, a composed current-fixture journey, prompt templates, one unified exported/saved manifest, and migration documentation.
 
-The repository does not contain merge/deployment behavior, cluster access, a Guardian persistence database, custom TrueForge frontend, separate dashboard, new agent workflow, or Phase 7 behavior.
+The repository does not contain merge/deployment behavior, cluster access, a Guardian persistence database, custom TrueForge frontend, separate dashboard, broad vulnerability remediation, or general incident response.
 
 ## Immutable fixture references
 
@@ -102,7 +104,8 @@ The Phase 5 integration matrix and three safe-state live rehearsals pass. A new 
 - The live Phase 5 remote is intentionally not clean: exact fixture PR #1 must remain open. Live rehearsals can prove reuse and running-session persistence, but cannot reach first-write approval or creation without a destructive reset. Do not claim a new live denial/creation proof.
 - Deterministic reconnect proves an approval-pending `CREATE_BRANCH` checkpoint. The live reconnect proves the narrower preserved running-session input and pending reuse-verification action. Do not recast the live run as an approval pause.
 - Qodo's automatic and manual Phase 5 PR #6 attempts reported reviews paused. No Qodo findings or approval exist. Alternate reviews were completed and remediated; PR #6 later merged, but the merge and alternate reviews must not be recast as Qodo approval.
-- Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. Alternate review findings were remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`; operator acceptance remains required before any merge.
+- Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. Alternate review findings were remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`; the operator subsequently merged PR #7.
+- The unified saved manifest attaches write tools because `OPEN_PR` needs them. `ANALYSIS_ONLY` and `PREPARE_REMEDIATION` exclusion is enforced by the mode contract and typed planning/receipt gates, while TrueForge separately enforces approval if a write is reached. Dynamic roles remain instruction-scoped rather than hard per-mode tool isolation.
 
 ## Handoff update protocol
 

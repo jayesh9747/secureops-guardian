@@ -1,5 +1,7 @@
 # Phase 7 — retained prize-strengthening features
 
+> Historical roadmap: the operator's Phase 7 unified-agent request supersedes this file as the active Phase 7 implementation contract. See [`PHASE_7_UNIFIED_GUARDIAN.md`](./PHASE_7_UNIFIED_GUARDIAN.md). These items remain post-core backlog and are not silently added to the unified-agent change.
+
 Timebox: only hours remaining after Phase 6 is submission-ready. This phase is outside the baseline 38-hour commitment.
 
 ## Goal
@@ -88,4 +90,3 @@ For each promoted feature:
 ## Exit gate
 
 Phase 7 never blocks submission. Its output is either a fully tested promoted feature or an unchanged roadmap item with no partial code in the release branch.
-

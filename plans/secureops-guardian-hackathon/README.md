@@ -55,7 +55,8 @@ Phase 7 retains deferred features. Retention means they remain ordered and speci
 | 5 | [Reliability and persistence](./PHASE_5_RELIABILITY_PERSISTENCE.md) | 4 h | Missing evidence fails closed, reconnect resumes, and three rehearsals pass |
 | 6 | [UI, quality, and submission](./PHASE_6_UI_QUALITY_SUBMISSION.md) | 4 h | Judge-readable card, reviewed repo, runnable README, and recorded demo |
 | — | Emergency buffer | 2 h | Submission-critical recovery only |
-| 7 | [Retained prize-strengthening features](./PHASE_7_RETAINED_FEATURES.md) | Extra time | Features promoted individually after the core is frozen |
+| 7 | [Unified SecureOps Guardian](./PHASE_7_UNIFIED_GUARDIAN.md) | Post-core | One saved agent composes the frozen Phase 2-6 contracts |
+| Backlog | [Retained prize-strengthening features](./PHASE_7_RETAINED_FEATURES.md) | Post-core | Historical ordered backlog after unified-agent delivery |
 | Post-event | [TrueForge subagent boundary proposal](./POST_HACKATHON_SUBAGENT_BOUNDARIES.md) | Outside event | Evidence-backed upstream feature request |
 
 Baseline total: 38 hours including buffer.

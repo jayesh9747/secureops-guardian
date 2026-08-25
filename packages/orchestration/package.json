@@ -1,0 +1,21 @@
+{
+  "name": "@guardian/orchestration",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@guardian/github-write": "workspace:*",
+    "@guardian/investigation": "workspace:*",
+    "@guardian/policy-verifier": "workspace:*",
+    "@guardian/presentation": "workspace:*",
+    "@guardian/reliability": "workspace:*",
+    "@guardian/shared": "workspace:*",
+    "zod": "4.4.3"
+  }
+}

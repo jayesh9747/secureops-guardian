@@ -96,6 +96,18 @@ The sandbox verifier is a deterministic policy model for this owned fixture, not
 
 ## Product contract
 
+### Phase 7 unified entry point
+
+Users interact only with the saved TrueForge agent `secureops-guardian_v0`. Phase-named saved agents and exported specifications are retained as test fixtures/reference configurations, not product choices.
+
+Every run starts with a schema-version-1 scope containing repository, base branch, an exact full-SHA suspect commit or comparison range, and an optional target file. `ANALYSIS_ONLY` is the default and permits GitHub reads only; `PREPARE_REMEDIATION` may use Daytona and create an exact proposal but cannot request approval or write; `OPEN_PR` may reach the separately approval-gated GitHub write sequence after all retained gates pass.
+
+Any repository authorized by the official GitHub MCP may enter parameterized read-only preflight. Initial proven remediation remains limited to allowlisted Kubernetes NetworkPolicy cases inside the documented static verifier subset. Unsupported repositories/semantics, missing incident evidence, source-identity mismatches, and conflicting revisions return `INCONCLUSIVE` before Daytona, proposal, approval, or write.
+
+The one journey is: scope preflight → official GitHub investigation → optional owned incident-evidence join → deterministic rule evaluation → Daytona proof when permitted → exact proposal → approval-bound GitHub write or read-only reuse when permitted → OpenUI or Markdown plus a machine-readable run receipt.
+
+GitHub-only analysis never claims deployment, runtime exposure, data access, exfiltration, or live-cluster behavior. The truthful breadth claim is: Guardian can inspect any authorized GitHub repository in read-only mode; proven remediation currently supports Kubernetes NetworkPolicy cases inside its documented static verifier subset.
+
 ### Inputs
 
 - One security exposure alert naming the checkout workload.

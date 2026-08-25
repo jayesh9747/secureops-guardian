@@ -85,6 +85,30 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
+  packages/orchestration:
+    dependencies:
+      '@guardian/github-write':
+        specifier: workspace:*
+        version: link:../github-write
+      '@guardian/investigation':
+        specifier: workspace:*
+        version: link:../investigation
+      '@guardian/policy-verifier':
+        specifier: workspace:*
+        version: link:../policy-verifier
+      '@guardian/presentation':
+        specifier: workspace:*
+        version: link:../presentation
+      '@guardian/reliability':
+        specifier: workspace:*
+        version: link:../reliability
+      '@guardian/shared':
+        specifier: workspace:*
+        version: link:../shared
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+
   packages/policy-verifier:
     dependencies:
       '@guardian/shared':

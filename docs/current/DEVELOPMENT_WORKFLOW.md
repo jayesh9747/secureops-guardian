@@ -13,7 +13,7 @@
 | 4 | `phase-4/github-approval-write` |
 | 5 | `phase-5/reliability-persistence` |
 | 6 | `phase-6/ui-quality-submission` |
-| 7 feature | `phase-7/<bounded-feature>` |
+| 7 | `phase-7/unified-guardian` |
 
 Open one PR per phase. Later-phase work begins from updated `main` only after the previous phase PR is merged.
 
@@ -52,4 +52,3 @@ The implementing session finishes with:
 - Phase exit-gate evidence.
 - Remaining blockers or risks.
 - Explicit confirmation that no later phase was implemented.
-

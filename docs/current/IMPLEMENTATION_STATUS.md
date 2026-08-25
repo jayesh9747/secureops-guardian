@@ -41,7 +41,7 @@ Phase 6 consumes the frozen structured outputs without changing the evidence, ve
 
 The Phase 6 TrueForge manifest inherits the exact Phase 4 MCP tool and approval lists and enables only presentation-related Generative UI behavior. No custom frontend, dashboard, or new agent workflow is introduced.
 
-Phase 6 visual verification, available public-link validation, and alternate review are recorded. Qodo remained paused and supplied no approval. Recording/upload, submission links, and final operator acceptance remain open in the Phase 6 checklist.
+Phase 6 visual verification, available public-link validation, official-rules reconciliation, and alternate review are recorded. The required README Qodo evidence section links merged PR #3 and its two completed review passes. Phase 6's official `/agentic_review` request remained paused and supplied no approval. Recording/upload, submission-form access, and final operator acceptance remain open in the Phase 6 checklist.
 
 ## Implemented capability boundary
 
@@ -102,7 +102,7 @@ The Phase 5 integration matrix and three safe-state live rehearsals pass. A new 
 - The live Phase 5 remote is intentionally not clean: exact fixture PR #1 must remain open. Live rehearsals can prove reuse and running-session persistence, but cannot reach first-write approval or creation without a destructive reset. Do not claim a new live denial/creation proof.
 - Deterministic reconnect proves an approval-pending `CREATE_BRANCH` checkpoint. The live reconnect proves the narrower preserved running-session input and pending reuse-verification action. Do not recast the live run as an approval pause.
 - Qodo's automatic and manual Phase 5 PR #6 attempts reported reviews paused. No Qodo findings or approval exist. Alternate reviews were completed and remediated; PR #6 later merged, but the merge and alternate reviews must not be recast as Qodo approval.
-- Qodo's automatic and manual Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. The alternate two-axis review was remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`; operator acceptance remains required before any merge.
+- Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. The alternate two-axis review was remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`; operator acceptance remains required before any merge.
 
 ## Handoff update protocol
 

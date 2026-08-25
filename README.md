@@ -171,6 +171,14 @@ node packages/policy-verifier/dist/cli.bundle.cjs \
 | Demo cannot reach first write | Expected: PR #1 exists. Use truthful read-only reuse; never reset remote state. |
 | Verifier claims live behavior | Reject the claim; the verifier is static fixture-contract analysis only. |
 
+## Qodo Code Review Evidence
+
+Representative merged PR [#3](https://github.com/jayesh9747/secureops-guardian/pull/3) contains the Phase 2 investigation and evidence-validation implementation. Qodo's first deep review found three `High` gaps: the target-file finding was not bound to the exact diff/blob evidence, the reconstructed NetworkPolicy was not tied to its complete bounded identity, and trusted evidence labels could front fabricated payloads. Commit [`2fa5749`](https://github.com/jayesh9747/secureops-guardian/commit/2fa5749e4b07f09f131dd2f9f7ce4f3d4470edd0) fixed all three with exact provenance checks, full manifest validation, canonical fixture comparisons, and adversarial tests.
+
+Qodo's follow-up confirmed those findings resolved and surfaced two `Medium` issues: clean-checkout tests could depend on ignored build output, and requiring explicit `policyTypes: [Egress]` caused a false negative for an otherwise exact egress rule. Commit [`9b95dfb`](https://github.com/jayesh9747/secureops-guardian/commit/9b95dfb024d4408c057c9afa1138e500f5d5f7fc) fixed both. The review threads, evidence-backed replies, resolutions, and follow-up history remain visible on [PR #3](https://github.com/jayesh9747/secureops-guardian/pull/3); the detailed record is in the [Phase 2 evidence](./docs/evidence/PHASE_2_AGENT_INVESTIGATION.md#qodo-review). A final additional request was paused, so no later Qodo approval is claimed.
+
+For Phase 6, Qodo's automatic attempt, an earlier manual request, and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407199824) on [PR #7](https://github.com/jayesh9747/secureops-guardian/pull/7) were paused for this user. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407200657) contains no findings or approval. An alternate two-axis review found one receipt-binding issue; commit [`33b9e51`](https://github.com/jayesh9747/secureops-guardian/commit/33b9e51282f73dce0a8afeb07bd20dd0a53edc74) fixed it with fail-closed proposal/target/PR checks and adversarial tests.
+
 ## AI-assistance disclosure
 
 AI coding assistants supported planning, implementation, tests, documentation, and review. The operator retained responsibility for scope, credentials, approvals, writes, evidence interpretation, review acceptance, recording, visibility, and submission. A paused Qodo response is never presented as approval.

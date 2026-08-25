@@ -79,6 +79,14 @@ The three distinct inconclusive fixtures remain covered in the nine-case automat
 
 Recording, upload, video visibility, submission-form access, final signed-out video validation, and submission remain operator-only.
 
+## Official rules reconciliation
+
+The current [TrueForge event page](https://www.wemakedevs.org/hackathons/trueforge) and [official rules](https://www.wemakedevs.org/hackathons/trueforge/rules) were rechecked on 25 August 2026. The published deadline is 30 August 2026 at 20:00 London time. Submission requires the event-site form, a public source repository with a clear README, an approximately three-minute demo, and a short TrueForge write-up.
+
+The rules also require Qodo use and an exact `## Qodo Code Review Evidence` README section linking a representative merged PR, summarizing findings and changes, and preserving review/follow-up history. The README now points to merged product PR #3, its two completed Qodo review passes, all five remediated findings, and the visible follow-up record. It separately records that Phase 6's official `/agentic_review` request was paused and claims no Qodo approval.
+
+The primary demo sequence now visibly includes the preserved real Phase 4 approval pauses and three separately approved GitHub writes, followed by the current read-only retry trace. This truthfully demonstrates the human approval boundary without mutating or resetting the fixture merely for recording.
+
 ## Verification
 
 Reviewed implementation head: `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`.
@@ -104,7 +112,7 @@ Reviewed implementation head: `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`.
 
 ## Review
 
-Development PR [#7](https://github.com/jayesh9747/secureops-guardian/pull/7) is open, non-draft, and unmerged. Qodo's automatic attempt and the manual [`/review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407056420) both received the exact result “reviews are paused for this user.” Qodo produced no findings and no approval, so none is claimed.
+Development PR [#7](https://github.com/jayesh9747/secureops-guardian/pull/7) is open, non-draft, and unmerged. Qodo's automatic attempt, the earlier manual [`/review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407056420), and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407199824) all received the result that reviews are paused for this user. The official command's [paused response](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407200657) contains no findings or approval, so none is claimed.
 
 The alternate two-axis review found no hard standards violations. Its actionable spec finding was that presentation adapters needed to cross-check the receipt/record proposal hash and fixed GitHub target against the bound proposal. Commit `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` adds those fail-closed checks and adversarial hash, target, and PR-URL tests. It also removes duplicated verified-presentation assembly and consolidates display metadata.
 

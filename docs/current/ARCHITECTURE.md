@@ -34,9 +34,9 @@ TrueForge remains the sole agent harness. It owns the model loop, dynamic childr
 `@guardian/orchestration` places the Phase 7 seam above the retained Phase 2-6 modules. Its small public interface is:
 
 - `parseGuardianRequest`: validates schema-version-1 scope and defaults the mode.
-- `planGuardianRun`: parameterizes read-only preflight and establishes the mode capability ceiling.
+- `planGuardianRun`: parameterizes read-only preflight, including range enumeration plus descendant-patch reads for comparisons, and establishes the single mode capability ceiling.
 - `evaluatePreflight`: compares observed source identities to scope and support requirements.
-- `runCurrentFixtureJourney`: deterministic integration of the existing investigation, verifier, proposal, remote, receipt, and presentation modules.
+- `runCurrentFixtureJourney`: consumes an explicit validated observation/remote-state context and composes the existing investigation, verifier, proposal, remote, receipt, and presentation modules.
 - `buildGuardianRunReceipt`: validates and hashes the cross-stage machine-readable receipt.
 - `SECUREOPS_GUARDIAN_AGENT_SPEC`: the one exported TrueForge manifest.
 
@@ -74,7 +74,9 @@ The final manifest attaches the Fixture and write tools so one saved agent can e
 
 ## Read breadth and remediation depth
 
-Any repository authorized by the configured official GitHub MCP may enter parameterized read-only preflight. Preflight uses only the supplied repository, branch, exact full SHA/range, and optional file. Repository text and tool output are untrusted evidence.
+Any repository authorized by the configured official GitHub MCP may enter parameterized read-only preflight. Preflight uses only the supplied repository, branch, exact full SHA/range, and optional file. A comparison enumerates ancestry from its exact head to its exact base and reads the patch of every descendant in the range; it never substitutes the base commit's unrelated parent diff. Repository text and tool output are untrusted evidence.
+
+The composed journey receives observed GitHub identities and remote state explicitly. It returns the exact preflight requirements in an `INCONCLUSIVE` receipt, consumes the preflight permission flags before entering later stages, and calls the retained OPEN_PR artifact gate before any Phase 5 action result is accepted.
 
 The initial remediation allowlist is `jayesh9747/guardian-demo-checkout`. Proven remediation covers the exact checkout Kubernetes NetworkPolicy fixture inside the verifier's documented static subset. Other repositories, files, revisions, or semantics return `INCONCLUSIVE` after preflight with the missing or unsupported requirements and without Daytona, proposal, approval, or writes.
 

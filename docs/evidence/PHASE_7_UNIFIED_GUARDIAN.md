@@ -8,7 +8,7 @@ Scope: Phase 7 only
 
 ## Result
 
-Phase 7 replaces the phase-named operator entry points with one saved TrueForge agent named `secureops-guardian`. Its parameterized scope and three explicit modes preserve the Phase 2-6 evidence, verifier, proposal, remote, approval, receipt, and presentation gates:
+Phase 7 replaces the phase-named operator entry points with one saved TrueForge agent named `secureops-guardian_v0`. Its parameterized scope and three explicit modes preserve the Phase 2-6 evidence, verifier, proposal, remote, approval, receipt, and presentation gates:
 
 - `ANALYSIS_ONLY` uses official GitHub MCP reads only and never calls the Fixture MCP, enters Daytona, creates a proposal, requests approval, or calls a GitHub write.
 - `PREPARE_REMEDIATION` may enter Daytona and return an exact eligible proposal, but never requests approval or calls a GitHub write.
@@ -46,13 +46,13 @@ The attached tool inventory is not authorization. `ANALYSIS_ONLY` prohibits Fixt
 
 | Artifact | Value |
 | --- | --- |
-| Saved TrueForge name | `secureops-guardian` |
-| Saved TrueForge ID | `01m0vvphezaejvtcxgf9z972ed` |
+| Saved TrueForge name | `secureops-guardian_v0` |
+| Saved TrueForge ID | `01m0w6s2eyqtzyb6q4y6ppsta9` |
 | Portable export | [`exports/secureops-guardian.trueforge.json`](../../exports/secureops-guardian.trueforge.json) |
 | Prompt templates | [`docs/current/PHASE_7_PROMPTS.md`](../current/PHASE_7_PROMPTS.md) |
 | Migration guide | [`docs/current/PHASE_7_MIGRATION.md`](../current/PHASE_7_MIGRATION.md) |
 
-The saved record was updated in place and read back from TrueForge. The response confirmed sandbox and file downloads enabled, dynamic subagents enabled, Generative UI enabled, ask-user questions enabled, the exact combined tool inventory, and approvals on exactly the three GitHub writes. Historical phase-named saved agents were not deleted or modified.
+TrueForge agent names are immutable, so the replacement record was created and read back from TrueForge. The response confirmed sandbox and file downloads enabled, dynamic subagents enabled, Generative UI enabled, ask-user questions enabled, the exact combined tool inventory, and approvals on exactly the three GitHub writes. The predecessor `secureops-guardian` remains saved so historical reference sessions continue to resolve; phase-named fixtures were not modified.
 
 ## Deterministic mode matrix
 
@@ -109,7 +109,7 @@ The final remote reconciliation used `list_branches`, exact open `list_pull_requ
 | `pnpm format:check` | Pass |
 | `pnpm lint` | Pass |
 | `pnpm typecheck` | Pass |
-| `pnpm test` | Pass — 19 files, 151 tests |
+| `pnpm test` | Pass — 19 files, 172 tests |
 | `pnpm build` | Pass |
 | `pnpm bundle:verifier` plus candidate replay | Pass — `SECURITY_REMEDIATION_READY` |
 | `pnpm phase5:matrix` | Pass — eight expected/actual matches |
@@ -122,9 +122,11 @@ The final remote reconciliation used `list_branches`, exact open `list_pull_requ
 
 Development PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) is open, non-draft, and unmerged. Qodo's automatic attempt and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513497) both received the result that reviews are paused for this user. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513076) contains no findings or approval, so none is claimed.
 
-The alternate standards/spec review found two cross-stage gaps. First, the stable schema accepted the exact parent-to-suspect comparison, but the composed fixture journey always supplied a commit-shaped preflight observation and rejected that valid range. Second, the run-receipt validator bound action content when present but did not require proof/proposal stages for actionable terminal states or an exact proposal for `SECURITY_REMEDIATION_READY`. The review-remediation commit routes both supported revision forms through one journey and adds adversarial receipt tests for missing action receipts, missing proposals, bypassed proof stages, and valid fail-closed preflight receipts. The earlier pre-PR spec audit separately tightened `ANALYSIS_ONLY` from optional Fixture reads to official GitHub MCP reads only and makes every runtime claim `Unknown`.
+The consolidated alternate review reported 15 findings (G-01 through G-15). The reproductions exposed four root causes: remediation-only checks were applied to every mode; fixture constants stood in for observed identities; computed capability and OPEN_PR gates were not load-bearing; and raw-string/error-boundary validation was incomplete.
 
-No standards-axis blocker remained after remediation. The package keeps the public orchestration seam above the retained Phase 2-6 modules, preserves strict schemas at trust boundaries, and contains no second runtime or custom GitHub client. Operator acceptance of this alternate review remains required before merge.
+Remediation now separates general analysis from remediation eligibility, enumerates full comparison ancestry and descendant patches, normalizes repository/path identities, validates observed repository identity, enforces receipt tool-reference/runtime invariants, emits fail-closed receipts, accepts an omitted target only when the exact proposal resolves it, renders the supplied scope, consumes the single capability ceiling and preflight flags, calls the OPEN_PR artifact gate, reuses the Phase 6 controlling artifact builder, and catches only typed remote-validation errors. All reported reproductions are regression tests. The follow-up Standards review also corrected stale saved-agent and review claims in this evidence record and the implementation status.
+
+No standards- or spec-axis blocker remained after remediation. The package keeps the public orchestration seam above the retained Phase 2-6 modules, preserves strict schemas at trust boundaries, and contains no second runtime or custom GitHub client. Operator acceptance of this alternate review remains required before merge.
 
 ## Safety conclusion
 

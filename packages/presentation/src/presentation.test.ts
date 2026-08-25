@@ -250,6 +250,26 @@ describe('stock TrueForge OpenUI rendering matrix', () => {
     }
   });
 
+  it('keeps the run receipt behind one disclosure in the primary OpenUI response', () => {
+    const reused = matrix.find(({ scenario }) => scenario === 'pr-reused');
+    expect(reused).toBeDefined();
+    if (reused === undefined) return;
+
+    const response = renderGuardianResponse(reused.presentation, {
+      runReceipt: {
+        schema_version: 1,
+        receipt_id: 'guardian-run:sha256:fixture',
+        terminal_status: 'PR_REUSED',
+      },
+    });
+
+    expect(response.match(/```openui/gu)).toHaveLength(1);
+    expect(response).toContain('TabItem("receipt", "Run receipt"');
+    expect(response).toContain('CodeBlock("json"');
+    expect(response).not.toContain('## SecureOps Guardian');
+    expect(response).not.toContain('Journey Trace & Execution Log');
+  });
+
   it('escapes free-text pipe characters inside Markdown verifier tables', () => {
     const noSafe = matrix.find(({ scenario }) => scenario === 'no-safe-remediation');
     const ready = matrix.find(({ scenario }) => scenario === 'remediation-ready');
@@ -310,5 +330,11 @@ describe('Phase 6 TrueForge configuration and trace labels', () => {
     for (const label of GUARDIAN_TRACE_SEQUENCE) {
       expect(PHASE_SIX_AGENT_SPEC.manifest.instructions).toContain(label);
     }
+    expect(PHASE_SIX_AGENT_SPEC.manifest.instructions).toContain(
+      'Do not print a Journey Trace & Execution Log',
+    );
+    expect(PHASE_SIX_AGENT_SPEC.manifest.instructions).toContain(
+      'TrueForge Investigation rail owns the execution trace',
+    );
   });
 });

@@ -108,7 +108,7 @@ Do not enable merge, branch deletion, Actions, secrets, administration, issues, 
 
 ### Stock Generative UI
 
-Use [`SECUREOPS_GUARDIAN_AGENT_SPEC`](./packages/orchestration/src/agent.ts) or import the saved [TrueForge export](./exports/secureops-guardian.trueforge.json). It enables the official GitHub MCP, Fixture MCP, Daytona, dynamic children, persistence-compatible session behavior, ask-user for missing scope only after an investigation intent, and stock Generative UI in one manifest. Greetings and capability questions receive direct tool-free responses. Keep the stock TrueForge frontend.
+Use [`SECUREOPS_GUARDIAN_AGENT_SPEC`](./packages/orchestration/src/agent.ts) or import the saved [TrueForge export](./exports/secureops-guardian.trueforge.json). It enables the official GitHub MCP, Fixture MCP, Daytona, dynamic children, persistence-compatible session behavior, ask-user for missing scope only after an investigation intent, and stock Generative UI in one manifest. Greetings and capability questions receive direct tool-free responses. The Guardian adds no separate dashboard: its result stays in chat, while the companion TrueForge Investigation rail presents child-agent, MCP, sandbox, approval, timing, and failure events from the canonical session history.
 
 ## Unified prompts and expected outcome
 

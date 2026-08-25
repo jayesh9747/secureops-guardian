@@ -12,6 +12,7 @@ This file is navigation and handoff state, not a product specification. The acti
 
 - Completed and merged: Phase 0 through Phase 7. Phase 7 PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) merged as `cfa65ef288d2ae615c1dd2d58d1086655177420c` after the operator's alternate-review remediation and acceptance.
 - The post-merge greeting-intent regression is corrected on `fix/greeting-intent-routing`, created from the merged Phase 7 `main`.
+- Post-Phase 7 result-contract work is in progress on `feat/trace-ui-result-contract`. It removes duplicated platform-event narration from the final Guardian response, keeps exactly one primary rendering, and places the machine-readable receipt in the OpenUI `Run receipt` tab. The companion TrueForge UI work is isolated on `feat/agent-execution-trace-ui`; neither branch is represented here as merged or deployed.
 - Product `main`: `cfa65ef288d2ae615c1dd2d58d1086655177420c` after the Phase 7 merge.
 - Frozen Phase 5 review-remediated core: `263e6a27307a667f08bfa832b436a754c0848a2e`.
 - Controlling proposal hash: `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
@@ -63,6 +64,7 @@ The repository currently contains:
 - Three safe-state live retry rehearsals plus one native running-session reconnect proof. All use direct exact-head PR listing and preserve the fixture remote state.
 - Phase 6 strict presentation schema and adapters that consume the existing investigation, proof, proposal binding, receipt, and Phase 5 run records; receipt-to-proposal/target cross-checks; stock OpenUI and Markdown recovery renderers; a nine-case presentation matrix; exact trace captions; and public README/demo/submission artifacts.
 - Phase 7 stable request/scope schemas, parameterized read-only preflight, hard mode ceilings, fail-closed support evaluation, exact OPEN_PR artifact composition, cross-stage receipt hashing/validation, a composed current-fixture journey, prompt templates, one unified exported/saved manifest, and migration documentation.
+- The post-Phase 7 response contract keeps the security result in chat while assigning child-agent, MCP, sandbox, approval, timing, and failure visibility to TrueForge's Investigation rail. A successful OpenUI response contains its receipt in a progressive-disclosure tab and does not append the complete Markdown recovery rendering.
 
 The repository does not contain merge/deployment behavior, cluster access, a Guardian persistence database, custom TrueForge frontend, separate dashboard, broad vulnerability remediation, or general incident response.
 
@@ -110,6 +112,7 @@ The Phase 5 integration matrix and three safe-state live rehearsals pass. A new 
 - Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. Alternate review findings were remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`; the operator subsequently merged PR #7.
 - The unified saved manifest attaches Fixture and write tools because the later modes need them. `ANALYSIS_ONLY` Fixture/write exclusion and `PREPARE_REMEDIATION` write exclusion are enforced by the mode contract and typed planning/receipt gates, while TrueForge separately enforces approval if a write is reached. Dynamic roles remain instruction-scoped rather than hard per-mode tool isolation.
 - Qodo's automatic and official `/agentic_review` attempts on Phase 7 PR #8 reported reviews paused. No Qodo findings or approval exist. The consolidated alternate review reported 15 findings; all were reproduced, root-caused, remediated, and covered by the 172-test suite. Operator acceptance remains required before merge.
+- The trace-UI and result-contract branches are local implementation work until they are committed, reviewed, merged, and the saved TrueForge agent is updated. Existing saved-agent sessions continue using their persisted events and the previously saved prompt.
 
 ## Handoff update protocol
 

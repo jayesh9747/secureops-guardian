@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
+import { LAST_GOOD_COMMIT_SHA } from '@guardian/shared';
 
 import { runCurrentFixtureJourney } from './journey.js';
 
@@ -66,6 +67,31 @@ describe('unified current-fixture journey', () => {
     expect(result.receipt.proposal_hash_sha256).toMatch(/^[0-9a-f]{64}$/u);
     expect(result.openui).toBeNull();
     expect(result.markdown).toContain('No GitHub write or approval is permitted in this mode.');
+  });
+
+  it('routes the exact parent-to-suspect comparison through the same prepared journey', () => {
+    const result = runCurrentFixtureJourney({
+      mode: 'PREPARE_REMEDIATION',
+      scope: {
+        ...fixtureScope,
+        suspect: {
+          kind: 'comparison',
+          base_sha: LAST_GOOD_COMMIT_SHA,
+          head_sha: SUSPECT_COMMIT_SHA,
+        },
+      },
+    });
+
+    expect(result.receipt).toMatchObject({
+      terminal_status: 'SECURITY_REMEDIATION_READY',
+      scope: {
+        suspect: {
+          kind: 'comparison',
+          base_sha: LAST_GOOD_COMMIT_SHA,
+          head_sha: SUSPECT_COMMIT_SHA,
+        },
+      },
+    });
   });
 
   it('composes the frozen modules end to end and reuses the exact existing PR', () => {

@@ -83,14 +83,22 @@ function buildCurrentFixtureProposal() {
 
 export function runCurrentFixtureJourney(input: unknown) {
   const plan = planGuardianRun(input);
+  const observedSuspect =
+    plan.scope.suspect.kind === 'commit'
+      ? {
+          kind: 'commit' as const,
+          commit_sha: SUSPECT_COMMIT_SHA,
+          parent_sha: LAST_GOOD_COMMIT_SHA,
+        }
+      : {
+          kind: 'comparison' as const,
+          base_sha: LAST_GOOD_COMMIT_SHA,
+          head_sha: SUSPECT_COMMIT_SHA,
+        };
   const preflight = evaluatePreflight(plan, {
     repository: DEMO_REPOSITORY,
     base_branch: 'main',
-    suspect: {
-      kind: 'commit',
-      commit_sha: SUSPECT_COMMIT_SHA,
-      parent_sha: LAST_GOOD_COMMIT_SHA,
-    },
+    suspect: observedSuspect,
     resolved_target_file: TARGET_NETWORK_POLICY_FILE,
     target_kind: 'KUBERNETES_NETWORK_POLICY',
     verifier_subset: 'SUPPORTED',

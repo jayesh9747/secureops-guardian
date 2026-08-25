@@ -132,17 +132,40 @@ export const guardianRunReceiptSchema = z
       }
     }
 
-    const action = receipt.action_receipt;
     if (
-      ['DENIED', 'PR_CREATED', 'PR_REUSED', 'WRITE_CONFLICT'].includes(
-        receipt.terminal_status,
-      ) &&
-      action === null
+      receipt.terminal_status === 'SECURITY_REMEDIATION_READY' &&
+      (receipt.stages.daytona_proof !== 'COMPLETED' ||
+        receipt.stages.proposal !== 'CREATED' ||
+        receipt.proposal_hash_sha256 === null)
     ) {
       context.addIssue({
         code: 'custom',
-        message: 'An OPEN_PR action terminal state requires a Phase 4 action receipt.',
+        message: 'SECURITY_REMEDIATION_READY requires a completed proof and exact proposal.',
       });
+    }
+
+    const action = receipt.action_receipt;
+    const isActionTerminal = ['DENIED', 'PR_CREATED', 'PR_REUSED', 'WRITE_CONFLICT'].includes(
+      receipt.terminal_status,
+    );
+    if (isActionTerminal) {
+      if (action === null) {
+        context.addIssue({
+          code: 'custom',
+          message: 'An OPEN_PR action terminal state requires a Phase 4 action receipt.',
+        });
+      }
+      if (
+        receipt.mode !== 'OPEN_PR' ||
+        receipt.stages.daytona_proof !== 'COMPLETED' ||
+        receipt.stages.proposal !== 'CREATED' ||
+        receipt.proposal_hash_sha256 === null
+      ) {
+        context.addIssue({
+          code: 'custom',
+          message: 'An OPEN_PR action terminal state requires completed proof and proposal stages.',
+        });
+      }
     }
     if (action !== null) {
       if (

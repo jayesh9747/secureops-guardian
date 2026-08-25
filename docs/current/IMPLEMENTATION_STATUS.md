@@ -42,7 +42,7 @@ Phase 7 replaces phase selection with one saved root agent. The new `@guardian/o
 
 The current deterministic Phase 7 suite proves the three modes, arbitrary repository parameterization, unsupported/missing-evidence fail-closed behavior, prompt-injection non-influence, source-identity mismatches, exact proposal and remote-content conflicts, exact PR reuse, retained approval selectors, and the current-fixture composed journey. See [`PHASE_7_UNIFIED_GUARDIAN.md`](../../plans/secureops-guardian-hackathon/PHASE_7_UNIFIED_GUARDIAN.md); the final evidence record is [`PHASE_7_UNIFIED_GUARDIAN.md`](../evidence/PHASE_7_UNIFIED_GUARDIAN.md).
 
-The entry gate is satisfied: Phase 6 is merged, fixture PR #1 remains open/unmerged at the exact remediation head, updated `main` was used, and the operator-owned TrueForge compose change remains untouched. Full verification, review, evidence completion, and the non-draft Phase 7 PR remain.
+The entry gate is satisfied: Phase 6 is merged, fixture PR #1 remains open/unmerged at the exact remediation head, updated `main` was used, and the operator-owned TrueForge compose change remains untouched. Full verification passes and non-draft Phase 7 PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) is open. Qodo is paused; the alternate standards/spec review was remediated. Operator acceptance remains required before merge.
 
 ## Implemented capability boundary
 
@@ -105,7 +105,8 @@ The Phase 5 integration matrix and three safe-state live rehearsals pass. A new 
 - Deterministic reconnect proves an approval-pending `CREATE_BRANCH` checkpoint. The live reconnect proves the narrower preserved running-session input and pending reuse-verification action. Do not recast the live run as an approval pause.
 - Qodo's automatic and manual Phase 5 PR #6 attempts reported reviews paused. No Qodo findings or approval exist. Alternate reviews were completed and remediated; PR #6 later merged, but the merge and alternate reviews must not be recast as Qodo approval.
 - Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. Alternate review findings were remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`; the operator subsequently merged PR #7.
-- The unified saved manifest attaches write tools because `OPEN_PR` needs them. `ANALYSIS_ONLY` and `PREPARE_REMEDIATION` exclusion is enforced by the mode contract and typed planning/receipt gates, while TrueForge separately enforces approval if a write is reached. Dynamic roles remain instruction-scoped rather than hard per-mode tool isolation.
+- The unified saved manifest attaches Fixture and write tools because the later modes need them. `ANALYSIS_ONLY` Fixture/write exclusion and `PREPARE_REMEDIATION` write exclusion are enforced by the mode contract and typed planning/receipt gates, while TrueForge separately enforces approval if a write is reached. Dynamic roles remain instruction-scoped rather than hard per-mode tool isolation.
+- Qodo's automatic and official `/agentic_review` attempts on Phase 7 PR #8 reported reviews paused. No Qodo findings or approval exist. The alternate standards/spec review found and remediated comparison-routing and receipt terminal-binding gaps; operator acceptance remains required before merge.
 
 ## Handoff update protocol
 

@@ -15,6 +15,7 @@ const scope = {
 
 function coreOf(mode: 'ANALYSIS_ONLY' | 'PREPARE_REMEDIATION' | 'OPEN_PR') {
   const { receipt_id: _receiptId, ...core } = runCurrentFixtureJourney({ mode, scope }).receipt;
+  void _receiptId;
   return core;
 }
 
@@ -81,5 +82,28 @@ describe('Guardian run receipt cross-stage invariants', () => {
     expect(() => buildGuardianRunReceipt({ ...core, action_receipt: null })).toThrow(
       /action receipt/iu,
     );
+  });
+
+  it('rejects a remediation-ready state without an exact proposal', () => {
+    const core = coreOf('PREPARE_REMEDIATION');
+
+    expect(() =>
+      buildGuardianRunReceipt({
+        ...core,
+        stages: { ...core.stages, proposal: 'ABSENT' },
+        proposal_hash_sha256: null,
+      }),
+    ).toThrow(/exact proposal/iu);
+  });
+
+  it('rejects an OPEN_PR action state that bypasses proof and proposal stages', () => {
+    const core = coreOf('OPEN_PR');
+
+    expect(() =>
+      buildGuardianRunReceipt({
+        ...core,
+        stages: { ...core.stages, daytona_proof: 'NOT_RUN', proposal: 'ABSENT' },
+      }),
+    ).toThrow(/proof and proposal/iu);
   });
 });

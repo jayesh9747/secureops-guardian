@@ -34,7 +34,7 @@ No fixture reset, merge, close, edit, force-push, deployment, cluster access, or
 
 `@guardian/orchestration` is the public orchestration seam. It owns strict scope parsing, mode capability ceilings, parameterized read-only preflight, journey composition, remote reconciliation, and a hashed schema-version-1 run receipt. It reuses the existing Phase 2-6 modules rather than copying their security contracts.
 
-The saved-agent manifest enables the combined official GitHub MCP read and write tools, the owned Fixture MCP, Daytona, dynamic subagents, Generative UI, and ask-user questions. The agent instructions enforce the narrower per-mode ceiling. Ask-user questions are permitted only for missing scope before any tool call. The only approval-required tools remain:
+The saved-agent manifest enables the combined official GitHub MCP read and write tools, the owned Fixture MCP, Daytona, dynamic subagents, Generative UI, and ask-user questions. The agent instructions enforce the narrower per-mode ceiling. Greetings, capability questions, usage questions, safety questions, thanks, and requests for explanation receive direct tool-free responses. Ask-user questions are permitted only for missing scope after the user expresses an investigation, remediation, or pull-request intent. The only approval-required tools remain:
 
 1. `create_branch`
 2. `create_or_update_file`
@@ -53,6 +53,20 @@ The attached tool inventory is not authorization. `ANALYSIS_ONLY` prohibits Fixt
 | Migration guide | [`docs/current/PHASE_7_MIGRATION.md`](../current/PHASE_7_MIGRATION.md) |
 
 TrueForge agent names are immutable, so the replacement record was created and read back from TrueForge. The response confirmed sandbox and file downloads enabled, dynamic subagents enabled, Generative UI enabled, ask-user questions enabled, the exact combined tool inventory, and approvals on exactly the three GitHub writes. The predecessor `secureops-guardian` remains saved so historical reference sessions continue to resolve; phase-named fixtures were not modified.
+
+## Post-merge greeting regression and RCA
+
+A stored session (`01m0w8mk7ktz5dgqf3kyg6t7gk`) and a fresh replay (`01m0wectrwsm80zkx2z5b80brq`) both reproduced the same defect: plain `hello` ended in `tool.response_required` for `ask_user_question` and offered the pinned demo fixture. The saved TrueForge instructions byte-matched the portable export, ruling out a stale import. The root request contract treated every message without a complete scope as an incomplete run and had no conversation-only intent route; the fixture constants in the same prompt then biased the clarification toward the demo target. The second selector in the stored session was a new required action after the user's first answer, not duplicate UI rendering.
+
+The fixed manifest classifies intent before applying the request contract and explicitly prohibits all tool calls for conversation-only requests. Fresh saved-agent replays prove the new boundary:
+
+| Input | Session | Result |
+| --- | --- | --- |
+| `hello` | `01m0weetwwb0d45z6b5qd5m80n` | Direct welcome; zero tool calls |
+| `what can you do?` | `01m0wefj2pmwrd7zchb37fech1` | Direct capability explanation; zero tool calls |
+| `please investigate this security issue` | `01m0wefj2cqjat3xj5g3j6ew27` | One ask-user call for the missing contract; no demo fixture substitution |
+
+TrueForge still records `mcp.initialize` because the saved manifest preloads its MCP servers. That lifecycle event is not a connector read or investigation tool call. The regression test in `packages/orchestration/src/agent.test.ts` keeps the conversational intent gate in the portable manifest.
 
 ## Deterministic mode matrix
 
@@ -120,14 +134,14 @@ The final remote reconciliation used `list_branches`, exact open `list_pull_requ
 
 ## Review
 
-Development PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) is open, non-draft, and unmerged. Qodo's automatic attempt and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513497) both received the result that reviews are paused for this user. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513076) contains no findings or approval, so none is claimed.
+Development PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) merged as `cfa65ef288d2ae615c1dd2d58d1086655177420c`. Qodo's automatic attempt and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513497) both received the result that reviews are paused for this user. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513076) contains no findings or approval, so none is claimed.
 
 The consolidated alternate review reported 15 findings (G-01 through G-15). The reproductions exposed four root causes: remediation-only checks were applied to every mode; fixture constants stood in for observed identities; computed capability and OPEN_PR gates were not load-bearing; and raw-string/error-boundary validation was incomplete.
 
 Remediation now separates general analysis from remediation eligibility, enumerates full comparison ancestry and descendant patches, normalizes repository/path identities, validates observed repository identity, enforces receipt tool-reference/runtime invariants, emits fail-closed receipts, accepts an omitted target only when the exact proposal resolves it, renders the supplied scope, consumes the single capability ceiling and preflight flags, calls the OPEN_PR artifact gate, reuses the Phase 6 controlling artifact builder, and catches only typed remote-validation errors. All reported reproductions are regression tests. The follow-up Standards review also corrected stale saved-agent and review claims in this evidence record and the implementation status.
 
-No standards- or spec-axis blocker remained after remediation. The package keeps the public orchestration seam above the retained Phase 2-6 modules, preserves strict schemas at trust boundaries, and contains no second runtime or custom GitHub client. Operator acceptance of this alternate review remains required before merge.
+No standards- or spec-axis blocker remained after remediation. The package keeps the public orchestration seam above the retained Phase 2-6 modules, preserves strict schemas at trust boundaries, and contains no second runtime or custom GitHub client. The operator accepted the alternate review before PR #8 merged.
 
 ## Safety conclusion
 
-Phase 7 adds the unified saved-agent entry point, mode-aware orchestration, portable export, migration and prompt documentation, and deterministic/live evidence. It does not add merge, deploy, cluster, Actions, secrets, issue, administration, force-push, delete, overwrite, or destructive fixture behavior. The fixture PR remains the protected safe state and the phase development PR must remain open, non-draft, and unmerged at handoff.
+Phase 7 adds the unified saved-agent entry point, mode-aware orchestration, portable export, migration and prompt documentation, and deterministic/live evidence. The post-merge greeting correction changes only pre-contract intent routing. It does not add merge, deploy, cluster, Actions, secrets, issue, administration, force-push, delete, overwrite, or destructive fixture behavior. The fixture PR remains the protected safe state.

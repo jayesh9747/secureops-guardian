@@ -10,15 +10,15 @@ This file is navigation and handoff state, not a product specification. The acti
 
 ## Current state
 
-- Completed and merged: Phase 0 through Phase 6. Phase 6 PR [#7](https://github.com/jayesh9747/secureops-guardian/pull/7) merged as `8fde66dfcd7f537f70192246ee3a7eb7173f53ba` after the operator's alternate-review remediation and acceptance.
-- Phase 7 unified-agent implementation is in progress on `phase-7/unified-guardian`, created from updated `main` at `8fde66dfcd7f537f70192246ee3a7eb7173f53ba`.
-- Product `main`: `8fde66dfcd7f537f70192246ee3a7eb7173f53ba` after the Phase 6 merge.
+- Completed and merged: Phase 0 through Phase 7. Phase 7 PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) merged as `cfa65ef288d2ae615c1dd2d58d1086655177420c` after the operator's alternate-review remediation and acceptance.
+- The post-merge greeting-intent regression is corrected on `fix/greeting-intent-routing`, created from the merged Phase 7 `main`.
+- Product `main`: `cfa65ef288d2ae615c1dd2d58d1086655177420c` after the Phase 7 merge.
 - Frozen Phase 5 review-remediated core: `263e6a27307a667f08bfa832b436a754c0848a2e`.
 - Controlling proposal hash: `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
 - Remediation PR `jayesh9747/guardian-demo-checkout#1` is open and unmerged at commit `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
 - Saved TrueForge agent `01m0t4gpvz34x60qz6fxqz214d` now byte-matches the merged Phase 4 instructions, enables direct `list_pull_requests`, and separately approval-gates all three writes.
-- Saved TrueForge agent `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`, contains the unified Phase 7 manifest: official GitHub MCP reads/writes, Fixture MCP reads, Daytona, dynamic children, all three write approvals, stock Generative UI, and ask-user support restricted by instruction to missing scope before tools. Its immutable predecessor `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, remains saved so existing reference sessions keep resolving.
+- Saved TrueForge agent `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`, contains the unified Phase 7 manifest: official GitHub MCP reads/writes, Fixture MCP reads, Daytona, dynamic children, all three write approvals, stock Generative UI, and ask-user support restricted to missing scope after explicit investigation intent. Greetings and capability questions return directly without tool calls. Its immutable predecessor `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, remains saved so existing reference sessions keep resolving.
 - Phase-named saved agents remain only as historical test fixtures/reference configurations.
 - The TrueForge worktree has an operator-owned `docker-compose.yml` change. Preserve it and keep it out of product commits.
 
@@ -33,16 +33,19 @@ This file is navigation and handoff state, not a product specification. The acti
 | 4 — approval and GitHub write | `jayesh9747/secureops-guardian#5` | `b442a9d3765a4063bf98e7f429b8272686dac645` | `12cafa71769fd180afbaa246508cf4d74ac38902` | [`PHASE_4_APPROVAL_GITHUB_WRITE.md`](../evidence/PHASE_4_APPROVAL_GITHUB_WRITE.md) |
 | 5 — reliability and persistence | `jayesh9747/secureops-guardian#6` | `263e6a27307a667f08bfa832b436a754c0848a2e` | `fce4424be5461b2272dfbdd15c3d545d0c1e06e1` | [`PHASE_5_RELIABILITY_PERSISTENCE.md`](../evidence/PHASE_5_RELIABILITY_PERSISTENCE.md) |
 | 6 — UI, quality, submission | `jayesh9747/secureops-guardian#7` | `71835c282406d001e945243717c37068c441ed01` | `8fde66dfcd7f537f70192246ee3a7eb7173f53ba` | [`PHASE_6_UI_QUALITY_SUBMISSION.md`](../evidence/PHASE_6_UI_QUALITY_SUBMISSION.md) |
+| 7 — unified Guardian | `jayesh9747/secureops-guardian#8` | `b0ca030524aad8f4227e29bae86a0dcc5f219229` | `cfa65ef288d2ae615c1dd2d58d1086655177420c` | [`PHASE_7_UNIFIED_GUARDIAN.md`](../evidence/PHASE_7_UNIFIED_GUARDIAN.md) |
 
 Read a completed phase's plan or evidence only when verifying its prerequisite, reproducing its trace, or diagnosing a regression.
 
-## Active Phase 7 gate
+## Completed Phase 7 gate
 
 Phase 7 replaces phase selection with one saved root agent. The new `@guardian/orchestration` package validates a stable repository scope, establishes the `ANALYSIS_ONLY`, `PREPARE_REMEDIATION`, and `OPEN_PR` capability ceilings, parameterizes arbitrary-repository read-only preflight, composes the frozen Phase 2-6 modules for the exact supported fixture, and emits a cross-stage machine-readable run receipt.
 
 The current deterministic Phase 7 suite proves the three modes, arbitrary repository parameterization, complete comparison-range planning, normalized repository/path rejection, unsupported/missing-evidence fail-closed receipts, prompt-injection non-influence, source-identity mismatches, exact proposal and remote-content conflicts, exact PR reuse, retained approval selectors, and the current-fixture composed journey. See [`PHASE_7_UNIFIED_GUARDIAN.md`](../../plans/secureops-guardian-hackathon/PHASE_7_UNIFIED_GUARDIAN.md); the final evidence record is [`PHASE_7_UNIFIED_GUARDIAN.md`](../evidence/PHASE_7_UNIFIED_GUARDIAN.md).
 
-The entry gate is satisfied: Phase 6 is merged, fixture PR #1 remains open/unmerged at the exact remediation head, updated `main` was used, and the operator-owned TrueForge compose change remains untouched. Full verification passes and non-draft Phase 7 PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) is open. Qodo is paused; all 15 findings from the consolidated alternate review were reproduced and remediated with regression coverage. Operator acceptance remains required before merge.
+The entry and exit gates passed: Phase 6 was merged, fixture PR #1 remained open/unmerged at the exact remediation head, updated `main` was used, and the operator-owned TrueForge compose change remained untouched. Full verification passed and Phase 7 PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) merged as `cfa65ef288d2ae615c1dd2d58d1086655177420c`. Qodo was paused; all 15 findings from the consolidated alternate review were reproduced and remediated with regression coverage, and the operator accepted the alternate review.
+
+After merge, live greeting replays exposed one prompt-routing regression: a message without scope was always treated as an incomplete run. The saved agent and portable export now classify conversation-only intent first. `hello` and capability questions produce direct responses with zero tool calls; an explicit but incomplete investigation request produces one ask-user call without substituting the demo fixture. The evidence and session IDs are recorded in [`PHASE_7_UNIFIED_GUARDIAN.md`](../evidence/PHASE_7_UNIFIED_GUARDIAN.md).
 
 ## Implemented capability boundary
 

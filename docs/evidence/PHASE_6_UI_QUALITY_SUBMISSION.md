@@ -89,7 +89,7 @@ The primary demo sequence now visibly includes the preserved real Phase 4 approv
 
 ## Verification
 
-Reviewed implementation head: `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`.
+Reviewed implementation head: `71835c282406d001e945243717c37068c441ed01`.
 
 | Command or gate | Result |
 | --- | --- |
@@ -97,7 +97,7 @@ Reviewed implementation head: `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`.
 | `pnpm format:check` | Pass |
 | `pnpm lint` | Pass |
 | `pnpm typecheck` | Pass |
-| `pnpm test` | Pass — 12 files, 120 tests |
+| `pnpm test` | Pass — 12 files, 126 tests |
 | `pnpm build` | Pass |
 | `pnpm bundle:verifier` plus candidate replay | Pass — `SECURITY_REMEDIATION_READY` |
 | `pnpm phase5:matrix` | Pass — eight expected/actual matches |
@@ -115,6 +115,8 @@ Reviewed implementation head: `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`.
 Development PR [#7](https://github.com/jayesh9747/secureops-guardian/pull/7) is open, non-draft, and unmerged. Qodo's automatic attempt, the earlier manual [`/review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407056420), and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407199824) all received the result that reviews are paused for this user. The official command's [paused response](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407200657) contains no findings or approval, so none is claimed.
 
 The alternate two-axis review found no hard standards violations. Its actionable spec finding was that presentation adapters needed to cross-check the receipt/record proposal hash and fixed GitHub target against the bound proposal. Commit `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` adds those fail-closed checks and adversarial hash, target, and PR-URL tests. It also removes duplicated verified-presentation assembly and consolidates display metadata.
+
+A follow-up executable review reproduced seven presentation-boundary failures. Their common root cause was that individually valid Phase 2, Phase 4, and Phase 5 objects were not relationally bound before rendering; investigation synthesis also discarded fixture-case identity. Commit `71835c282406d001e945243717c37068c441ed01` retains and checks the case ID, requires the recorded four-state proof to equal the proposal proof, rejects missing proof and unclassified evidence, produces an explicit empty-diagnostics error, deep-clones inherited agent configuration, escapes Markdown table cells, centralizes boundary literals, and makes the fallback CLI gate content-based. Six adversarial tests reproduce those boundary and rendering defects, bringing the suite to 126 tests.
 
 The suggested custom typed OpenUI AST was not applied: TrueForge's stock OpenUI interface is a textual DSL, and adding a parallel component framework would expand Phase 6 scope. The renderer instead retains an exhaustive status table, a stock-component allowlist test, a streaming-safe root test, byte-exact session output checks, and live stock-TrueForge visual verification. The repository-wide identity instruction predates the Phase 6 implementation commits and is preserved as an operator-owned workflow constraint. Explicit operator acceptance of this alternate review remains required before merge.
 

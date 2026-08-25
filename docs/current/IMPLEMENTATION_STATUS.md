@@ -102,7 +102,7 @@ The Phase 5 integration matrix and three safe-state live rehearsals pass. A new 
 - The live Phase 5 remote is intentionally not clean: exact fixture PR #1 must remain open. Live rehearsals can prove reuse and running-session persistence, but cannot reach first-write approval or creation without a destructive reset. Do not claim a new live denial/creation proof.
 - Deterministic reconnect proves an approval-pending `CREATE_BRANCH` checkpoint. The live reconnect proves the narrower preserved running-session input and pending reuse-verification action. Do not recast the live run as an approval pause.
 - Qodo's automatic and manual Phase 5 PR #6 attempts reported reviews paused. No Qodo findings or approval exist. Alternate reviews were completed and remediated; PR #6 later merged, but the merge and alternate reviews must not be recast as Qodo approval.
-- Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. The alternate two-axis review was remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`; operator acceptance remains required before any merge.
+- Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. Alternate review findings were remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`; operator acceptance remains required before any merge.
 
 ## Handoff update protocol
 

@@ -32,7 +32,7 @@ Updated: 25 August 2026
 - [x] Required Phase 6 checks pass on the reviewed implementation head.
 - [x] Visual matrix is verified in stock TrueForge for every terminal status.
 - [x] Qodo review requested automatically, with the earlier `/review`, and with the official `/agentic_review`; all reported reviews paused, with no Phase 6 findings or approval.
-- [x] Alternate review completed; applicable findings resolved in `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`.
+- [x] Alternate reviews completed; applicable findings resolved in `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`.
 - [ ] Operator explicitly accepts alternate review if Qodo supplies no approval.
 - [x] Phase 6 development PR remains open and unmerged at handoff.
 - [x] Fixture PR #1 remains open and unmerged at handoff.

@@ -35,3 +35,18 @@ If a phase prerequisite is unavailable, exhaust safe in-scope diagnosis, record 
 Work from the phase branch named in `docs/current/DEVELOPMENT_WORKFLOW.md`. Keep `main` releasable and planning-led. Use small, reviewable commits. Push the phase branch, open a pull request with the repository template, obtain Qodo review, address actionable findings, rerun the phase checks, and merge only after the phase exit gate passes.
 
 Preserve unrelated user changes. Keep secrets, tokens, local absolute paths, and private data out of commits, logs, screenshots, and recordings.
+
+## GitHub identity
+
+Keep the global Gitflip profile on `work`. This repository's commits belong to the `personal` profile and GitHub account `jayesh9747`.
+
+Before committing, run `gitflip use personal --local` in this repository and verify the local `user.name` and `user.email`. Do not activate the personal Gitflip profile globally.
+
+For every GitHub CLI operation or push:
+
+1. Run `gh auth switch -u jayesh9747` and `gh auth setup-git`.
+2. Use an explicit HTTPS repository URL for pushes because SSH `github.com` intentionally remains on the global `work` profile.
+3. Complete and verify all GitHub operations for the task.
+4. Run `gh auth switch -u jsavaliya9747` and `gh auth setup-git` before handoff.
+
+The identity step is complete only when commits use the local personal identity, GitHub writes belong to `jayesh9747`, and the active `gh` account has been restored to `jsavaliya9747`.

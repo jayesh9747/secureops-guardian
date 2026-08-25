@@ -1,0 +1,50 @@
+# Phase 6 submission and public-link checklist
+
+Updated: 25 August 2026
+
+## Public artifacts
+
+- [x] Product repository opens signed out: `https://github.com/jayesh9747/secureops-guardian`
+- [x] Phase 6 development PR opens signed out: `https://github.com/jayesh9747/secureops-guardian/pull/7`
+- [x] Fixture repository opens signed out: `https://github.com/jayesh9747/guardian-demo-checkout`
+- [x] Fixture remediation PR #1 opens signed out and remains open/unmerged: `https://github.com/jayesh9747/guardian-demo-checkout/pull/1`
+- [x] README internal and external links resolve locally and at their public targets.
+- [x] MIT license is visible.
+- [x] Official rules and deadline rechecked: 30 August 2026 at 20:00 London time.
+- [x] Exact `## Qodo Code Review Evidence` README section links representative merged PR #3 and its completed review/follow-up history.
+- [ ] Primary recording opens signed out at normal playback speed: operator upload pending.
+- [ ] Backup recording opens signed out at normal playback speed: operator upload pending.
+- [ ] Submission page/project URL opens signed out: operator creation pending.
+
+## Content and safety
+
+- [x] Product, user, differentiation, architecture, setup, prompt, outcomes, tests, troubleshooting, disclosure, limits, and roadmap are documented.
+- [x] GitHub evidence is described as real and incident evidence as owned synthetic.
+- [x] Daytona proof is described as deterministic static analysis, not live-cluster proof.
+- [x] Actual data access and exfiltration remain `Unknown`.
+- [x] GitHub writes are described as separately approved, retry-safe, and non-atomic.
+- [x] No merge, deployment, cluster access, production data, separate dashboard, or Phase 7 behavior is claimed.
+- [ ] Primary and backup recordings show no credentials, headers, provider settings, private data, model reasoning, notifications, or local absolute paths.
+- [ ] Recording narration matches the observed trace and real PR URL.
+
+## Review and release
+
+- [x] Required Phase 6 checks pass on the reviewed implementation head.
+- [x] Visual matrix is verified in stock TrueForge for every terminal status.
+- [x] Qodo review requested automatically, with the earlier `/review`, and with the official `/agentic_review`; all reported reviews paused, with no Phase 6 findings or approval.
+- [x] Alternate reviews completed; applicable findings resolved in `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`.
+- [ ] Operator explicitly accepts alternate review if Qodo supplies no approval.
+- [x] Phase 6 development PR remains open and unmerged at handoff.
+- [x] Fixture PR #1 remains open and unmerged at handoff.
+
+## Operator-only completion
+
+- [ ] Record primary take.
+- [ ] Record backup take.
+- [ ] Upload both recordings and choose public/unlisted visibility allowed by the competition.
+- [ ] Validate video audio, resolution, duration, permissions, and URLs signed out.
+- [ ] Confirm repository and PR visibility signed out.
+- [x] Confirm published submission deadline and time zone on the official rules page: 30 August 2026 at 20:00 London time.
+- [ ] Retrieve the operator's official event submission-form URL from the registered event contact/site.
+- [ ] Paste the final description and public URLs into the submission form.
+- [ ] Submit early and capture the submission confirmation.

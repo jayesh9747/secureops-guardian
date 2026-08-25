@@ -10,15 +10,16 @@ This file is navigation and handoff state, not a product specification. The acti
 
 ## Current state
 
-- Completed and merged: Phase 0 through Phase 4.
-- Phase 5 deterministic integration, safe-state TrueForge persistence/retry rehearsals, and local gates pass. Development PR [#6](https://github.com/jayesh9747/secureops-guardian/pull/6) is open, non-draft, and unmerged.
-- Current product branch: `phase-5/reliability-persistence`, created from updated `main` at `12cafa71769fd180afbaa246508cf4d74ac38902`.
-- Product `main`: `12cafa71769fd180afbaa246508cf4d74ac38902` after Phase 4 merge and contains reviewed Phase 4 head `b442a9d3765a4063bf98e7f429b8272686dac645`.
+- Completed and merged: Phase 0 through Phase 5. Phase 5 PR [#6](https://github.com/jayesh9747/secureops-guardian/pull/6) merged without Qodo approval after its paused responses and the recorded alternate review.
+- Phase 6 presentation implementation, visual verification, public documentation, demo narrative, and submission preparation are complete on open development PR [#7](https://github.com/jayesh9747/secureops-guardian/pull/7). Operator recording, upload, alternate-review acceptance, and submission remain.
+- Current product branch: `phase-6/ui-quality-submission`, created from updated `main` at `fce4424be5461b2272dfbdd15c3d545d0c1e06e1`.
+- Product `main`: `fce4424be5461b2272dfbdd15c3d545d0c1e06e1` after the Phase 5 merge and contains documentation head `1777bfd070ac1ebd34e23a604767ae2e703c36ad`.
 - Frozen Phase 5 review-remediated core: `263e6a27307a667f08bfa832b436a754c0848a2e`.
 - Controlling proposal hash: `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
 - Remediation PR `jayesh9747/guardian-demo-checkout#1` is open and unmerged at commit `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
 - Saved TrueForge agent `01m0t4gpvz34x60qz6fxqz214d` now byte-matches the merged Phase 4 instructions, enables direct `list_pull_requests`, and separately approval-gates all three writes.
+- Saved Phase 6 TrueForge agent `01m0vvphezaejvtcxgf9z972ed` inherits the Phase 4 tools and approvals and enables stock Generative UI.
 - The TrueForge worktree has an operator-owned `docker-compose.yml` change. Preserve it and keep it out of product commits.
 
 ## Completed gates
@@ -30,16 +31,17 @@ This file is navigation and handoff state, not a product specification. The acti
 | 2 — agent investigation | `jayesh9747/secureops-guardian#3` | `fec1463146a8bceb233e4e126acca4acb68e14cb` | `05a07dc812b3b7e7ae7dce5534311f7f26f3ad1b` | [`PHASE_2_AGENT_INVESTIGATION.md`](../evidence/PHASE_2_AGENT_INVESTIGATION.md) |
 | 3 — sandbox proof | `jayesh9747/secureops-guardian#4` | Operator accepted Claude review after Qodo remained unavailable; review-remediated head `ae6e75236bbc8ccfb17fe563837b944d9d5fdb2c` | `382e57da8e2b6aae1ed6f0fee19ffd12c017cbac` | [`PHASE_3_SANDBOX_PROOF.md`](../evidence/PHASE_3_SANDBOX_PROOF.md) |
 | 4 — approval and GitHub write | `jayesh9747/secureops-guardian#5` | `b442a9d3765a4063bf98e7f429b8272686dac645` | `12cafa71769fd180afbaa246508cf4d74ac38902` | [`PHASE_4_APPROVAL_GITHUB_WRITE.md`](../evidence/PHASE_4_APPROVAL_GITHUB_WRITE.md) |
+| 5 — reliability and persistence | `jayesh9747/secureops-guardian#6` | `263e6a27307a667f08bfa832b436a754c0848a2e` | `fce4424be5461b2272dfbdd15c3d545d0c1e06e1` | [`PHASE_5_RELIABILITY_PERSISTENCE.md`](../evidence/PHASE_5_RELIABILITY_PERSISTENCE.md) |
 
 Read a completed phase's plan or evidence only when verifying its prerequisite, reproducing its trace, or diagnosing a regression.
 
-## Active Phase 5 gate
+## Active Phase 6 gate
 
-The Phase 5 branch adds one deterministic integration package and no Phase 6 behavior. Its eight-case matrix covers existing-PR reuse, first-write denial, missing deployment, missing reachability, conflicting revision, two failed candidate attempts, mismatched remote content, and reconnect with a pending action. See [`PHASE_5_RELIABILITY_PERSISTENCE.md`](../evidence/PHASE_5_RELIABILITY_PERSISTENCE.md).
+Phase 6 consumes the frozen structured outputs without changing the evidence, verifier, proposal, approval, receipt, mutation, or persistence gates. The presentation schema covers ready, denied, created, reused, inconclusive, conflict, and no-safe terminal results. Action receipts must match the bound proposal hash, fixed GitHub target, and pull-request URL before presentation. The stock OpenUI renderer has a separate complete Markdown recovery rendering and is exercised by a nine-case matrix. See [`PHASE_6_UI_QUALITY_SUBMISSION.md`](../evidence/PHASE_6_UI_QUALITY_SUBMISSION.md).
 
-Three consecutive live TrueForge runs against preserved fixture PR #1 returned `PR_REUSED` with six reads, zero write calls, and zero approvals. The middle run reloaded the running session through a fresh connection and preserved the proposal/evidence input and pending reuse-verification instruction. The exact approval-pending reconnect is deterministic integration proof because the current safe remote state already contains the branch and PR.
+The Phase 6 TrueForge manifest inherits the exact Phase 4 MCP tool and approval lists and enables only presentation-related Generative UI behavior. No custom frontend, dashboard, or new agent workflow is introduced.
 
-Qodo's automatic and manual `/review` attempts on PR #6 both reported reviews paused. Qodo supplied no findings or approval. An alternate two-axis standards/spec review and a deeper follow-up review completed; all applicable findings were resolved in `263e6a27307a667f08bfa832b436a754c0848a2e`. Explicit operator acceptance of those alternate reviews remains required before merge. See the [Phase 5 release checklist](../evidence/PHASE_5_RELEASE_CHECKLIST.md).
+Phase 6 visual verification, available public-link validation, official-rules reconciliation, and alternate review are recorded. The required README Qodo evidence section links merged PR #3 and its two completed review passes. Phase 6's official `/agentic_review` request remained paused and supplied no approval. Recording/upload, submission-form access, and final operator acceptance remain open in the Phase 6 checklist.
 
 ## Implemented capability boundary
 
@@ -55,8 +57,9 @@ The repository currently contains:
 - Accepted TrueForge denial, approved, and retry traces. Denial writes nothing; approval creates the exact fixture remediation branch, commit, and open PR through three separately approved calls; retry uses reads only and returns the same PR. See [`PHASE_4_APPROVAL_GITHUB_WRITE.md`](../evidence/PHASE_4_APPROVAL_GITHUB_WRITE.md).
 - Phase 5 strict audit records and deterministic orchestration across the evidence, candidate, proposal, remote decision, receipt, and persistence boundaries. Actual terminal status is observed independently from expected scenario policy; mismatches remain serializable and fail the CLI gate. Records retain all consumed evidence IDs, exact defects, Phase 4 receipts, typed remote results, and `ABSENT`/`OBSERVED` mutation artifacts. Unsafe evidence stops before verifier/proposal/approval, the tuple-bounded driver terminates after two failed candidates, remote mismatch cannot overwrite, and canonical checkpoint restoration requires the same case, evidence IDs, proposal hash, and pending action.
 - Three safe-state live retry rehearsals plus one native running-session reconnect proof. All use direct exact-head PR listing and preserve the fixture remote state.
+- Phase 6 strict presentation schema and adapters that consume the existing investigation, proof, proposal binding, receipt, and Phase 5 run records; receipt-to-proposal/target cross-checks; stock OpenUI and Markdown recovery renderers; a nine-case presentation matrix; exact trace captions; and public README/demo/submission artifacts.
 
-The repository does not contain merge/deployment behavior, cluster access, a Guardian persistence database, later-phase UI, or Phase 6 behavior.
+The repository does not contain merge/deployment behavior, cluster access, a Guardian persistence database, custom TrueForge frontend, separate dashboard, new agent workflow, or Phase 7 behavior.
 
 ## Immutable fixture references
 
@@ -98,7 +101,8 @@ The Phase 5 integration matrix and three safe-state live rehearsals pass. A new 
 - Qodo automatically attempted Phase 4 PR #5 and reported reviews paused for this user. No Phase 4 Qodo findings or approval exist; do not recast its later merge as Qodo approval.
 - The live Phase 5 remote is intentionally not clean: exact fixture PR #1 must remain open. Live rehearsals can prove reuse and running-session persistence, but cannot reach first-write approval or creation without a destructive reset. Do not claim a new live denial/creation proof.
 - Deterministic reconnect proves an approval-pending `CREATE_BRANCH` checkpoint. The live reconnect proves the narrower preserved running-session input and pending reuse-verification action. Do not recast the live run as an approval pause.
-- Qodo's automatic and manual Phase 5 PR #6 attempts reported reviews paused. No Qodo findings or approval exist. Both alternate reviews are complete and remediated, but explicit operator acceptance remains a merge blocker.
+- Qodo's automatic and manual Phase 5 PR #6 attempts reported reviews paused. No Qodo findings or approval exist. Alternate reviews were completed and remediated; PR #6 later merged, but the merge and alternate reviews must not be recast as Qodo approval.
+- Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. Alternate review findings were remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`; operator acceptance remains required before any merge.
 
 ## Handoff update protocol
 

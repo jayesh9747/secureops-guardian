@@ -259,7 +259,7 @@ export const changeInvestigationResultSchema = z
     }
   });
 
-const phaseTwoCaseIdSchema = z.enum([
+export const phaseTwoCaseIdSchema = z.enum([
   DEMO_CASE_ID,
   MISSING_DEPLOYMENT_REVISION_CASE_ID,
   MISSING_REACHABILITY_CASE_ID,

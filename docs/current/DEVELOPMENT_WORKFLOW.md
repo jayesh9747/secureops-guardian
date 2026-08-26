@@ -14,6 +14,7 @@
 | 5 | `phase-5/reliability-persistence` |
 | 6 | `phase-6/ui-quality-submission` |
 | 7 | `phase-7/unified-guardian` |
+| Expansion Phase 1 — natural-language request compiler | `expansion-phase-1/natural-language-request-compiler` |
 
 Open one PR per phase. Later-phase work begins from updated `main` only after the previous phase PR is merged.
 

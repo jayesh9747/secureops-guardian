@@ -1,6 +1,6 @@
 # Unified SecureOps Guardian architecture
 
-Updated: 25 August 2026.
+Updated: 26 August 2026.
 
 ## User-facing system
 
@@ -8,6 +8,14 @@ Updated: 25 August 2026.
 
 ```text
 User -> saved TrueForge agent secureops-guardian_v0
+          |
+          +-- conversation-only intent -> direct response, zero tools
+          |
+          +-- natural language -> untrusted GuardianIntentDraft
+          |     `-- deterministic compile / missing facts / confirmation
+          |           `-- validated GuardianRequest
+          |
+          +-- exact GuardianRequest JSON -> backward-compatible direct validation
           |
           +-- scope preflight -> official GitHub MCP reads
           |
@@ -34,6 +42,7 @@ TrueForge remains the sole agent harness. It owns the model loop, dynamic childr
 `@guardian/orchestration` places the Phase 7 seam above the retained Phase 2-6 modules. Its small public interface is:
 
 - `parseGuardianRequest`: validates schema-version-1 scope and defaults the mode.
+- `compileGuardianRequest`: accepts exact JSON or a natural-language envelope containing the user-authored text and an untrusted `GuardianIntentDraft`; it returns conversation-only, missing-input, confirmation-required, or ready state. Only ready state contains an executable `GuardianRequest`.
 - `planGuardianRun`: parameterizes read-only preflight, including range enumeration plus descendant-patch reads for comparisons, and establishes the single mode capability ceiling.
 - `evaluatePreflight`: compares observed source identities to scope and support requirements.
 - `runCurrentFixtureJourney`: consumes an explicit validated observation/remote-state context and composes the existing investigation, verifier, proposal, remote, receipt, and presentation modules.
@@ -42,7 +51,15 @@ TrueForge remains the sole agent harness. It owns the model loop, dynamic childr
 
 The orchestration module calls the existing typed modules. It does not reimplement their evidence provenance, verifier, proposal binding, remote decision, receipt, persistence, or presentation gates.
 
-## Stable request schema
+## Natural-language compiler seam
+
+Natural language is a usability layer above the stable request schema. Model extraction produces an untrusted draft; deterministic compilation accepts a scope value only when that exact repository, branch, full SHA/range endpoint, or optional file is present in the user-authored text and passes the existing validator. A pasted GitHub commit URL can contribute only its explicit repository and full SHA. The compiler never calls GitHub to fill scope, substitutes the demo repository, expands a short SHA, or guesses `main`.
+
+Incomplete scope returns one concise question and no executable request, so `planGuardianRun` cannot produce a tool plan. Natural-language `PREPARE_REMEDIATION` and `OPEN_PR` interpretations require confirmation bound to the SHA-256 of the exact generated request. Confirmation establishes request meaning only; the existing three GitHub write approvals remain separate. Exact JSON remains directly executable for backward compatibility.
+
+The compiler is a pure in-process module. Free-form text and draft data do not cross the planning seam: preflight and every retained Phase 2-7 gate consume only `GuardianRequest`.
+
+## Stable executable request schema
 
 ```json
 {
@@ -60,7 +77,7 @@ The orchestration module calls the existing typed modules. It does not reimpleme
 }
 ```
 
-`suspect` may instead be an exact comparison object with `base_sha` and `head_sha`, both full 40-character lowercase Git SHAs. Missing scope is the only reason ask-user support is enabled, and it must occur before every other tool call.
+`suspect` may instead be an exact comparison object with `base_sha` and `head_sha`, both full 40-character lowercase Git SHAs. For natural-language remediation/write requests, ask-user also owns interpreted-request confirmation. Both missing-input and confirmation questions occur before every other tool call and never authorize a GitHub write.
 
 ## Mode ceilings
 

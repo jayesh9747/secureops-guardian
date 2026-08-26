@@ -1,8 +1,26 @@
 # Unified Guardian prompt templates
 
-These prompts target the one saved TrueForge agent named `secureops-guardian_v0`. Keep the JSON scope intact. Replace only values explicitly marked as placeholders.
+These prompts target the one saved TrueForge agent named `secureops-guardian_v0`. Natural language is the primary input after Expansion Phase 1. Exact JSON remains supported for regression tests and advanced use.
 
-## Current fixture first run
+## Natural-language current fixture
+
+First send this request without calling tools or attaching files:
+
+```text
+Prepare a safe remediation for the NetworkPolicy changed by https://github.com/jayesh9747/guardian-demo-checkout/commit/7b2f2ad51f9ef97334176fbfed3138465b62fcdb. The base branch is main and the target file is k8s/checkout-networkpolicy.yaml. Stop if the existing verifier cannot prove the repair; do not open a pull request.
+```
+
+Guardian must interpret this as `PREPARE_REMEDIATION`, display the exact repository, branch, full commit, file, and capability ceiling, then ask for confirmation before any other tool. Expansion Phase 1 intentionally retains the existing verifier-upload precondition. In the confirmation turn, attach the five files listed below with the exact upload names and confirm the interpreted request. Automatic verifier staging belongs to Expansion Phase 2.
+
+For read-only analysis, use an equally explicit request without uploads:
+
+```text
+Check whether commit <full-40-character-lowercase-git-sha> in <owner>/<repository> introduced a security risk. The exact base branch is <base-branch>.
+```
+
+Guardian compiles this to `ANALYSIS_ONLY` and may begin GitHub-only preflight immediately after the complete scope validates. A pasted commit URL supplies only the repository and full SHA; a missing branch still produces one question and zero other tool calls.
+
+## Exact JSON current fixture
 
 Before sending the prompt, attach these five files to the same TrueForge turn. Keep the upload names shown here so the explicit verifier paths remain reproducible:
 

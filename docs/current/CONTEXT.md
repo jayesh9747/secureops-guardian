@@ -67,3 +67,15 @@ _Avoid_: Pending fix, approval request
 **Controlled External Write**:
 A change to a shared external system that the agent may attempt only after a human authorizes its exact content.
 _Avoid_: Irreversible action, autonomous remediation
+
+**Guardian Intent Draft**:
+An untrusted extraction of only the action and scope values explicitly present in a user's natural-language investigation request.
+_Avoid_: Executable prompt, inferred scope
+
+**Guardian Request Compilation**:
+The deterministic normalization, explicit-source validation, missing-field reporting, and higher-capability confirmation that may produce the existing typed `GuardianRequest`.
+_Avoid_: Prompt execution, scope guessing
+
+**Interpreted Request Confirmation**:
+A human confirmation bound to the exact generated request digest for natural-language remediation or pull-request intent. It confirms meaning but does not authorize any GitHub write.
+_Avoid_: Write approval, blanket consent

@@ -1,4 +1,5 @@
 export * from './agent.js';
+export * from './intent.js';
 export * from './journey.js';
 export * from './open-pr.js';
 export * from './plan.js';

@@ -1,4 +1,5 @@
-import { parseGuardianRequest, type GuardianMode, type GuardianRequest } from './scope.js';
+import { compileGuardianRequest } from './intent.js';
+import { type GuardianMode, type GuardianRequest } from './scope.js';
 
 export const GITHUB_WRITE_TOOLS = [
   'create_branch',
@@ -24,7 +25,11 @@ function capabilityCeiling(mode: GuardianMode) {
 }
 
 export function planGuardianRun(input: unknown) {
-  const request = parseGuardianRequest(input);
+  const compilation = compileGuardianRequest(input);
+  if (compilation.status !== 'READY') {
+    throw new Error(`Guardian request is not executable: ${compilation.status}`);
+  }
+  const request = compilation.request;
   const [owner, repo] = request.scope.repository.split('/') as [string, string];
   const headSha =
     request.scope.suspect.kind === 'commit'

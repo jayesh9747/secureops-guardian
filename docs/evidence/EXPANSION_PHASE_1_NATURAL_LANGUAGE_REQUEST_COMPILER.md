@@ -67,7 +67,7 @@ The local phase gate passed with:
 - the retained bundled-verifier candidate replay; and
 - `git diff --check`.
 
-PR/review status is recorded in the pull request before merge. No live GitHub fixture mutation, sandbox run, or saved-agent update is required for the deterministic compiler gate; live saved-agent reconciliation waits for accepted merged code.
+Implementation PR [#13](https://github.com/jayesh9747/secureops-guardian/pull/13) is open. GitGuardian passed. Qodo's [automatic response](https://github.com/jayesh9747/secureops-guardian/pull/13#issuecomment-5425113187) says reviews are paused for this user; it contains no findings or approval. The PR therefore remains open pending an accepted review path. No live GitHub fixture mutation, sandbox run, or saved-agent update is required for the deterministic compiler gate; live saved-agent reconciliation waits for accepted merged code.
 
 ## Exit boundary
 

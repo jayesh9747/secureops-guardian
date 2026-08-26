@@ -45,6 +45,8 @@ ${SUSPECT_NETWORK_POLICY_PATCH}
 
 Return exactly seven evidence records, one for each listed evidence ID. Use only the exact source reference and tool associated above; the commit-history record uses list_commits, the suspect and parent commit plus target-diff records use get_commit, the manifest record uses get_file_contents, and the two remediation records use list_branches and search_pull_requests.
 
+Return the JSON object directly in the child final message. Do not call exec, use Code Mode, or run a script to construct, format, validate, copy, or summarize the JSON. Your complete tool trace must contain only the six listed official GitHub MCP read calls.
+
 Return facts, raw evidence, unknowns, and limitations only. The top-level limitations array must contain at least: "GitHub repository evidence does not establish live workload behavior." Do not provide prose-report framing, severity, a causal conclusion, rule decision, remediation recommendation, patch, sandbox request, approval request, or write request. If evidence is missing, preserve the field as Unknown and name the missing evidence.
 `.trim();
 
@@ -58,6 +60,8 @@ Investigate only case ${DEMO_CASE_ID} for asset checkout-api. Call get_security_
 Return one compact JSON object with exactly these top-level keys and shapes: {"case_id": "${DEMO_CASE_ID}", "synthetic": true, "alert": {source-native alert evidence item}, "deployment": {source-native deployment evidence item}, "reachability_observations": [all source-native reachability evidence items], "service_dependencies": [all source-native DNS and PostgreSQL dependency evidence items], "missing_fields": [], "conflicting_fields": [], "unknowns": ["actual_data_access", "actual_data_exfiltration"], "limitations": [explicit source limitations]}. Use the key alert, not security_alert. Use the key reachability_observations, not reachability or observations. Do not add or rename keys.
 
 Preserve every returned evidence_id and source_ref exactly. Return observations, evidence IDs, source references, unknowns, and limitations only. Do not provide prose-report framing, severity, a causal conclusion, rule decision, remediation recommendation, patch, sandbox request, approval request, or write request. Keep actual data access and exfiltration Unknown.
+
+Return the JSON object directly in the child final message. Do not call exec, use Code Mode, or run a script to construct, format, validate, copy, or summarize the JSON. Your complete tool trace must contain only the four listed guardian-fixture MCP read calls.
 `.trim();
 
 export const ROOT_AGENT_INSTRUCTIONS = `

@@ -26,6 +26,13 @@ Run SecureOps Guardian with this exact request:
       "commit_sha": "7b2f2ad51f9ef97334176fbfed3138465b62fcdb"
     },
     "target_file": "k8s/checkout-networkpolicy.yaml"
+  },
+  "verifier_inputs": {
+    "verifier_bundle": "verifier.bundle.cjs",
+    "expected_contract": "expected-contract.json",
+    "suspect": "suspect.yaml",
+    "deny_all": "deny-all.yaml",
+    "last_good": "last-good.yaml"
   }
 }
 
@@ -82,6 +89,13 @@ Run SecureOps Guardian with this exact request:
       "commit_sha": "<full-40-character-lowercase-git-sha>"
     },
     "target_file": "<exact-kubernetes-networkpolicy-path>"
+  },
+  "verifier_inputs": {
+    "verifier_bundle": "verifier.bundle.cjs",
+    "expected_contract": "expected-contract.json",
+    "suspect": "suspect.yaml",
+    "deny_all": "deny-all.yaml",
+    "last_good": "last-good.yaml"
   }
 }
 

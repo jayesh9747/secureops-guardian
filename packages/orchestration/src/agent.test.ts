@@ -89,6 +89,23 @@ describe('unified TrueForge manifest', () => {
     );
   });
 
+  it('requires an explicit verifier-input declaration before remediation can call tools', () => {
+    const instructions = SECUREOPS_GUARDIAN_AGENT_SPEC.manifest.instructions;
+
+    expect(instructions).toContain('"verifier_inputs"');
+    expect(instructions).toContain('"verifier.bundle.cjs"');
+    expect(instructions).toContain('"expected-contract.json"');
+    expect(instructions).toContain('"suspect.yaml"');
+    expect(instructions).toContain('"deny-all.yaml"');
+    expect(instructions).toContain('"last-good.yaml"');
+    expect(instructions).toContain(
+      'For PREPARE_REMEDIATION and OPEN_PR, verifier_inputs is required before any tool call',
+    );
+    expect(instructions).toContain(
+      'use ask-user support only to request a complete new remediation request object',
+    );
+  });
+
   it('keeps the portable saved-agent instructions synchronized', async () => {
     const exported = portableExportSchema.parse(
       JSON.parse(

@@ -48,6 +48,8 @@ The entry and exit gates passed: Phase 6 was merged, fixture PR #1 remained open
 
 After merge, live greeting replays exposed one prompt-routing regression: a message without scope was always treated as an incomplete run. The saved agent and portable export now classify conversation-only intent first. `hello` and capability questions produce direct responses with zero tool calls; an explicit but incomplete investigation request produces one ask-user call without substituting the demo fixture. The evidence and session IDs are recorded in [`PHASE_7_UNIFIED_GUARDIAN.md`](../evidence/PHASE_7_UNIFIED_GUARDIAN.md).
 
+Post-Phase-7 live remediation replay also exposed a missing verifier-input gate and noisy sandbox fallback behavior. Remediation modes now require a visible five-file `verifier_inputs` declaration before tools, child investigators return JSON without sandbox formatting, and the verifier follows a bounded pinned command sequence. The accepted fail-closed and complete session traces are recorded in [`PHASE_7_HARNESS_RELIABILITY_FIX.md`](../evidence/PHASE_7_HARNESS_RELIABILITY_FIX.md).
+
 ## Implemented capability boundary
 
 The repository currently contains:

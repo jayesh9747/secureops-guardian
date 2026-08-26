@@ -351,6 +351,13 @@ describe('saved root-agent contract', () => {
     ]);
     expect(ROOT_AGENT_INSTRUCTIONS).toContain('do not generate or request a remediation patch');
   });
+
+  it('requires both child investigators to return JSON directly without sandbox formatting', () => {
+    for (const task of [CHANGE_SECURITY_INVESTIGATOR_TASK, EXPOSURE_EVIDENCE_INVESTIGATOR_TASK]) {
+      expect(task).toContain('Return the JSON object directly in the child final message');
+      expect(task).toContain('Do not call exec, use Code Mode, or run a script');
+    }
+  });
 });
 
 describe('SEC-NET-001', () => {

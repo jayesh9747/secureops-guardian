@@ -6,7 +6,7 @@ Date: 27 August 2026.
 
 Expansion Phase 2 replaces the primary five-file upload ceremony with one immutable TrueForge skill bundle. It adds no verifier pack, workload rule, UI redesign, live Kubernetes access, public download fallback, or TrueForge upstream change.
 
-The product branch is `expansion-phase-2/verifier-skill-bundle` from Phase 8 merge `08684b89ef97d5487b236ea94e894bdda77e5c4c`. The separate public skill repository is [`jayesh9747/secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill), branch `expansion-phase-2/verifier-skill-bundle`, commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, immutable tag `guardian-network-egress-v1.0.4`, and unmerged skill PR [#1](https://github.com/jayesh9747/secureops-guardian-verifier-skill/pull/1).
+The product branch is `expansion-phase-2/verifier-skill-bundle` from Phase 8 merge `08684b89ef97d5487b236ea94e894bdda77e5c4c`, with unmerged product PR [#15](https://github.com/jayesh9747/secureops-guardian/pull/15). The separate public skill repository is [`jayesh9747/secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill), branch `expansion-phase-2/verifier-skill-bundle`, commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, immutable tag `guardian-network-egress-v1.0.4`, and unmerged skill PR [#1](https://github.com/jayesh9747/secureops-guardian-verifier-skill/pull/1).
 
 ## Immutable bundle identity
 

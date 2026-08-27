@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { VERIFIER_PACK_METADATA } from './verifier-pack-metadata.js';
+import { VERIFIER_PACK_METADATA, VERIFIER_PACK_SCOPE } from './verifier-pack-metadata.js';
 
 export {
   VERIFIER_PACK_METADATA,
@@ -9,7 +9,7 @@ export {
   VERIFIER_SKILL_NAME,
 } from './verifier-pack-metadata.js';
 
-export const DEMO_REPOSITORY = 'jayesh9747/guardian-demo-checkout';
+export const DEMO_REPOSITORY = VERIFIER_PACK_SCOPE.repository;
 export const DEMO_CASE_ID = 'checkout-networkpolicy-egress-exposure';
 export const MISSING_DEPLOYMENT_REVISION_CASE_ID =
   'checkout-networkpolicy-egress-exposure-missing-deployment-revision';
@@ -18,14 +18,14 @@ export const MISSING_REACHABILITY_CASE_ID =
 export const CONFLICTING_REVISION_CASE_ID =
   'checkout-networkpolicy-egress-exposure-conflicting-revision';
 export const LAST_GOOD_COMMIT_SHA = 'a6d177b43396c7b4b45aa98cb2970d0489a7a4f9';
-export const SUSPECT_COMMIT_SHA = '7b2f2ad51f9ef97334176fbfed3138465b62fcdb';
-export const TARGET_NETWORK_POLICY_FILE = 'k8s/checkout-networkpolicy.yaml';
+export const SUSPECT_COMMIT_SHA = VERIFIER_PACK_SCOPE.suspect_commit_sha;
+export const TARGET_NETWORK_POLICY_FILE = VERIFIER_PACK_SCOPE.target_file;
 export const VERIFIER_PACK_IDENTITY = {
   ...VERIFIER_PACK_METADATA,
-  manifest_sha256: 'cf91d512c8be9939add2cb7f5700151164a1953a7864c1a77708b3d706756aaf',
+  manifest_sha256: 'e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe',
 } as const;
 export const VERIFIER_BUNDLE_SHA256 =
-  '3b2b3be63ea60cc98106854858c3725edd2a0efc604e9389a9328b5299c6bee1' as const;
+  '028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9' as const;
 export const fullGitShaSchema = z
   .string()
   .regex(/^[0-9a-f]{40}$/u, 'Expected a full Git commit SHA.');

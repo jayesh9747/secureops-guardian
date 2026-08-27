@@ -98,7 +98,7 @@ Configure the Gemini provider through TrueForge settings, select `google-gemini/
 
 ### Pinned verifier skill
 
-Register the public `guardian-network-egress-v1` skill from [`secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill) at immutable commit `bdea775220c07c20bd7f433cb3e12793d105b266` (tag `guardian-network-egress-v1.0.2`) and attach it to `secureops-guardian_v0`. The runtime-proven mount is `/opt/tf/skills/guardian-network-egress-v1`. The root contract pins manifest SHA-256 `cf91d512c8be9939add2cb7f5700151164a1953a7864c1a77708b3d706756aaf`; the manifest pins bundle SHA-256 `3b2b3be63ea60cc98106854858c3725edd2a0efc604e9389a9328b5299c6bee1` and every fixture digest. Guardian never searches for, generates, downloads, or accepts a substitute pack.
+Register the public `guardian-network-egress-v1` skill from [`secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill) at immutable commit `ade2d1453bba033dd3300a7c7aede6e28b97582d` (tag `guardian-network-egress-v1.0.4`) and attach it to `secureops-guardian_v0`. The runtime-proven mount is `/opt/tf/skills/guardian-network-egress-v1`. The root contract pins manifest SHA-256 `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`; the manifest pins bundle SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9` and every fixture digest. Guardian never searches for, generates, downloads, or accepts a substitute pack.
 
 ### Official GitHub MCP
 
@@ -128,7 +128,7 @@ With the preserved fixture state, expect:
 - changed file `k8s/checkout-networkpolicy.yaml` and exposure `checkout-api -> forbidden.example.test:443/TCP`;
 - actual data access `Unknown` and a passing four-state proof;
 - proposal hash `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`;
-- verifier pack `k8s-network-egress-v1` version `1.0.2`, with binding SHA-256 `e831714943ab549ff01bbd434b5ded6e49d46692824d03b08baadb4a8c047841`;
+- verifier pack `k8s-network-egress-v1` version `1.0.4`, with binding SHA-256 `3afb251833539c6383a999c2255934c76648994505857e543bc5d3959b7c9e20`;
 - `PR_REUSED` with [`guardian-demo-checkout#1`](https://github.com/jayesh9747/guardian-demo-checkout/pull/1);
 - zero write calls and zero approvals on the reuse path.
 
@@ -173,7 +173,7 @@ Candidate replay:
 ```sh
 node /opt/tf/skills/guardian-network-egress-v1/verifier.bundle.cjs \
   --pack-root /opt/tf/skills/guardian-network-egress-v1 \
-  --expected-manifest-sha256 cf91d512c8be9939add2cb7f5700151164a1953a7864c1a77708b3d706756aaf \
+  --expected-manifest-sha256 e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe \
   --candidate docs/evidence/PHASE_3_CANDIDATE.yaml \
   --full-proof true
 ```

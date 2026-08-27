@@ -9,8 +9,8 @@ import { evaluateCandidateAttempt } from './workflow.js';
 
 const verifierPack = {
   pack_id: 'k8s-network-egress-v1',
-  pack_version: '1.0.2',
-  source_revision: 'guardian-network-egress-v1.0.2',
+  pack_version: '1.0.4',
+  source_revision: 'guardian-network-egress-v1.0.4',
   manifest_sha256: '1'.repeat(64),
 } as const;
 

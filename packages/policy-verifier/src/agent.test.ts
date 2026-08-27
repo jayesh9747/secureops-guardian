@@ -24,7 +24,7 @@ describe('Phase 3 TrueForge agent boundary', () => {
   it('validates only the announced pinned skill root before candidate generation', () => {
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('/opt/tf/skills/guardian-network-egress-v1');
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('k8s-network-egress-v1');
-    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('guardian-network-egress-v1.0.2');
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('guardian-network-egress-v1.0.4');
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('VERIFIER_PACK_READY');
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('--expected-manifest-sha256');
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('--full-proof true');

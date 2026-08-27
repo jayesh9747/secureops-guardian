@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   buildEligibleProposal,
   canonicalJson,
+  computeVerifierPackBinding,
   parsePolicyContract,
   verifyFourStates,
 } from '@guardian/policy-verifier';
@@ -15,6 +16,7 @@ import { bindEligibleProposal } from './binding.js';
 import {
   PHASE_FOUR_TARGET,
   PHASE_THREE_PROPOSAL_HASH,
+  PHASE_THREE_VERIFIER_PACK_BINDING_SHA256,
   SUSPECT_CANDIDATE_GIT_BLOB_SHA,
   VERIFIED_CANDIDATE_GIT_BLOB_SHA,
   VERIFIED_CANDIDATE_SHA256,
@@ -76,6 +78,15 @@ function snapshot(overrides: Partial<RemoteSnapshot> = {}): RemoteSnapshot {
 }
 
 describe('Phase 4 proposal binding and presentation', () => {
+  it('keeps the pinned pack binding derived from the proposal hash and pack identity', () => {
+    expect(PHASE_THREE_VERIFIER_PACK_BINDING_SHA256).toBe(
+      computeVerifierPackBinding({
+        proposal_hash_sha256: PHASE_THREE_PROPOSAL_HASH,
+        verifier_pack: VERIFIER_PACK_IDENTITY,
+      }),
+    );
+  });
+
   it('byte-matches the displayed candidate to the merged sandbox-verified artifact', () => {
     const candidateBytes = Buffer.from(binding.candidateYaml);
     const candidateGitBlobSha = createHash('sha1')
@@ -408,5 +419,11 @@ describe('Phase 4 truthful receipts and TrueForge policy', () => {
       sandbox: { enabled: false },
       dynamic_sub_agents: { enabled: false },
     });
+    expect(PHASE_FOUR_AGENT_SPEC.manifest.instructions).toContain(
+      'The complete PR reuse reconciliation is exactly six reads',
+    );
+    expect(PHASE_FOUR_AGENT_SPEC.manifest.instructions).toContain(
+      'get_file_contents and get_commit for the remediation branch',
+    );
   });
 });

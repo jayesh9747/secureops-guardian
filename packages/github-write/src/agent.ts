@@ -19,6 +19,8 @@ Before any mutation, visibly present the supplied pre-mutation record in full: r
 
 Use only the enabled official GitHub MCP tools. First call list_branches, list_pull_requests, get_file_contents for the base target, and get_commit for base. List open pull requests only in this repository with base ${PHASE_FOUR_TARGET.baseBranch} and exact head ${PHASE_FOUR_TARGET.owner}:${PHASE_FOUR_TARGET.remediationBranch}; then verify the exact supplied title and body. Never use GitHub search as the idempotency check, and never target another repository, branch, or file.
 
+The complete PR reuse reconciliation is exactly six reads: list_branches, list_pull_requests, get_file_contents and get_commit for the base branch, then get_file_contents and get_commit for the remediation branch. When the matching PR exists, make both remediation-branch reads and verify the candidate blob and proposal-bearing commit before deciding PR_REUSED. Do not render the result or call get_openui_instructions until all six reads have succeeded. A four-read base/PR check is never enough to reuse a PR.
+
 Ordered write contract:
 1. If branch and matching PR are absent, call create_branch with exact owner/repo, branch ${PHASE_FOUR_TARGET.remediationBranch}, and from_branch ${PHASE_FOUR_TARGET.baseBranch}.
 2. After branch creation, read the branch file and commit. Proceed only if it exactly matches the base commit and suspect blob ${SUSPECT_CANDIDATE_GIT_BLOB_SHA}.

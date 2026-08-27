@@ -4,7 +4,7 @@ SecureOps Guardian is one saved TrueForge agent that helps an on-call platform/s
 
 The demo joins real GitHub commit evidence from the public [`guardian-demo-checkout`](https://github.com/jayesh9747/guardian-demo-checkout) repository with explicitly synthetic incident observations. Unlike a generic incident summary, Guardian identifies one changed NetworkPolicy rule, rejects deny-all containment because it breaks checkout's database path, proves an exact replacement against four policy states, and creates or deterministically reuses one reviewable pull request only at the approval boundary.
 
-Users select only `secureops-guardian_v0` and supply a schema-version-1 repository scope. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. Guardian can inspect any authorized GitHub repository in read-only mode; proven remediation currently supports Kubernetes NetworkPolicy cases inside its documented static verifier subset.
+Users select only `secureops-guardian_v0` and describe an exact repository change in ordinary language; exact schema-version-1 JSON remains available for tests and advanced use. Guardian compiles natural language into the existing typed request without guessing a repository, branch, revision, or file. Missing facts produce one tool-free question, while remediation and pull-request interpretations require confirmation before preflight. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. Guardian can inspect any authorized GitHub repository in read-only mode; proven remediation currently supports Kubernetes NetworkPolicy cases inside its documented static verifier subset.
 
 ## Judge-visible result
 
@@ -21,6 +21,7 @@ Users select only `secureops-guardian_v0` and supply a schema-version-1 reposito
 
 ```text
 Engineer -> saved TrueForge agent secureops-guardian_v0
+  +-- natural language or exact JSON -> validated GuardianRequest
   +-- parameterized scope preflight -> official GitHub MCP reads
   +-- exact supported case
   |     +-- change-security-investigator -> official GitHub MCP reads
@@ -31,7 +32,7 @@ Engineer -> saved TrueForge agent secureops-guardian_v0
   `-- stock OpenUI or Markdown + machine-readable run receipt
 ```
 
-TrueForge is the sole agent harness. [`@guardian/orchestration`](./packages/orchestration/src/index.ts) composes the reviewed investigation, sandbox verification, proposal, approval, receipt, reliability, and presentation modules behind one user-facing manifest. Phase-named manifests remain only as test fixtures/reference configurations. Dynamic child roles are instruction-scoped and share attached resources, not enforced authorization boundaries. See the [architecture](./docs/current/ARCHITECTURE.md) and [migration note](./docs/current/PHASE_7_MIGRATION.md).
+TrueForge is the sole agent harness. [`@guardian/orchestration`](./packages/orchestration/src/index.ts) compiles natural-language requests at the planning seam and composes the reviewed investigation, sandbox verification, proposal, approval, receipt, reliability, and presentation modules behind one user-facing manifest. Phase-named manifests remain only as test fixtures/reference configurations. Dynamic child roles are instruction-scoped and share attached resources, not enforced authorization boundaries. See the [architecture](./docs/current/ARCHITECTURE.md) and [migration note](./docs/current/PHASE_7_MIGRATION.md).
 
 | TrueForge capability | Guardian use |
 | --- | --- |
@@ -112,7 +113,7 @@ Use [`SECUREOPS_GUARDIAN_AGENT_SPEC`](./packages/orchestration/src/agent.ts) or 
 
 ## Unified prompts and expected outcome
 
-Use the [current-fixture first-run prompt](./docs/current/PHASE_7_PROMPTS.md#current-fixture-first-run). The same document provides an [arbitrary-repository `ANALYSIS_ONLY` template](./docs/current/PHASE_7_PROMPTS.md#arbitrary-repository-analysis_only) and an [`OPEN_PR` safety template](./docs/current/PHASE_7_PROMPTS.md#open_pr-safety-template).
+Use the [natural-language current-fixture prompt](./docs/current/PHASE_7_PROMPTS.md#natural-language-current-fixture). The same document retains exact JSON templates for backward compatibility and provides an [arbitrary-repository `ANALYSIS_ONLY` template](./docs/current/PHASE_7_PROMPTS.md#arbitrary-repository-analysis_only) and an [`OPEN_PR` safety template](./docs/current/PHASE_7_PROMPTS.md#open_pr-safety-template).
 
 With the preserved fixture state, expect:
 
@@ -196,6 +197,7 @@ AI coding assistants supported planning, implementation, tests, documentation, a
 ## Known limitations and retained roadmap
 
 - Any authorized repository can enter read-only preflight, but proven remediation remains limited to the exact owned Kubernetes NetworkPolicy case inside the documented static subset.
+- Expansion Phase 1 still uses the existing five explicit verifier uploads for remediation modes; automatic versioned verifier assets belong to Expansion Phase 2 and are not implemented here.
 - The preserved public state safely demonstrates PR reuse, not a new live creation or denial sequence.
 - Phase-named saved agents and exported specifications are retained only as historical test fixtures/reference configurations.
 - There is no live cluster, production telemetry, CVE scan, packet capture, penetration test, compliance assessment, general incident response, or autonomous containment.

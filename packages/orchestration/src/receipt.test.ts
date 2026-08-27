@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
 
+import { REQUIRED_VERIFIER_INPUTS } from './intent.js';
 import { buildCurrentFixtureJourneyContext, runCurrentFixtureJourney } from './journey.js';
 import { buildGuardianRunReceipt } from './receipt.js';
 
@@ -14,7 +15,11 @@ const scope = {
 };
 
 function coreOf(mode: 'ANALYSIS_ONLY' | 'PREPARE_REMEDIATION' | 'OPEN_PR') {
-  const input = { mode, scope };
+  const input = {
+    mode,
+    scope,
+    ...(mode === 'ANALYSIS_ONLY' ? {} : { verifier_inputs: REQUIRED_VERIFIER_INPUTS }),
+  };
   const { receipt_id: _receiptId, ...core } = runCurrentFixtureJourney(
     input,
     buildCurrentFixtureJourneyContext(input),

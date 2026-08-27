@@ -1,5 +1,6 @@
 import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
 
+import { REQUIRED_VERIFIER_INPUTS } from './intent.js';
 import { buildCurrentFixtureJourneyContext, runCurrentFixtureJourney } from './journey.js';
 
 const scope = {
@@ -11,7 +12,11 @@ const scope = {
 };
 
 const receipts = ['ANALYSIS_ONLY', 'PREPARE_REMEDIATION', 'OPEN_PR'].map((mode) => {
-  const input = { mode, scope };
+  const input = {
+    mode,
+    scope,
+    ...(mode === 'ANALYSIS_ONLY' ? {} : { verifier_inputs: REQUIRED_VERIFIER_INPUTS }),
+  };
   return runCurrentFixtureJourney(input, buildCurrentFixtureJourneyContext(input));
 });
 

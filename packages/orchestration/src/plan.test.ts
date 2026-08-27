@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { REQUIRED_VERIFIER_INPUTS } from './intent.js';
 import { planGuardianRun } from './plan.js';
 
 const arbitraryScope = {
@@ -52,7 +53,11 @@ describe('Guardian run planning', () => {
   });
 
   it('never gives PREPARE_REMEDIATION a GitHub write capability', () => {
-    const plan = planGuardianRun({ mode: 'PREPARE_REMEDIATION', scope: arbitraryScope });
+    const plan = planGuardianRun({
+      mode: 'PREPARE_REMEDIATION',
+      scope: arbitraryScope,
+      verifier_inputs: REQUIRED_VERIFIER_INPUTS,
+    });
 
     expect(plan.capability_ceiling).toEqual({
       incident_fixture_reads: true,

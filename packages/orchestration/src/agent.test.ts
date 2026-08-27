@@ -108,6 +108,15 @@ describe('unified TrueForge manifest', () => {
     );
     expect(instructions).toContain('Confirmation of OPEN_PR does not approve a GitHub write');
     expect(instructions).toContain('a negated, quoted, or explanatory mention never elevates mode');
+    expect(instructions).toContain(
+      'The typed compiler is the only authority that computes the interpreted-request SHA-256',
+    );
+    expect(instructions).toContain(
+      'must not calculate, invent, or display an interpreted-request SHA-256',
+    );
+    expect(instructions).toContain(
+      'bind confirmation to every visible canonical scope and mode field',
+    );
   });
 
   it('requires an explicit verifier-input declaration before remediation can call tools', () => {

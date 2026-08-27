@@ -1,6 +1,6 @@
 # SecureOps Guardian implementation status
 
-Updated: 26 August 2026.
+Updated: 27 August 2026.
 
 ## Purpose
 
@@ -12,14 +12,14 @@ This file is navigation and handoff state, not a product specification. The acti
 
 - Completed and merged: original Phase 0 through Phase 7. Phase 7 PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) merged as `cfa65ef288d2ae615c1dd2d58d1086655177420c` after the operator's alternate-review remediation and acceptance.
 - Post-Phase-7 reliability and UI-contract fixes are merged through PR [#12](https://github.com/jayesh9747/secureops-guardian/pull/12): conversation-only greeting routing, separation of result from execution trace, decision-first results, and fail-closed verifier-input handling.
-- Product `main`: `8c205b1ef3e526cdee6cf6072bd0f51798114036` after PR #12. This revision was fetched and verified before Expansion Phase 1 implementation began.
-- Expansion Phase 1 — Natural-language request compiler is implemented in PR [#13](https://github.com/jayesh9747/secureops-guardian/pull/13) on `expansion-phase-1/natural-language-request-compiler`, based on product `main` plus planning commit `67a041c`. It adds an untrusted `GuardianIntentDraft`, deterministic compiler outcomes, digest-bound confirmation for natural-language remediation/write intent, and exact-JSON compatibility at the existing planning seam. It does not implement automatic verifier assets, FindingPacks, the workload-security pack, or new Incident Brief/artifact behavior. Qodo responded that reviews are paused for this user, so the PR has no Qodo findings or approval and remains open.
+- Product `main`: `dc056805934ff55d83e0756c5d91a722184309b1` after Expansion Phase 1 PR #13 merged.
+- Expansion Phase 1 — Natural-language request compiler was implemented in PR [#13](https://github.com/jayesh9747/secureops-guardian/pull/13) on `expansion-phase-1/natural-language-request-compiler`; reviewed head `bb6d71035d4109a42bb13be561ea28c300834743` merged as `dc056805934ff55d83e0756c5d91a722184309b1`. A takeover review then reproduced six acceptance gaps, now corrected on `fix/phase-8-acceptance-gaps`: verifier-gate bypass, incomplete commit-URL extraction, uppercase/conflicting SHA acceptance, unsafe-target omission, action-kind elevation, and missing live evidence. The correction remains Phase 8 only. Qodo reported reviews paused on PR #13, so it supplied no findings or approval; the merge is not a Qodo review.
 - Frozen Phase 5 review-remediated core: `263e6a27307a667f08bfa832b436a754c0848a2e`.
 - Controlling proposal hash: `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
 - Remediation PR `jayesh9747/guardian-demo-checkout#1` is open and unmerged at commit `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
 - Saved TrueForge agent `01m0t4gpvz34x60qz6fxqz214d` now byte-matches the merged Phase 4 instructions, enables direct `list_pull_requests`, and separately approval-gates all three writes.
-- Saved TrueForge agent `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`, contains the merged Phase 7 manifest: official GitHub MCP reads/writes, Fixture MCP reads, Daytona, dynamic children, all three write approvals, stock Generative UI, and fail-closed ask-user behavior. The Expansion Phase 1 portable export is updated on its implementation branch; the live saved agent must not be reconciled from that export until the phase PR is accepted and merged. Its immutable predecessor `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, remains saved so existing reference sessions keep resolving.
+- Saved TrueForge agent `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`, is reconciled to the corrected Expansion Phase 1 portable manifest. Canonical saved/export manifest SHA-256 is `059f0ccbd25658d050d82262347fd3405ffe6666b0003421a7551fcfa8cf90c5`. The manifest retains official GitHub MCP reads/writes, Fixture MCP reads, Daytona, dynamic children, all three write approvals, stock Generative UI, and fail-closed ask-user behavior. Its immutable predecessor `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, remains saved so existing reference sessions keep resolving.
 - Phase-named saved agents remain only as historical test fixtures/reference configurations.
 - The TrueForge worktree has an operator-owned `docker-compose.yml` change. Preserve it and keep it out of product commits.
 
@@ -35,6 +35,7 @@ This file is navigation and handoff state, not a product specification. The acti
 | 5 — reliability and persistence | `jayesh9747/secureops-guardian#6` | `263e6a27307a667f08bfa832b436a754c0848a2e` | `fce4424be5461b2272dfbdd15c3d545d0c1e06e1` | [`PHASE_5_RELIABILITY_PERSISTENCE.md`](../evidence/PHASE_5_RELIABILITY_PERSISTENCE.md) |
 | 6 — UI, quality, submission | `jayesh9747/secureops-guardian#7` | `71835c282406d001e945243717c37068c441ed01` | `8fde66dfcd7f537f70192246ee3a7eb7173f53ba` | [`PHASE_6_UI_QUALITY_SUBMISSION.md`](../evidence/PHASE_6_UI_QUALITY_SUBMISSION.md) |
 | 7 — unified Guardian | `jayesh9747/secureops-guardian#8` | `b0ca030524aad8f4227e29bae86a0dcc5f219229` | `cfa65ef288d2ae615c1dd2d58d1086655177420c` | [`PHASE_7_UNIFIED_GUARDIAN.md`](../evidence/PHASE_7_UNIFIED_GUARDIAN.md) |
+| Expansion 1 — natural-language compiler | `jayesh9747/secureops-guardian#13` | `bb6d71035d4109a42bb13be561ea28c300834743` | `dc056805934ff55d83e0756c5d91a722184309b1` | [`EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md`](../evidence/EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md) |
 
 Read a completed phase's plan or evidence only when verifying its prerequisite, reproducing its trace, or diagnosing a regression.
 
@@ -54,7 +55,7 @@ Post-Phase-7 live remediation replay also exposed a missing verifier-input gate 
 
 Expansion Phase 1 is additive above the existing `GuardianRequest`. The compiler accepts exact JSON directly or a natural-language envelope containing only the user-authored text plus an untrusted draft. Deterministic normalization requires explicit source text for repository, branch, full commit/range endpoints, and optional target file. It returns one of four states: conversation-only, needs input, confirmation required, or ready. Only ready contains the executable typed request, and `planGuardianRun` rejects every other state before it can construct MCP reads or a capability ceiling.
 
-The focused suite proves ten paraphrases normalize to one analysis request, exact JSON remains compatible, commit URLs do not supply a missing branch, invented scope fails closed, missing facts produce one question, unconfirmed or digest-mismatched remediation/write intent cannot enter planning, and conversation-only input produces no request/question. The portable `secureops-guardian_v0` manifest carries the matching tool-free extraction and confirmation contract. See [`EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md`](../evidence/EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md).
+The corrected focused suite proves ten paraphrases normalize to one analysis request; exact JSON remains compatible behind the retained verifier gate; malformed or mode-forbidden verifier envelopes stop with one question; commit URLs supply only their exact repository/full lowercase SHA and never a missing branch; unsupported URLs, contradictory repository/branch/SHA candidates, and uppercase SHAs fail closed; branch and target roles require contextual labels; invalid or unlabeled targets cannot broaden scope; action kind must match direct affirmative user-authored evidence; missing facts produce one question; unconfirmed or digest-mismatched remediation/write intent cannot enter planning; and conversation-only input produces no request/question. The portable `secureops-guardian_v0` manifest carries the matching tool-free extraction and confirmation contract. Final live replays cover conversation-only, missing scope, PREPARE confirmation, and complete analysis without fixture mutation or GitHub writes. See [`EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md`](../evidence/EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md).
 
 ## Implemented capability boundary
 
@@ -121,9 +122,10 @@ The Phase 5 integration matrix and three safe-state live rehearsals pass. A new 
 - Qodo's automatic, earlier manual, and official `/agentic_review` Phase 6 PR #7 attempts reported reviews paused. No Qodo findings or approval exist. Alternate review findings were remediated at `33b9e51282f73dce0a8afeb07bd20dd0a53edc74` and follow-up `71835c282406d001e945243717c37068c441ed01`; the operator subsequently merged PR #7.
 - The unified saved manifest attaches Fixture and write tools because the later modes need them. `ANALYSIS_ONLY` Fixture/write exclusion and `PREPARE_REMEDIATION` write exclusion are enforced by the mode contract and typed planning/receipt gates, while TrueForge separately enforces approval if a write is reached. Dynamic roles remain instruction-scoped rather than hard per-mode tool isolation.
 - Qodo's automatic and official `/agentic_review` attempts on Phase 7 PR #8 reported reviews paused. No Qodo findings or approval exist. The consolidated alternate review reported 15 findings; all were reproduced, root-caused, remediated, and covered by the 172-test suite. Operator acceptance remains required before merge.
-- Qodo's automatic attempt on Expansion Phase 1 PR #13 reported reviews paused. The response contains no findings or approval; do not recast GitGuardian success or a later merge as Qodo review. The PR remains open pending an accepted review path.
+- Qodo's automatic attempt on Expansion Phase 1 PR #13 reported reviews paused. The response contains no findings or approval; do not recast GitGuardian success or the subsequent merge as Qodo review.
 - Expansion Phase 1 intentionally retains the existing five same-turn verifier uploads for remediation modes. Automatic versioned verifier assets are Expansion Phase 2 and must not be inferred from the compiler work.
-- Until the Expansion Phase 1 PR is accepted, merged, and the live saved agent is reconciled from the merged portable export, live sessions continue using the previously saved prompt. Existing sessions also retain their persisted prompt and event history.
+- The typed compiler is the only authority for the interpreted-request digest. The prompt-only saved TrueForge agent does not execute the TypeScript compiler; it binds live confirmation to every visible canonical field and must not calculate or display a digest unless a deterministic integration supplies it.
+- New saved-agent sessions resolve the reconciled manifest. Existing sessions retain their persisted prompt and event history.
 
 ## Handoff update protocol
 

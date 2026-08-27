@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
 import { LAST_GOOD_COMMIT_SHA } from '@guardian/shared';
 
+import { REQUIRED_VERIFIER_INPUTS } from './intent.js';
 import {
   buildCurrentFixtureJourneyContext,
   runCurrentFixtureJourney,
@@ -17,8 +18,25 @@ const fixtureScope = {
   target_file: TARGET_NETWORK_POLICY_FILE,
 };
 
+function withVerifierInputs(input: unknown) {
+  if (
+    typeof input !== 'object' ||
+    input === null ||
+    !('mode' in input) ||
+    input.mode === undefined ||
+    input.mode === 'ANALYSIS_ONLY'
+  ) {
+    return input;
+  }
+  return { ...input, verifier_inputs: REQUIRED_VERIFIER_INPUTS };
+}
+
 function runJourney(input: unknown) {
-  return runCurrentFixtureJourney(input, buildCurrentFixtureJourneyContext(input));
+  const executableInput = withVerifierInputs(input);
+  return runCurrentFixtureJourney(
+    executableInput,
+    buildCurrentFixtureJourneyContext(executableInput),
+  );
 }
 
 describe('unified current-fixture journey', () => {
@@ -244,7 +262,7 @@ describe('unified current-fixture journey', () => {
   });
 
   it('makes the OPEN_PR remote artifact gate load-bearing', () => {
-    const input = { mode: 'OPEN_PR', scope: fixtureScope } as const;
+    const input = withVerifierInputs({ mode: 'OPEN_PR', scope: fixtureScope });
     const context = buildCurrentFixtureJourneyContext(input);
     if (context.remote_snapshot === undefined) throw new Error('Expected remote snapshot.');
     const remote = structuredClone(context.remote_snapshot) as {

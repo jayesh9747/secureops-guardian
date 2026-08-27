@@ -6,7 +6,7 @@ Date: 27 August 2026.
 
 Expansion Phase 2 replaces the primary five-file upload ceremony with one immutable TrueForge skill bundle. It adds no verifier pack, workload rule, UI redesign, live Kubernetes access, public download fallback, or TrueForge upstream change.
 
-The product branch is `expansion-phase-2/verifier-skill-bundle` from Phase 8 merge `08684b89ef97d5487b236ea94e894bdda77e5c4c`, with unmerged product PR [#15](https://github.com/jayesh9747/secureops-guardian/pull/15). The separate public skill repository is [`jayesh9747/secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill), branch `expansion-phase-2/verifier-skill-bundle`, commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, immutable tag `guardian-network-egress-v1.0.4`, and unmerged skill PR [#1](https://github.com/jayesh9747/secureops-guardian-verifier-skill/pull/1).
+The product branch is `expansion-phase-2/verifier-skill-bundle` from Phase 8 merge `08684b89ef97d5487b236ea94e894bdda77e5c4c`, with unmerged product PR [#15](https://github.com/jayesh9747/secureops-guardian/pull/15). The separate public skill repository is [`jayesh9747/secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill), branch `expansion-phase-2/verifier-skill-bundle`, pinned payload commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, immutable tag `guardian-network-egress-v1.0.4`, and unmerged skill PR [#1](https://github.com/jayesh9747/secureops-guardian-verifier-skill/pull/1). Skill PR head `c1b107cc3d3427a21eca51f8bb227bbd2d8a93b1` adds the packaging metadata/scope drift guard without changing any pinned payload byte.
 
 ## Immutable bundle identity
 
@@ -81,7 +81,7 @@ The fixture PR remained open and unmerged at `44fb8c7f5e99f835c6779f5e7b777c1b01
 
 ## Verification
 
-The product gate passed formatting, lint, typecheck, build, bundle generation, `git diff --check`, all 246 Vitest tests, and the Phase 5, Phase 6, and Phase 7 deterministic matrices. Rebuilding `packages/policy-verifier/dist/cli.bundle.cjs` produced the exact pinned bundle digest `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9`. Rebuilding the skill then reproduced manifest digest `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`. The skill repository's `npm test` independently validated its complete identity and scope, exact manifest file set, and every payload digest.
+The product gate passed formatting, lint, typecheck, build, bundle generation, `git diff --check`, all 246 Vitest tests, and the Phase 5, Phase 6, and Phase 7 deterministic matrices. Rebuilding `packages/policy-verifier/dist/cli.bundle.cjs` produced the exact pinned bundle digest `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9`. Rebuilding the skill then reproduced manifest digest `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`. The skill repository's `npm test` independently validated compiled-product/spec mismatch cases, its complete identity and scope, exact manifest file set, and every payload digest.
 
 ## Rollback
 

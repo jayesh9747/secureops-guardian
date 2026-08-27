@@ -99,6 +99,12 @@ function assertReceiptMatchesBoundProposal(
     throw new Error('Presentation rejected an action receipt for a different proposal hash.');
   }
   if (
+    JSON.stringify(receipt.verifier_pack) !== JSON.stringify(proposal.verifier_pack) ||
+    receipt.verifier_pack_binding_sha256 !== proposal.verifier_pack_binding_sha256
+  ) {
+    throw new Error('Presentation rejected an action receipt for a different verifier pack.');
+  }
+  if (
     receipt.repository !== PHASE_FOUR_TARGET.repository ||
     receipt.base_branch !== PHASE_FOUR_TARGET.baseBranch ||
     receipt.remediation_branch !== PHASE_FOUR_TARGET.remediationBranch
@@ -155,6 +161,7 @@ function exactProposal(proposal: EligibleProposal): GuardianPresentation['propos
     state: 'EXACT',
     proposal_id: proposal.proposal_id,
     proposal_hash_sha256: proposal.proposal_hash_sha256,
+    verifier_pack_binding_sha256: proposal.verifier_pack_binding_sha256,
     exact_patch: proposal.canonical_diff,
   };
 }
@@ -177,6 +184,7 @@ function buildVerifiedPresentationSections(input: {
     verifier: {
       state: 'FOUR_STATE_VERIFIED',
       execution_boundary: GUARDIAN_VERIFIER_BOUNDARY,
+      verifier_pack: input.proposal.verifier_pack,
       rows: proofRows(input.proposal.four_state_verifier_result),
     },
     proposal: exactProposal(input.proposal),
@@ -303,6 +311,7 @@ export function buildRunRecordPresentation(input: {
       verifier: {
         state: 'NO_SAFE_REMEDIATION',
         execution_boundary: GUARDIAN_VERIFIER_BOUNDARY,
+        verifier_pack: record.verifier_output.verifier_pack,
         attempts,
       },
       proposal: {

@@ -1,7 +1,13 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { canonicalJson, type EligibleProposal } from '@guardian/policy-verifier';
+import {
+  buildEligibleProposal,
+  canonicalJson,
+  parsePolicyContract,
+  verifyFourStates,
+} from '@guardian/policy-verifier';
+import { VERIFIER_PACK_IDENTITY } from '@guardian/shared';
 import { describe, expect, it } from 'vitest';
 
 import { PHASE_FOUR_AGENT_SPEC } from './agent.js';
@@ -25,13 +31,29 @@ import { buildPreMutationPresentation } from './presentation.js';
 import { buildPhaseFourReceiptArtifacts } from './receipt-artifacts.js';
 import { buildActionReceipt } from './receipt.js';
 
-const proposal = JSON.parse(
-  readFileSync(new URL('../../../docs/evidence/PHASE_3_PROPOSAL.json', import.meta.url), 'utf8'),
-) as EligibleProposal;
 const candidateArtifact = readFileSync(
   new URL('../../../docs/evidence/PHASE_3_CANDIDATE.yaml', import.meta.url),
   'utf8',
 );
+const policyFixture = (name: string) =>
+  readFileSync(new URL(`../../policy-verifier/fixtures/${name}`, import.meta.url), 'utf8');
+const suspectArtifact = policyFixture('suspect.yaml');
+const proof = verifyFourStates(
+  {
+    lastGoodYaml: candidateArtifact,
+    suspectYaml: suspectArtifact,
+    denyAllYaml: policyFixture('deny-all.yaml'),
+    candidateYaml: candidateArtifact,
+  },
+  parsePolicyContract(policyFixture('expected-contract.json')),
+  VERIFIER_PACK_IDENTITY,
+);
+const proposal = buildEligibleProposal({
+  candidateYaml: candidateArtifact,
+  suspectYaml: suspectArtifact,
+  proof,
+});
+if (proposal === undefined) throw new Error('Expected the controlling eligible proposal.');
 const bindingResult = bindEligibleProposal(proposal);
 if (bindingResult.status !== 'BOUND') throw new Error(bindingResult.reason);
 const binding = bindingResult.binding;
@@ -80,6 +102,12 @@ describe('Phase 4 proposal binding and presentation', () => {
     expect(
       decideWrite({ ...proposal, proposal_hash_sha256: '0'.repeat(64) }, snapshot()).status,
     ).toBe('WRITE_CONFLICT');
+    expect(
+      bindEligibleProposal({
+        ...proposal,
+        verifier_pack: { ...proposal.verifier_pack, manifest_sha256: 'f'.repeat(64) },
+      }).status,
+    ).toBe('WRITE_CONFLICT');
   });
 
   it('rejects proof rows whose security flags contradict their classification', () => {
@@ -99,6 +127,11 @@ describe('Phase 4 proposal binding and presentation', () => {
     expect(presentation).toContain(binding.proposal.canonical_diff);
     expect(presentation).toContain(binding.candidateYaml);
     expect(presentation).toContain(PHASE_THREE_PROPOSAL_HASH);
+    expect(presentation).toContain(binding.proposal.verifier_pack.pack_id);
+    expect(presentation).toContain(binding.proposal.verifier_pack.pack_version);
+    expect(presentation).toContain(binding.proposal.verifier_pack.source_revision);
+    expect(presentation).toContain(binding.proposal.verifier_pack.manifest_sha256);
+    expect(presentation).toContain(binding.proposal.verifier_pack_binding_sha256);
     expect(presentation).toContain('evidence:security-alert:checkout-egress:001');
     expect(presentation).toContain('SECURE_BUT_OPERATIONALLY_REJECTED');
     expect(presentation).toContain('retry-safe, not atomic');
@@ -251,7 +284,14 @@ describe('Phase 4 truthful receipts and TrueForge policy', () => {
           'utf8',
         ),
       ) as unknown;
-      expect(canonicalJson(committed)).toBe(canonicalJson(receiptCase.receipt));
+      const {
+        verifier_pack: historicalPackMigration,
+        verifier_pack_binding_sha256: historicalPackBindingMigration,
+        ...historicalReceipt
+      } = receiptCase.receipt;
+      expect(historicalPackMigration.pack_id).toBe('k8s-network-egress-v1');
+      expect(historicalPackBindingMigration).toMatch(/^[0-9a-f]{64}$/u);
+      expect(canonicalJson(committed)).toBe(canonicalJson(historicalReceipt));
     }
   });
 
@@ -268,6 +308,10 @@ describe('Phase 4 truthful receipts and TrueForge policy', () => {
     expect(receipt.status).toBe('DENIED');
     expect(receipt.approved_tool_call_references).toEqual([]);
     expect(receipt.denied_tool_call_references).toEqual(['call_denied_branch']);
+    expect(receipt.verifier_pack).toEqual(binding.proposal.verifier_pack);
+    expect(receipt.verifier_pack_binding_sha256).toBe(
+      binding.proposal.verifier_pack_binding_sha256,
+    );
     expect(receipt).not.toHaveProperty('remote_commit_sha');
     expect(receipt).not.toHaveProperty('pr_url');
 

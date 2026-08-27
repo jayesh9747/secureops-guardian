@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { actionReceiptSchema } from '@guardian/github-write';
-import { canonicalJson } from '@guardian/policy-verifier';
+import { canonicalJson, verifierPackIdentitySchema } from '@guardian/policy-verifier';
 import { z } from 'zod';
 
 export const phaseFiveScenarioIdSchema = z.enum([
@@ -60,6 +60,7 @@ const proofRowSchema = z
 
 const verifierOutputSchema = z
   .object({
+    verifier_pack: verifierPackIdentitySchema,
     attempts: z.array(verifierAttemptSchema).min(1).max(2),
     four_state: z.array(proofRowSchema).length(4).nullable(),
   })

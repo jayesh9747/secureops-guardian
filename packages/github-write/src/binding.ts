@@ -2,9 +2,11 @@ import {
   canonicalJson,
   canonicalizeYaml,
   fourStateProofPasses,
+  recomputeVerifierPackBinding,
   recomputeProposalHash,
   type EligibleProposal,
 } from '@guardian/policy-verifier';
+import { VERIFIER_PACK_IDENTITY } from '@guardian/shared';
 
 import {
   EXPECTED_PROPOSAL_TARGET,
@@ -43,6 +45,14 @@ export function bindEligibleProposal(proposal: EligibleProposal): BindingResult 
     recomputedProposalHash !== PHASE_THREE_PROPOSAL_HASH
   ) {
     return conflict('Proposal hash or ID does not match the eligible Phase 3 proposal.');
+  }
+  if (
+    canonicalJson(proposal.verifier_pack) !== canonicalJson(VERIFIER_PACK_IDENTITY) ||
+    canonicalJson(proposal.four_state_verifier_result.verifier_pack) !==
+      canonicalJson(VERIFIER_PACK_IDENTITY) ||
+    proposal.verifier_pack_binding_sha256 !== recomputeVerifierPackBinding(proposal)
+  ) {
+    return conflict('Proposal verifier pack identity or binding digest does not match the pin.');
   }
   if (canonicalJson(proposal.target) !== canonicalJson(EXPECTED_PROPOSAL_TARGET)) {
     return conflict('Proposal target is outside the fixed Phase 4 boundary.');

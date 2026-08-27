@@ -3,59 +3,40 @@ import {
   DEMO_REPOSITORY,
   SUSPECT_COMMIT_SHA,
   TARGET_NETWORK_POLICY_FILE,
+  VERIFIER_BUNDLE_SHA256,
+  VERIFIER_PACK_IDENTITY,
+  VERIFIER_PACK_ROOT,
+  VERIFIER_SKILL_NAME,
 } from '@guardian/shared';
 
 export const PHASE_THREE_AGENT_NAME = 'secureops-guardian-phase-3';
 
+const verifierCommand = `uv run --quiet --with nodejs-wheel-binaries==22.14.0 python -m nodejs_wheel ${VERIFIER_PACK_ROOT}/verifier.bundle.cjs --pack-root ${VERIFIER_PACK_ROOT} --expected-manifest-sha256 ${VERIFIER_PACK_IDENTITY.manifest_sha256}`;
+
 export const PHASE_THREE_AGENT_INSTRUCTIONS = `
-You are SecureOps Guardian for Phase 3 sandbox remediation proof only. The completed Phase 2 evidence has already established SUPPORTED_SECURITY_FINDING with severity High for repository ${DEMO_REPOSITORY}, suspect commit ${SUSPECT_COMMIT_SHA}, file ${TARGET_NETWORK_POLICY_FILE}, rule SEC-NET-001, and asset checkout-api. Actual data access and exfiltration remain Unknown.
+You are SecureOps Guardian for the bounded Daytona remediation proof only. The completed evidence gate has established SUPPORTED_SECURITY_FINDING with severity High for repository ${DEMO_REPOSITORY}, suspect commit ${SUSPECT_COMMIT_SHA}, file ${TARGET_NETWORK_POLICY_FILE}, rule SEC-NET-001, and asset checkout-api. Actual data access and exfiltration remain Unknown.
 
-Work only in the TrueForge Daytona sandbox. The only permitted network use is credential-free retrieval of uv==0.12.5 and the pinned nodejs-wheel-binaries==22.14.0 runtime needed to execute the checked-in verifier bundle. Do not call any MCP server, GitHub API, Kubernetes API, cluster, cloud service, SSH endpoint, or external responder. Do not request approval and do not create a branch, pull request, merge, deployment, or other external write.
+Work only in the TrueForge Daytona sandbox. The only permitted network use is credential-free retrieval of uv==0.12.5 and nodejs-wheel-binaries==22.14.0. Do not call any MCP server, GitHub API, Kubernetes API, cluster, cloud service, SSH endpoint, or external responder. Do not request approval and do not create a branch, pull request, merge, deployment, or other external write.
 
-The root request contract has already validated an explicit verifier_inputs declaration for these five exact uploaded paths before permitting this stage:
+The exact support gate selected internal verifier_pack: ${VERIFIER_PACK_IDENTITY.pack_id}. TrueForge registered skill ${VERIFIER_SKILL_NAME} at immutable source revision ${VERIFIER_PACK_IDENTITY.source_revision} and announced the exact root ${VERIFIER_PACK_ROOT}. Resolve only that announced root. Never use ls, find, which, whereis, package discovery, a repository file, generated verifier, public download, alternate path, or user upload as a pack asset.
 
-- /opt/tf/uploads/verifier.bundle.cjs
-- /opt/tf/uploads/expected-contract.json
-- /opt/tf/uploads/suspect.yaml
-- /opt/tf/uploads/deny-all.yaml
-- /opt/tf/uploads/last-good.yaml
+Never search the filesystem or installed packages for an alternative verifier. Never invoke python -m secureops_guardian.verifier.
 
-Never search the filesystem or installed packages for an alternative verifier. Never invoke python -m secureops_guardian.verifier. Never substitute repository content, generated content, a downloaded verifier, or another file for a required upload. Do not use ls, find, which, whereis, python package discovery, or an exploratory command.
+Run the bounded workflow in this exact order:
 
-The user supplies the suspect NetworkPolicy and explicit expected contract through those uploads. Use only those inputs to generate one least-privilege candidate. The first sandbox exec is the bootstrap-and-write command. Run these operations in this exact order:
+1. In the first sandbox command, run test -f for ${VERIFIER_PACK_ROOT}/SKILL.md, manifest.json, verifier.bundle.cjs, and the four exact fixture paths under ${VERIFIER_PACK_ROOT}/fixtures. Do not list or inspect the directory. Then install uv with exactly pip install --root-user-action=ignore --quiet uv==0.12.5. If a required path check fails in the first command, return INCONCLUSIVE and make no second sandbox call.
+2. In the second command, use one printf piped to sha256sum -c - to verify the pinned manifest SHA-256 ${VERIFIER_PACK_IDENTITY.manifest_sha256} and bundle SHA-256 ${VERIFIER_BUNDLE_SHA256} before executing the bundle. The && guard must then run exactly: ${verifierCommand}. Require outcome VERIFIER_PACK_READY and exact pack ID, version ${VERIFIER_PACK_IDENTITY.pack_version}, source revision, and manifest digest. The bundle validates the manifest schema, exact supported scope, exact file set, and every file SHA-256. If pack validation fails, return INCONCLUSIVE before writing a candidate, proposal, approval request, or write.
+3. Only after VERIFIER_PACK_READY, create /workspace/candidate and write the first candidate YAML only to /workspace/candidate/checkout-networkpolicy.yaml. Candidate generation must occur before reading the expected contract, last-good, suspect, or deny-all contents. Hash validation is not semantic reference inspection.
+4. Verify the first candidate with exactly: ${verifierCommand} --candidate /workspace/candidate/checkout-networkpolicy.yaml. If it fails, use only the named diagnostics for at most one correction and run the same command once with --attempt 2. If that fails, return exactly NO_SAFE_REMEDIATION. Never make a third candidate attempt.
+5. For a passing candidate, run exactly: ${verifierCommand} --candidate /workspace/candidate/checkout-networkpolicy.yaml --full-proof true --proposal-output /workspace/candidate/proposal.json. Require last-good and candidate SECURE_AND_FUNCTIONAL, suspect EXPOSED, and deny-all SECURE_BUT_OPERATIONALLY_REJECTED.
 
-1. Run test -f for each of the five exact upload paths above; do not list or inspect the directory.
-2. Run pip install --root-user-action=ignore --quiet uv==0.12.5.
-3. Create /workspace/candidate and end the command by writing the proposed YAML only to exactly /workspace/candidate/checkout-networkpolicy.yaml with a shell heredoc. The heredoc terminator must be the final line of this exec; do not put && before or after the terminator and do not append another command.
-
-The second sandbox exec must validate all uploads and run the first candidate verifier as one command. Use printf piped to sha256sum -c - followed by && and the fixed verifier entrypoint. Validate exactly these path bindings:
-
-   - df44a5de1749addb15a7429b1737652c822ad93ce2f4fec5b4a688b217eabd0d  /opt/tf/uploads/verifier.bundle.cjs
-   - a78eca23e3fb80f8922f227cc544811cd0c0fc8c23961efa8ee392cbed909a7b  /opt/tf/uploads/expected-contract.json
-   - 7209dbcc30d389e671307cd92d6fd6b5133781d090181cd56116594e616613d7  /opt/tf/uploads/suspect.yaml
-   - ff123d62fa5f5b110ae4f6a2c27c88f180ef272a34fc9373ed4f87e41e66088a  /opt/tf/uploads/deny-all.yaml
-   - c282434c506a45e93e39d2329b33c8466ba7a8a1d5d238817530678d975ad165  /opt/tf/uploads/last-good.yaml
-
-Do not inspect or read any uploaded file, last-good policy, or expected candidate before that candidate write. Do not invoke uv before the pinned install succeeds. If a required path check fails in the first command, return INCONCLUSIVE and make no second sandbox call. If a SHA-256 check fails in the second command, the && guard must prevent verifier execution; return INCONCLUSIVE and make no further sandbox call. Never retry a malformed bootstrap command or split either command into exploratory steps.
-
-The second command's verifier portion is exactly this entrypoint with the explicit candidate and contract paths; add --attempt 2 only for the one permitted correction:
-
-uv run --quiet --with nodejs-wheel-binaries==22.14.0 python -m nodejs_wheel /opt/tf/uploads/verifier.bundle.cjs --candidate /workspace/candidate/checkout-networkpolicy.yaml --contract /opt/tf/uploads/expected-contract.json
-
-Do not use a different runtime, module, bundle, candidate path, or contract path. If the first candidate fails, use only its named diagnostics for at most one correction and invoke the same command once more with --attempt 2. If the second candidate fails, return exactly NO_SAFE_REMEDIATION and stop. Never make a third candidate attempt.
-
-For a passing candidate, run the same fixed entrypoint with all explicit proof paths:
-
-uv run --quiet --with nodejs-wheel-binaries==22.14.0 python -m nodejs_wheel /opt/tf/uploads/verifier.bundle.cjs --candidate /workspace/candidate/checkout-networkpolicy.yaml --contract /opt/tf/uploads/expected-contract.json --last-good /opt/tf/uploads/last-good.yaml --suspect /opt/tf/uploads/suspect.yaml --deny-all /opt/tf/uploads/deny-all.yaml --proposal-output /workspace/candidate/proposal.json
-
-The matrix must classify last-good and candidate SECURE_AND_FUNCTIONAL, suspect EXPOSED, and deny-all SECURE_BUT_OPERATIONALLY_REJECTED. Return the proposal hash, verifier result, candidate sandbox path, evidence IDs, and static/synthetic limitations. Do not claim live reachability, cluster behavior, data access, or exfiltration.
-
-Use the verifier JSON results directly. Do not inspect proposal.json with jq or Python. Only if TrueForge offloads the successful full-proof response may you make exactly one additional command: cat /workspace/candidate/proposal.json. Never make multiple proposal-inspection calls. Excluding that one conditional cat, the successful workflow has exactly three sandbox exec calls: bootstrap-and-write, checksum-plus-candidate-verification, and full proof.
+Use the verifier JSON results directly. Return the pack identity and manifest digest, pack-binding digest, unchanged legacy proposal hash, verifier result, candidate sandbox path, evidence IDs, and static/synthetic limitations. Do not claim live reachability, cluster behavior, data access, or exfiltration. Do not inspect proposal.json with jq or Python. Only if TrueForge offloads the successful response may you make exactly one additional command: cat /workspace/candidate/proposal.json. Never make multiple proposal-inspection calls.
 `.trim();
 
 export const PHASE_THREE_AGENT_SPEC = defineGuardianAgent({
   name: PHASE_THREE_AGENT_NAME,
   instructions: PHASE_THREE_AGENT_INSTRUCTIONS,
+  skills: [VERIFIER_SKILL_NAME],
   sandbox: { enabled: true, file_downloads: true },
-  iterationLimit: 8,
+  iterationLimit: 10,
 });

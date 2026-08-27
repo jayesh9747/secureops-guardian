@@ -61,7 +61,9 @@ function verifierMarkdown(presentation: GuardianPresentation): string {
     return `Verifier not run: ${presentation.verifier.reason}`;
   }
   if (presentation.verifier.state === 'NO_SAFE_REMEDIATION') {
-    return `| Attempt | Outcome | Classification | Diagnostics |
+    return `${verifierPackMarkdown(presentation.verifier.verifier_pack)}
+
+| Attempt | Outcome | Classification | Diagnostics |
 | --- | --- | --- | --- |
 ${presentation.verifier.attempts
   .map(
@@ -72,7 +74,9 @@ ${presentation.verifier.attempts
 
 Execution boundary: ${presentation.verifier.execution_boundary}.`;
   }
-  return `| State | Classification | DB path | Forbidden path | Decision |
+  return `${verifierPackMarkdown(presentation.verifier.verifier_pack)}
+
+| State | Classification | DB path | Forbidden path | Decision |
 | --- | --- | --- | --- | --- |
 ${presentation.verifier.rows
   .map(
@@ -82,6 +86,18 @@ ${presentation.verifier.rows
   .join('\n')}
 
 Execution boundary: ${presentation.verifier.execution_boundary}.`;
+}
+
+function verifierPackMarkdown(
+  pack: Extract<
+    GuardianPresentation['verifier'],
+    { state: 'FOUR_STATE_VERIFIED' }
+  >['verifier_pack'],
+): string {
+  return `- Verifier pack: \`${pack.pack_id}\`
+- Pack version: \`${pack.pack_version}\`
+- Source revision: \`${pack.source_revision}\`
+- Manifest SHA-256: \`${pack.manifest_sha256}\``;
 }
 
 function actionMarkdown(presentation: GuardianPresentation): string {
@@ -143,6 +159,7 @@ export function renderGuardianMarkdown(untrustedPresentation: GuardianPresentati
     presentation.proposal.state === 'EXACT'
       ? `- Proposal ID: \`${presentation.proposal.proposal_id}\`
 - Proposal SHA-256: \`${presentation.proposal.proposal_hash_sha256}\`
+- Verifier pack binding SHA-256: \`${presentation.proposal.verifier_pack_binding_sha256}\`
 
 \`\`\`diff
 ${presentation.proposal.exact_patch}\`\`\``
@@ -188,8 +205,9 @@ function verifierOpenUiLines(presentation: GuardianPresentation): string[] {
   }
   if (presentation.verifier.state === 'NO_SAFE_REMEDIATION') {
     return [
-      'verifierSection = Card([verifierHeader, verifierTable], "sunk", "column", "s")',
+      'verifierSection = Card([verifierHeader, verifierPack, verifierTable], "sunk", "column", "s")',
       `verifierHeader = CardHeader("Daytona verifier", ${openUiString(presentation.verifier.execution_boundary)})`,
+      `verifierPack = TextContent(${openUiString(verifierPackMarkdown(presentation.verifier.verifier_pack))}, "small")`,
       'verifierTable = Table([Col("Attempt", verifierAttempts), Col("Outcome", verifierOutcomes), Col("Diagnostics", verifierDiagnostics)])',
       `verifierAttempts = ${JSON.stringify(presentation.verifier.attempts.map((attempt) => attempt.attempt))}`,
       `verifierOutcomes = ${JSON.stringify(presentation.verifier.attempts.map((attempt) => attempt.outcome))}`,
@@ -197,8 +215,9 @@ function verifierOpenUiLines(presentation: GuardianPresentation): string[] {
     ];
   }
   return [
-    'verifierSection = Card([verifierHeader, verifierTable], "sunk", "column", "s")',
+    'verifierSection = Card([verifierHeader, verifierPack, verifierTable], "sunk", "column", "s")',
     `verifierHeader = CardHeader("Four-state verifier", ${openUiString(presentation.verifier.execution_boundary)})`,
+    `verifierPack = TextContent(${openUiString(verifierPackMarkdown(presentation.verifier.verifier_pack))}, "small")`,
     'verifierTable = Table([Col("State", verifierStates), Col("DB", verifierDb), Col("Forbidden", verifierForbidden), Col("Decision", verifierDecisions)])',
     `verifierStates = ${JSON.stringify(presentation.verifier.rows.map((row) => row.state))}`,
     `verifierDb = ${JSON.stringify(presentation.verifier.rows.map((row) => row.legitimate_db_path))}`,
@@ -215,8 +234,9 @@ function proposalOpenUiLines(presentation: GuardianPresentation): string[] {
     ];
   }
   return [
-    'proposalContent = [proposalHash, proposalPatch]',
+    'proposalContent = [proposalHash, proposalPackBinding, proposalPatch]',
     `proposalHash = TextContent(${openUiString(`Proposal SHA-256: ${presentation.proposal.proposal_hash_sha256}`)}, "small")`,
+    `proposalPackBinding = TextContent(${openUiString(`Verifier pack binding SHA-256: ${presentation.proposal.verifier_pack_binding_sha256}`)}, "small")`,
     `proposalPatch = CodeBlock("diff", ${openUiString(presentation.proposal.exact_patch)})`,
   ];
 }

@@ -49,6 +49,12 @@ describe('Phase 6 presentation schema', () => {
         expect(presentation.evidence.deterministic_rule).toContain(
           'evidence:rule:SEC-NET-001:checkout-networkpolicy',
         );
+        expect(presentation.verifier).toMatchObject({
+          verifier_pack: { pack_id: 'k8s-network-egress-v1' },
+        });
+        if (presentation.proposal.state === 'EXACT') {
+          expect(presentation.proposal.verifier_pack_binding_sha256).toMatch(/^[0-9a-f]{64}$/u);
+        }
       }
     }
   });
@@ -92,7 +98,7 @@ describe('Phase 6 presentation schema', () => {
           proposal_hash_sha256: '0'.repeat(64),
         },
       }),
-    ).toThrow(/different proposal hash/u);
+    ).toThrow(/Verifier pack binding digest|different proposal hash/u);
     expect(() =>
       buildCreatedPresentation({
         finding,
@@ -121,7 +127,7 @@ describe('Phase 6 presentation schema', () => {
     }
     deniedRecord.action_receipt.proposal_hash_sha256 = '0'.repeat(64);
     expect(() => buildRunRecordPresentation({ record: deniedRecord, finding, proposal })).toThrow(
-      /different proposal hash/u,
+      /Verifier pack binding digest|different proposal hash/u,
     );
   });
 
@@ -233,6 +239,7 @@ describe('stock TrueForge OpenUI rendering matrix', () => {
 
   it.each(matrix)('keeps $scenario readable through the Markdown fallback', (testCase) => {
     const markdown = renderGuardianMarkdown(testCase.presentation);
+    const openui = renderGuardianOpenUi(testCase.presentation);
     const response = renderGuardianResponse(testCase.presentation);
     const fallback = renderGuardianFallbackResponse(testCase.presentation);
     expect(markdown).toContain(testCase.presentation.terminal_status);
@@ -247,9 +254,19 @@ describe('stock TrueForge OpenUI rendering matrix', () => {
 
     if (testCase.presentation.proposal.state === 'EXACT') {
       expect(markdown).toContain(testCase.presentation.proposal.proposal_hash_sha256);
+      expect(markdown).toContain(testCase.presentation.proposal.verifier_pack_binding_sha256);
       expect(markdown).toContain(testCase.presentation.proposal.exact_patch);
+      expect(openui).toContain(testCase.presentation.proposal.verifier_pack_binding_sha256);
     } else {
       expect(markdown).toContain('No proposal:');
+    }
+
+    if (testCase.presentation.verifier.state !== 'NOT_RUN') {
+      expect(markdown).toContain(testCase.presentation.verifier.verifier_pack.pack_id);
+      expect(markdown).toContain(testCase.presentation.verifier.verifier_pack.pack_version);
+      expect(markdown).toContain(testCase.presentation.verifier.verifier_pack.source_revision);
+      expect(markdown).toContain(testCase.presentation.verifier.verifier_pack.manifest_sha256);
+      expect(openui).toContain(testCase.presentation.verifier.verifier_pack.manifest_sha256);
     }
 
     const githubResult = testCase.presentation.action.github_result;

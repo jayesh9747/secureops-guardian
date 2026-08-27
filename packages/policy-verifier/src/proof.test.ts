@@ -7,6 +7,13 @@ import { parsePolicyContract } from './contract.js';
 import { buildEligibleProposal, recomputeProposalHash, verifyFourStates } from './proof.js';
 import { evaluateCandidateAttempt } from './workflow.js';
 
+const verifierPack = {
+  pack_id: 'k8s-network-egress-v1',
+  pack_version: '1.0.0',
+  source_revision: 'guardian-network-egress-v1.0.0',
+  manifest_sha256: '1'.repeat(64),
+} as const;
+
 const fixture = (name: string) =>
   readFileSync(fileURLToPath(new URL(`../fixtures/${name}`, import.meta.url)), 'utf8');
 const contract = parsePolicyContract(fixture('expected-contract.json'));
@@ -51,6 +58,7 @@ describe('bounded candidate workflow', () => {
         candidateYaml: lastGood,
       },
       contract,
+      verifierPack,
     );
     const first = buildEligibleProposal({ candidateYaml: lastGood, suspectYaml: suspect, proof });
     const second = buildEligibleProposal({ candidateYaml: lastGood, suspectYaml: suspect, proof });
@@ -60,6 +68,12 @@ describe('bounded candidate workflow', () => {
     if (first === undefined) throw new Error('Expected an eligible proposal.');
     expect(first.proposal_id).toBe(`proposal:sha256:${first.proposal_hash_sha256}`);
     expect(recomputeProposalHash(first)).toBe(first.proposal_hash_sha256);
+    expect(first.proposal_hash_sha256).toBe(
+      '2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15',
+    );
+    expect(first.four_state_verifier_result.verifier_pack).toEqual(verifierPack);
+    expect(first.verifier_pack).toEqual(verifierPack);
+    expect(first.verifier_pack_binding_sha256).toMatch(/^[0-9a-f]{64}$/u);
     expect(first.target.remediation_branch).toBe('guardian/fix-checkout-egress');
     expect(first?.canonical_diff).toContain('-            cidr: 0.0.0.0/0');
   });
@@ -77,6 +91,7 @@ describe('bounded candidate workflow', () => {
         candidateYaml: lastGood,
       },
       contract,
+      verifierPack,
     );
     const changedProof = verifyFourStates(
       {
@@ -86,6 +101,7 @@ describe('bounded candidate workflow', () => {
         candidateYaml: changed,
       },
       changedContract,
+      verifierPack,
     );
     const original = buildEligibleProposal({
       candidateYaml: lastGood,
@@ -109,9 +125,40 @@ describe('bounded candidate workflow', () => {
         candidateYaml: denyAll,
       },
       contract,
+      verifierPack,
     );
     expect(
       buildEligibleProposal({ candidateYaml: denyAll, suspectYaml: suspect, proof }),
     ).toBeUndefined();
+  });
+
+  it('changes the pack binding without changing the legacy candidate proposal hash', () => {
+    const proof = verifyFourStates(
+      {
+        lastGoodYaml: lastGood,
+        suspectYaml: suspect,
+        denyAllYaml: denyAll,
+        candidateYaml: lastGood,
+      },
+      contract,
+      verifierPack,
+    );
+    const original = buildEligibleProposal({
+      candidateYaml: lastGood,
+      suspectYaml: suspect,
+      proof,
+    });
+    const changedProof = {
+      ...proof,
+      verifier_pack: { ...verifierPack, manifest_sha256: '2'.repeat(64) },
+    };
+    const changed = buildEligibleProposal({
+      candidateYaml: lastGood,
+      suspectYaml: suspect,
+      proof: changedProof,
+    });
+
+    expect(changed?.proposal_hash_sha256).toBe(original?.proposal_hash_sha256);
+    expect(changed?.verifier_pack_binding_sha256).not.toBe(original?.verifier_pack_binding_sha256);
   });
 });

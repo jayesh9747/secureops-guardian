@@ -7,7 +7,7 @@ import { SECUREOPS_GUARDIAN_AGENT_SPEC } from './agent.js';
 import { GITHUB_WRITE_TOOLS } from './plan.js';
 
 const portableExportSchema = z.object({
-  manifest: z.object({ instructions: z.string() }),
+  manifest: z.object({ instructions: z.string(), skills: z.array(z.object({ name: z.string() })) }),
 });
 
 describe('unified TrueForge manifest', () => {
@@ -40,6 +40,7 @@ describe('unified TrueForge manifest', () => {
       ask_user_questions: { enabled: true },
       dynamic_sub_agents: { enabled: true },
     });
+    expect(manifest.skills).toEqual([{ name: 'guardian-network-egress-v1' }]);
   });
 
   it('preserves mode, scope, trust, claim, allowlist, and non-atomic safety requirements', () => {
@@ -119,24 +120,15 @@ describe('unified TrueForge manifest', () => {
     );
   });
 
-  it('requires an explicit verifier-input declaration before remediation can call tools', () => {
+  it('selects and validates the internal verifier pack without a five-file user ceremony', () => {
     const instructions = SECUREOPS_GUARDIAN_AGENT_SPEC.manifest.instructions;
 
-    expect(instructions).toContain('"verifier_inputs"');
-    expect(instructions).toContain('"verifier.bundle.cjs"');
-    expect(instructions).toContain('"expected-contract.json"');
-    expect(instructions).toContain('"suspect.yaml"');
-    expect(instructions).toContain('"deny-all.yaml"');
-    expect(instructions).toContain('"last-good.yaml"');
-    expect(instructions).toContain(
-      'For PREPARE_REMEDIATION and OPEN_PR, verifier_inputs is required before any tool call',
-    );
-    expect(instructions).toContain(
-      'For exact JSON, request a complete new remediation request object',
-    );
-    expect(instructions).toContain(
-      'For natural language, combine the interpreted-request confirmation with a request to attach all five named files',
-    );
+    expect(instructions).toContain('verifier_pack: k8s-network-egress-v1');
+    expect(instructions).toContain('/opt/tf/skills/guardian-network-egress-v1');
+    expect(instructions).toContain('after the exact support gate');
+    expect(instructions).toContain('ANALYSIS_ONLY must not load or materialize the skill');
+    expect(instructions).not.toContain('attach all five');
+    expect(instructions).not.toContain('same-turn uploads');
   });
 
   it('keeps the portable saved-agent instructions synchronized', async () => {

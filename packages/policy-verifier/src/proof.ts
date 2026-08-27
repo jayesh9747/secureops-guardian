@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
 
 import { canonicalJson, canonicalUnifiedDiff, canonicalizeYaml } from './canonical.js';
+import type { VerifierPackIdentity } from './pack.js';
 import type { PolicyContract, VerificationResult } from './types.js';
 import { verifyNetworkPolicy } from './verifier.js';
 
@@ -17,6 +18,7 @@ export interface ProofMatrixEntry {
 
 export interface FourStateProof {
   schema_version: 1;
+  verifier_pack: VerifierPackIdentity;
   states: ProofMatrixEntry[];
 }
 
@@ -42,6 +44,8 @@ export interface EligibleProposal {
   schema_version: 1;
   proposal_id: string;
   proposal_hash_sha256: string;
+  verifier_pack: VerifierPackIdentity;
+  verifier_pack_binding_sha256: string;
   target: {
     repository: string;
     base_branch: 'main';
@@ -62,18 +66,42 @@ export interface EligibleProposal {
   ];
 }
 
-type ProposalCore = Omit<EligibleProposal, 'proposal_id' | 'proposal_hash_sha256'>;
+type ProposalCore = Omit<
+  EligibleProposal,
+  | 'proposal_id'
+  | 'proposal_hash_sha256'
+  | 'verifier_pack'
+  | 'verifier_pack_binding_sha256'
+  | 'four_state_verifier_result'
+> & {
+  four_state_verifier_result: Omit<FourStateProof, 'verifier_pack'>;
+};
 
 function proposalCore(proposal: EligibleProposal): ProposalCore {
   const core = { ...proposal } as Partial<EligibleProposal>;
   delete core.proposal_id;
   delete core.proposal_hash_sha256;
-  return core as ProposalCore;
+  delete core.verifier_pack;
+  delete core.verifier_pack_binding_sha256;
+  const proof = { ...proposal.four_state_verifier_result } as Partial<FourStateProof>;
+  delete proof.verifier_pack;
+  return { ...core, four_state_verifier_result: proof } as ProposalCore;
 }
 
 export function recomputeProposalHash(proposal: EligibleProposal): string {
   return createHash('sha256')
     .update(canonicalJson(proposalCore(proposal)))
+    .digest('hex');
+}
+
+export function recomputeVerifierPackBinding(proposal: EligibleProposal): string {
+  return createHash('sha256')
+    .update(
+      canonicalJson({
+        proposal_hash_sha256: proposal.proposal_hash_sha256,
+        verifier_pack: proposal.verifier_pack,
+      }),
+    )
     .digest('hex');
 }
 
@@ -85,9 +113,11 @@ export function verifyFourStates(
     candidateYaml: string;
   },
   contract: PolicyContract,
+  verifierPack: VerifierPackIdentity,
 ): FourStateProof {
   return {
     schema_version: 1,
+    verifier_pack: verifierPack,
     states: [
       { state: 'last-good', result: verifyNetworkPolicy(inputs.lastGoodYaml, contract) },
       { state: 'suspect', result: verifyNetworkPolicy(inputs.suspectYaml, contract) },
@@ -147,7 +177,10 @@ export function buildEligibleProposal(input: {
       TARGET_NETWORK_POLICY_FILE,
     ),
     supporting_evidence_ids: SUPPORTING_EVIDENCE_IDS,
-    four_state_verifier_result: input.proof,
+    four_state_verifier_result: {
+      schema_version: input.proof.schema_version,
+      states: input.proof.states,
+    },
     candidate_verifier_result: candidateResult,
     limitations: PROPOSAL_LIMITATIONS,
     expected_phase_4_github_mcp_write_sequence: [
@@ -159,12 +192,19 @@ export function buildEligibleProposal(input: {
   const unhashedProposal: EligibleProposal = {
     proposal_id: '',
     proposal_hash_sha256: '',
+    verifier_pack: input.proof.verifier_pack,
+    verifier_pack_binding_sha256: '',
     ...core,
+    four_state_verifier_result: input.proof,
   };
   const proposalHash = recomputeProposalHash(unhashedProposal);
-  return {
+  const proposal = {
     ...unhashedProposal,
     proposal_id: `proposal:sha256:${proposalHash}`,
     proposal_hash_sha256: proposalHash,
+  };
+  return {
+    ...proposal,
+    verifier_pack_binding_sha256: recomputeVerifierPackBinding(proposal),
   };
 }

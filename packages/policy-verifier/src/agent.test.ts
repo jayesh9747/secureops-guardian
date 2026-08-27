@@ -21,19 +21,16 @@ describe('Phase 3 TrueForge agent boundary', () => {
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('do not create a branch');
   });
 
-  it('uses one bounded fail-closed bootstrap for the explicit verifier inputs', () => {
-    for (const path of [
-      '/opt/tf/uploads/verifier.bundle.cjs',
-      '/opt/tf/uploads/expected-contract.json',
-      '/opt/tf/uploads/suspect.yaml',
-      '/opt/tf/uploads/deny-all.yaml',
-      '/opt/tf/uploads/last-good.yaml',
-    ]) {
-      expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain(path);
-    }
-
-    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('Run test -f for each');
-    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('sha256sum -c -');
+  it('validates only the announced pinned skill root before candidate generation', () => {
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('/opt/tf/skills/guardian-network-egress-v1');
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('k8s-network-egress-v1');
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('guardian-network-egress-v1.0.0');
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('VERIFIER_PACK_READY');
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('--expected-manifest-sha256');
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('--full-proof true');
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain(
+      'If pack validation fails, return INCONCLUSIVE before writing a candidate',
+    );
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain(
       'If a required path check fails in the first command, return INCONCLUSIVE',
     );
@@ -49,12 +46,8 @@ describe('Phase 3 TrueForge agent boundary', () => {
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain(
       'uv run --quiet --with nodejs-wheel-binaries==22.14.0 python -m nodejs_wheel',
     );
-    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain(
-      'df44a5de1749addb15a7429b1737652c822ad93ce2f4fec5b4a688b217eabd0d',
-    );
-    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain(
-      'the successful workflow has exactly three sandbox exec calls',
-    );
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).not.toContain('/opt/tf/uploads');
+    expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain('sha256sum -c -');
     expect(PHASE_THREE_AGENT_INSTRUCTIONS).toContain(
       'Never make multiple proposal-inspection calls',
     );

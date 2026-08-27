@@ -106,6 +106,8 @@ describe('Guardian run receipt cross-stage invariants', () => {
         },
         missing_or_unsupported_requirements: ['Complete incident evidence is required.'],
         proposal_hash_sha256: null,
+        verifier_pack: null,
+        verifier_pack_binding_sha256: null,
         runtime_claims: {
           ...core.runtime_claims,
           deployment: 'Unknown',
@@ -133,6 +135,8 @@ describe('Guardian run receipt cross-stage invariants', () => {
         },
         missing_or_unsupported_requirements: ['Complete incident evidence is required.'],
         proposal_hash_sha256: null,
+        verifier_pack: null,
+        verifier_pack_binding_sha256: null,
         runtime_claims: {
           ...core.runtime_claims,
           deployment: 'SupportedByOwnedSyntheticEvidence',

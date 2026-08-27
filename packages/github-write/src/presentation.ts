@@ -33,6 +33,10 @@ This pull request applies the exact Phase 3 sandbox-verified candidate for \`SEC
 
 - Proposal hash: \`${proposal.proposal_hash_sha256}\`
 - Proposal ID: \`${proposal.proposal_id}\`
+- Verifier pack: \`${proposal.verifier_pack.pack_id}\` version \`${proposal.verifier_pack.pack_version}\`
+- Verifier pack source revision: \`${proposal.verifier_pack.source_revision}\`
+- Verifier pack manifest SHA-256: \`${proposal.verifier_pack.manifest_sha256}\`
+- Verifier pack binding SHA-256: \`${proposal.verifier_pack_binding_sha256}\`
 - Base branch: \`${proposal.target.base_branch}\`
 - Remediation branch: \`${proposal.target.remediation_branch}\`
 - Target file: \`${proposal.target.file}\`
@@ -71,6 +75,10 @@ export function buildPreMutationPresentation(binding: ProposalBinding): string {
 - Remediation branch: \`${PHASE_FOUR_TARGET.remediationBranch}\`
 - Target file: \`${PHASE_FOUR_TARGET.file}\`
 - Proposal hash: \`${binding.proposal.proposal_hash_sha256}\`
+- Verifier pack: \`${binding.proposal.verifier_pack.pack_id}\` version \`${binding.proposal.verifier_pack.pack_version}\`
+- Verifier pack source revision: \`${binding.proposal.verifier_pack.source_revision}\`
+- Verifier pack manifest SHA-256: \`${binding.proposal.verifier_pack.manifest_sha256}\`
+- Verifier pack binding SHA-256: \`${binding.proposal.verifier_pack_binding_sha256}\`
 - Displayed/verified candidate SHA-256: \`${binding.candidateSha256}\`
 - Expected remote Git blob SHA: \`${binding.candidateGitBlobSha}\`
 

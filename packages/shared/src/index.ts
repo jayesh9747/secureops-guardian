@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+import { VERIFIER_PACK_METADATA } from './verifier-pack-metadata.js';
+
+export {
+  VERIFIER_PACK_METADATA,
+  VERIFIER_PACK_ROOT,
+  VERIFIER_PACK_SCOPE,
+  VERIFIER_SKILL_NAME,
+} from './verifier-pack-metadata.js';
+
 export const DEMO_REPOSITORY = 'jayesh9747/guardian-demo-checkout';
 export const DEMO_CASE_ID = 'checkout-networkpolicy-egress-exposure';
 export const MISSING_DEPLOYMENT_REVISION_CASE_ID =
@@ -11,26 +20,12 @@ export const CONFLICTING_REVISION_CASE_ID =
 export const LAST_GOOD_COMMIT_SHA = 'a6d177b43396c7b4b45aa98cb2970d0489a7a4f9';
 export const SUSPECT_COMMIT_SHA = '7b2f2ad51f9ef97334176fbfed3138465b62fcdb';
 export const TARGET_NETWORK_POLICY_FILE = 'k8s/checkout-networkpolicy.yaml';
-export const VERIFIER_SKILL_NAME = 'guardian-network-egress-v1' as const;
-export const VERIFIER_PACK_ROOT = `/opt/tf/skills/${VERIFIER_SKILL_NAME}` as const;
 export const VERIFIER_PACK_IDENTITY = {
-  pack_id: 'k8s-network-egress-v1',
-  pack_version: '1.0.0',
-  source_revision: 'guardian-network-egress-v1.0.0',
-  manifest_sha256: '4f11fdc732b3aa49361fe1076949986a890dfa070d0f3853780029d7bab7df40',
+  ...VERIFIER_PACK_METADATA,
+  manifest_sha256: 'cf91d512c8be9939add2cb7f5700151164a1953a7864c1a77708b3d706756aaf',
 } as const;
 export const VERIFIER_BUNDLE_SHA256 =
-  '0cd2df8bde7f0377325f6f8338335f9a33a6ae4ad869b94f3bfc5458e9b05991' as const;
-export const VERIFIER_PACK_SCOPE = {
-  repository: DEMO_REPOSITORY,
-  base_branch: 'main',
-  suspect_commit_sha: SUSPECT_COMMIT_SHA,
-  target_file: TARGET_NETWORK_POLICY_FILE,
-  api_version: 'networking.k8s.io/v1',
-  kind: 'NetworkPolicy',
-  verifier_subset: VERIFIER_SKILL_NAME,
-} as const;
-
+  '3b2b3be63ea60cc98106854858c3725edd2a0efc604e9389a9328b5299c6bee1' as const;
 export const fullGitShaSchema = z
   .string()
   .regex(/^[0-9a-f]{40}$/u, 'Expected a full Git commit SHA.');

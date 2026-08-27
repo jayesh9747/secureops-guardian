@@ -1,6 +1,4 @@
-import { createHash } from 'node:crypto';
-
-import { canonicalJson, verifierPackIdentitySchema } from '@guardian/policy-verifier';
+import { computeVerifierPackBinding, verifierPackIdentitySchema } from '@guardian/policy-verifier';
 import { z } from 'zod';
 
 import type { ProposalBinding } from './binding.js';
@@ -38,14 +36,7 @@ export const actionReceiptSchema = z
   })
   .strict()
   .superRefine((receipt, context) => {
-    const expectedPackBinding = createHash('sha256')
-      .update(
-        canonicalJson({
-          proposal_hash_sha256: receipt.proposal_hash_sha256,
-          verifier_pack: receipt.verifier_pack,
-        }),
-      )
-      .digest('hex');
+    const expectedPackBinding = computeVerifierPackBinding(receipt);
     if (receipt.verifier_pack_binding_sha256 !== expectedPackBinding) {
       context.addIssue({
         code: 'custom',

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { DEMO_REPOSITORY, SUSPECT_COMMIT_SHA, TARGET_NETWORK_POLICY_FILE } from '@guardian/shared';
+import { VERIFIER_PACK_SCOPE } from '@guardian/shared/verifier-pack-metadata';
 
 import { canonicalJson, canonicalUnifiedDiff, canonicalizeYaml } from './canonical.js';
 import type { VerifierPackIdentity } from './pack.js';
@@ -94,15 +94,22 @@ export function recomputeProposalHash(proposal: EligibleProposal): string {
     .digest('hex');
 }
 
-export function recomputeVerifierPackBinding(proposal: EligibleProposal): string {
+export function computeVerifierPackBinding(input: {
+  proposal_hash_sha256: string;
+  verifier_pack: VerifierPackIdentity;
+}): string {
   return createHash('sha256')
     .update(
       canonicalJson({
-        proposal_hash_sha256: proposal.proposal_hash_sha256,
-        verifier_pack: proposal.verifier_pack,
+        proposal_hash_sha256: input.proposal_hash_sha256,
+        verifier_pack: input.verifier_pack,
       }),
     )
     .digest('hex');
+}
+
+export function recomputeVerifierPackBinding(proposal: EligibleProposal): string {
+  return computeVerifierPackBinding(proposal);
 }
 
 export function verifyFourStates(
@@ -164,17 +171,17 @@ export function buildEligibleProposal(input: {
   const core: ProposalCore = {
     schema_version: 1,
     target: {
-      repository: DEMO_REPOSITORY,
+      repository: VERIFIER_PACK_SCOPE.repository,
       base_branch: 'main',
       remediation_branch: DETERMINISTIC_REMEDIATION_BRANCH,
-      file: TARGET_NETWORK_POLICY_FILE,
-      suspect_commit_sha: SUSPECT_COMMIT_SHA,
+      file: VERIFIER_PACK_SCOPE.target_file,
+      suspect_commit_sha: VERIFIER_PACK_SCOPE.suspect_commit_sha,
     },
     canonical_candidate_yaml: canonicalCandidateYaml,
     canonical_diff: canonicalUnifiedDiff(
       canonicalSuspectYaml,
       canonicalCandidateYaml,
-      TARGET_NETWORK_POLICY_FILE,
+      VERIFIER_PACK_SCOPE.target_file,
     ),
     supporting_evidence_ids: SUPPORTING_EVIDENCE_IDS,
     four_state_verifier_result: {

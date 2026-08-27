@@ -27,7 +27,10 @@ import {
   writeCallMatchesProposal,
   type RemoteSnapshot,
 } from './contract.js';
-import { buildPreMutationPresentation } from './presentation.js';
+import {
+  buildLegacyRemediationPullRequestBody,
+  buildPreMutationPresentation,
+} from './presentation.js';
 import { buildPhaseFourReceiptArtifacts } from './receipt-artifacts.js';
 import { buildActionReceipt } from './receipt.js';
 
@@ -243,6 +246,34 @@ describe('Phase 4 ordered write contract', () => {
       },
     });
     expect(evaluateRemoteSnapshot(binding, alteredBody).status).toBe('WRITE_CONFLICT');
+  });
+
+  it('reuses the exact frozen Phase 4 PR body after a fresh pack-bound proof', () => {
+    const legacyBody = buildLegacyRemediationPullRequestBody(binding.proposal);
+    expect(legacyBody).not.toContain(binding.proposal.verifier_pack.pack_id);
+    expect(legacyBody).not.toContain(binding.proposal.verifier_pack_binding_sha256);
+    expect(
+      evaluateRemoteSnapshot(
+        binding,
+        snapshot({
+          branch: {
+            commitSha: candidateCommitSha,
+            targetFileGitBlobSha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
+            commitMessage: binding.commitMessage,
+          },
+          pullRequest: {
+            number: 1,
+            url: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/1',
+            title: binding.pullRequestTitle,
+            base: PHASE_FOUR_TARGET.baseBranch,
+            head: PHASE_FOUR_TARGET.remediationBranch,
+            body: legacyBody,
+          },
+        }),
+      ).status,
+    ).toBe('PR_REUSED');
+    expect(binding.proposal.verifier_pack).toEqual(VERIFIER_PACK_IDENTITY);
+    expect(binding.proposal.verifier_pack_binding_sha256).toMatch(/^[0-9a-f]{64}$/u);
   });
 
   it('fails closed instead of overwriting mismatched remote work', () => {

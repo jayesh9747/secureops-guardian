@@ -26,18 +26,21 @@ export function renderProofMatrix(proof: FourStateProof, friendlyLabels = false)
     .join('\n');
 }
 
-export function buildRemediationPullRequestBody(proposal: EligibleProposal): string {
+function remediationPullRequestBody(proposal: EligibleProposal, includePackIdentity: boolean) {
+  const packIdentity = includePackIdentity
+    ? `- Verifier pack: \`${proposal.verifier_pack.pack_id}\` version \`${proposal.verifier_pack.pack_version}\`
+- Verifier pack source revision: \`${proposal.verifier_pack.source_revision}\`
+- Verifier pack manifest SHA-256: \`${proposal.verifier_pack.manifest_sha256}\`
+- Verifier pack binding SHA-256: \`${proposal.verifier_pack_binding_sha256}\`
+`
+    : '';
   return `## SecureOps Guardian remediation
 
 This pull request applies the exact Phase 3 sandbox-verified candidate for \`SEC-NET-001\`.
 
 - Proposal hash: \`${proposal.proposal_hash_sha256}\`
 - Proposal ID: \`${proposal.proposal_id}\`
-- Verifier pack: \`${proposal.verifier_pack.pack_id}\` version \`${proposal.verifier_pack.pack_version}\`
-- Verifier pack source revision: \`${proposal.verifier_pack.source_revision}\`
-- Verifier pack manifest SHA-256: \`${proposal.verifier_pack.manifest_sha256}\`
-- Verifier pack binding SHA-256: \`${proposal.verifier_pack_binding_sha256}\`
-- Base branch: \`${proposal.target.base_branch}\`
+${packIdentity}- Base branch: \`${proposal.target.base_branch}\`
 - Remediation branch: \`${proposal.target.remediation_branch}\`
 - Target file: \`${proposal.target.file}\`
 - Verified candidate SHA-256: \`${VERIFIED_CANDIDATE_SHA256}\`
@@ -65,6 +68,14 @@ ${renderBullets(proposal.limitations)}
 
 Guardian created this reviewable pull request through separately approved official GitHub MCP writes. The sequence is retry-safe, not atomic. Guardian did not merge, deploy, roll back, delete a branch, or access a Kubernetes cluster.
 `;
+}
+
+export function buildRemediationPullRequestBody(proposal: EligibleProposal): string {
+  return remediationPullRequestBody(proposal, true);
+}
+
+export function buildLegacyRemediationPullRequestBody(proposal: EligibleProposal): string {
+  return remediationPullRequestBody(proposal, false);
 }
 
 export function buildPreMutationPresentation(binding: ProposalBinding): string {

@@ -1,6 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { VERIFIER_PACK_ROOT } from '@guardian/shared/verifier-pack-metadata';
+
 import { canonicalJson } from './canonical.js';
 import { PolicyContractError, parsePolicyContract } from './contract.js';
 import {
@@ -48,6 +50,9 @@ function parseArguments(argumentsList: string[]): CliArguments {
   const expectedManifestSha256 = values.get('--expected-manifest-sha256');
   if (packRoot === undefined || expectedManifestSha256 === undefined) {
     throw new CliArgumentError('--pack-root and --expected-manifest-sha256 are required.');
+  }
+  if (packRoot !== VERIFIER_PACK_ROOT) {
+    throw new CliArgumentError(`--pack-root must be exactly ${VERIFIER_PACK_ROOT}.`);
   }
   if (!/^[0-9a-f]{64}$/u.test(expectedManifestSha256)) {
     throw new CliArgumentError('--expected-manifest-sha256 must be 64 lowercase hex characters.');

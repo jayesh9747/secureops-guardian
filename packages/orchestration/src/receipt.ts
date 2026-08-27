@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
 
 import { actionReceiptSchema } from '@guardian/github-write';
-import { canonicalJson, verifierPackIdentitySchema } from '@guardian/policy-verifier';
+import {
+  canonicalJson,
+  computeVerifierPackBinding,
+  verifierPackIdentitySchema,
+} from '@guardian/policy-verifier';
 import { z } from 'zod';
 
 import { guardianModeSchema, repositoryScopeSchema } from './scope.js';
@@ -187,14 +191,10 @@ export const guardianRunReceiptSchema = z
         message: 'A proposal receipt requires the exact verifier pack identity and binding digest.',
       });
     } else {
-      const expectedPackBinding = createHash('sha256')
-        .update(
-          canonicalJson({
-            proposal_hash_sha256: receipt.proposal_hash_sha256,
-            verifier_pack: receipt.verifier_pack,
-          }),
-        )
-        .digest('hex');
+      const expectedPackBinding = computeVerifierPackBinding({
+        proposal_hash_sha256: receipt.proposal_hash_sha256,
+        verifier_pack: receipt.verifier_pack,
+      });
       if (receipt.verifier_pack_binding_sha256 !== expectedPackBinding) {
         context.addIssue({
           code: 'custom',

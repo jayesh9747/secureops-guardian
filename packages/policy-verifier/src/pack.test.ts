@@ -35,8 +35,8 @@ async function createPack(overrides: Record<string, unknown> = {}) {
   const manifest = {
     schema_version: 1,
     pack_id: 'k8s-network-egress-v1',
-    pack_version: '1.0.0',
-    source_revision: 'guardian-network-egress-v1.0.0',
+    pack_version: '1.0.2',
+    source_revision: 'guardian-network-egress-v1.0.2',
     supported_guardian_scope: scope,
     files: REQUIRED_VERIFIER_PACK_FILES.map((path) => ({
       path,
@@ -53,8 +53,8 @@ async function createPack(overrides: Record<string, unknown> = {}) {
     manifest,
     expected: {
       pack_id: 'k8s-network-egress-v1',
-      pack_version: '1.0.0',
-      source_revision: 'guardian-network-egress-v1.0.0',
+      pack_version: '1.0.2',
+      source_revision: 'guardian-network-egress-v1.0.2',
       manifest_sha256: createHash('sha256').update(manifestBytes).digest('hex'),
       supported_guardian_scope: scope,
     },
@@ -73,13 +73,22 @@ describe('pinned verifier pack staging', () => {
       loadVerifierPack({ pack_root: pack.root, expected: pack.expected }),
     ).resolves.toEqual({
       pack_id: 'k8s-network-egress-v1',
-      pack_version: '1.0.0',
-      source_revision: 'guardian-network-egress-v1.0.0',
+      pack_version: '1.0.2',
+      source_revision: 'guardian-network-egress-v1.0.2',
       manifest_sha256: pack.expected.manifest_sha256,
     });
   });
 
-  it('fails closed when the manifest or a required pack file is missing', async () => {
+  it('fails closed when the manifest is missing', async () => {
+    const pack = await createPack();
+    await rm(join(pack.root, 'manifest.json'));
+
+    await expect(
+      loadVerifierPack({ pack_root: pack.root, expected: pack.expected }),
+    ).rejects.toMatchObject({ code: 'PACK_MANIFEST_MISSING' });
+  });
+
+  it('fails closed when a required pack file is missing', async () => {
     const pack = await createPack();
     await rm(join(pack.root, 'fixtures/last-good.yaml'));
 

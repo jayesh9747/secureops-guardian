@@ -4,6 +4,11 @@ import { resolve, sep } from 'node:path';
 
 import { z } from 'zod';
 
+import {
+  VERIFIER_PACK_METADATA,
+  VERIFIER_PACK_SCOPE,
+} from '@guardian/shared/verifier-pack-metadata';
+
 export const REQUIRED_VERIFIER_PACK_FILES = [
   'SKILL.md',
   'verifier.bundle.cjs',
@@ -31,7 +36,7 @@ export const verifierPackScopeSchema = z
 export const verifierPackManifestSchema = z
   .object({
     schema_version: z.literal(1),
-    pack_id: z.literal('k8s-network-egress-v1'),
+    pack_id: z.literal(VERIFIER_PACK_METADATA.pack_id),
     pack_version: z.string().regex(/^\d+\.\d+\.\d+$/u),
     source_revision: z.string().min(1),
     supported_guardian_scope: verifierPackScopeSchema,
@@ -50,7 +55,7 @@ export const verifierPackManifestSchema = z
 
 export const verifierPackIdentitySchema = z
   .object({
-    pack_id: z.literal('k8s-network-egress-v1'),
+    pack_id: z.literal(VERIFIER_PACK_METADATA.pack_id),
     pack_version: z.string().regex(/^\d+\.\d+\.\d+$/u),
     source_revision: z.string().min(1),
     manifest_sha256: sha256Schema,
@@ -61,18 +66,8 @@ export type VerifierPackIdentity = z.infer<typeof verifierPackIdentitySchema>;
 export type VerifierPackScope = z.infer<typeof verifierPackScopeSchema>;
 
 export const PINNED_VERIFIER_PACK_METADATA = {
-  pack_id: 'k8s-network-egress-v1',
-  pack_version: '1.0.0',
-  source_revision: 'guardian-network-egress-v1.0.0',
-  supported_guardian_scope: {
-    repository: 'jayesh9747/guardian-demo-checkout',
-    base_branch: 'main',
-    suspect_commit_sha: '7b2f2ad51f9ef97334176fbfed3138465b62fcdb',
-    target_file: 'k8s/checkout-networkpolicy.yaml',
-    api_version: 'networking.k8s.io/v1',
-    kind: 'NetworkPolicy',
-    verifier_subset: 'guardian-network-egress-v1',
-  },
+  ...VERIFIER_PACK_METADATA,
+  supported_guardian_scope: VERIFIER_PACK_SCOPE,
 } as const;
 
 export type VerifierPackValidationErrorCode =

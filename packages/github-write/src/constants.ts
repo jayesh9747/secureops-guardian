@@ -5,7 +5,7 @@ export const PHASE_THREE_PROPOSAL_HASH =
   '2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15' as const;
 export const PHASE_THREE_PROPOSAL_ID = `proposal:sha256:${PHASE_THREE_PROPOSAL_HASH}` as const;
 export const PHASE_THREE_VERIFIER_PACK_BINDING_SHA256 =
-  '85b4e6fe6c547c89be6e7f1d42a224cb12ab12a43a4f572ada79936a84715458' as const;
+  'e831714943ab549ff01bbd434b5ded6e49d46692824d03b08baadb4a8c047841' as const;
 export const VERIFIED_CANDIDATE_SHA256 =
   'c282434c506a45e93e39d2329b33c8466ba7a8a1d5d238817530678d975ad165' as const;
 export const VERIFIED_CANDIDATE_GIT_BLOB_SHA = '1eddb230ac7c05bae199e6b9162a42da3bf039fa' as const;
@@ -52,6 +52,9 @@ export const REMEDIATION_COMMIT_MESSAGE = `fix: restrict checkout egress
 Guardian-Proposal-SHA256: ${PHASE_THREE_PROPOSAL_HASH}`;
 
 export const REMEDIATION_PR_TITLE = 'fix: restrict checkout egress to required dependencies';
+export const LEGACY_REMEDIATION_PR_NUMBER = 1 as const;
+export const LEGACY_REMEDIATION_PR_URL =
+  'https://github.com/jayesh9747/guardian-demo-checkout/pull/1' as const;
 
 export const EXPECTED_PROPOSAL_TARGET = {
   repository: DEMO_REPOSITORY,

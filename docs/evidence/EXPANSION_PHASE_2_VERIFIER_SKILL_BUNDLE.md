@@ -6,7 +6,7 @@ Date: 27 August 2026.
 
 Expansion Phase 2 replaces the primary five-file upload ceremony with one immutable TrueForge skill bundle. It adds no verifier pack, workload rule, UI redesign, live Kubernetes access, public download fallback, or TrueForge upstream change.
 
-The product branch is `expansion-phase-2/verifier-skill-bundle` from Phase 8 merge `08684b89ef97d5487b236ea94e894bdda77e5c4c`. The separate public skill repository is [`jayesh9747/secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill), branch `expansion-phase-2/verifier-skill-bundle`, commit `2ce037aebd89d113e2da7dd4b0ac54c6bd585541`, immutable tag `guardian-network-egress-v1.0.0`, and unmerged skill PR [#1](https://github.com/jayesh9747/secureops-guardian-verifier-skill/pull/1).
+The product branch is `expansion-phase-2/verifier-skill-bundle` from Phase 8 merge `08684b89ef97d5487b236ea94e894bdda77e5c4c`. The separate public skill repository is [`jayesh9747/secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill), branch `expansion-phase-2/verifier-skill-bundle`, commit `bdea775220c07c20bd7f433cb3e12793d105b266`, immutable tag `guardian-network-egress-v1.0.2`, and unmerged skill PR [#1](https://github.com/jayesh9747/secureops-guardian-verifier-skill/pull/1).
 
 ## Immutable bundle identity
 
@@ -14,26 +14,26 @@ The product branch is `expansion-phase-2/verifier-skill-bundle` from Phase 8 mer
 | --- | --- |
 | TrueForge skill | `guardian-network-egress-v1` |
 | Pack ID | `k8s-network-egress-v1` |
-| Pack version | `1.0.0` |
-| Source revision | `guardian-network-egress-v1.0.0` |
-| Skill source commit | `2ce037aebd89d113e2da7dd4b0ac54c6bd585541` |
-| Manifest SHA-256 | `4f11fdc732b3aa49361fe1076949986a890dfa070d0f3853780029d7bab7df40` |
-| Bundle SHA-256 | `0cd2df8bde7f0377325f6f8338335f9a33a6ae4ad869b94f3bfc5458e9b05991` |
+| Pack version | `1.0.2` |
+| Source revision | `guardian-network-egress-v1.0.2` |
+| Skill source commit | `bdea775220c07c20bd7f433cb3e12793d105b266` |
+| Manifest SHA-256 | `cf91d512c8be9939add2cb7f5700151164a1953a7864c1a77708b3d706756aaf` |
+| Bundle SHA-256 | `3b2b3be63ea60cc98106854858c3725edd2a0efc604e9389a9328b5299c6bee1` |
 | Proposal SHA-256 | `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15` |
-| Pack-binding SHA-256 | `85b4e6fe6c547c89be6e7f1d42a224cb12ab12a43a4f572ada79936a84715458` |
+| Pack-binding SHA-256 | `e831714943ab549ff01bbd434b5ded6e49d46692824d03b08baadb4a8c047841` |
 
 The manifest contains exactly six payload files:
 
 | Path | SHA-256 |
 | --- | --- |
 | `SKILL.md` | `2cc6f7c74dbc77d6d98b1d41a8787b768953220205cdcd5e8e6fc9077b2356da` |
-| `verifier.bundle.cjs` | `0cd2df8bde7f0377325f6f8338335f9a33a6ae4ad869b94f3bfc5458e9b05991` |
+| `verifier.bundle.cjs` | `3b2b3be63ea60cc98106854858c3725edd2a0efc604e9389a9328b5299c6bee1` |
 | `fixtures/expected-contract.json` | `a78eca23e3fb80f8922f227cc544811cd0c0fc8c23961efa8ee392cbed909a7b` |
 | `fixtures/suspect.yaml` | `7209dbcc30d389e671307cd92d6fd6b5133781d090181cd56116594e616613d7` |
 | `fixtures/deny-all.yaml` | `ff123d62fa5f5b110ae4f6a2c27c88f180ef272a34fc9373ed4f87e41e66088a` |
 | `fixtures/last-good.yaml` | `c282434c506a45e93e39d2329b33c8466ba7a8a1d5d238817530678d975ad165` |
 
-The bundle rejects a missing file, an extra manifest entry, a digest mismatch, a wrong pack/version/revision, or a scope mismatch. It never searches another path or accepts generated, downloaded, repository, package, or upload content as a substitute.
+The bundle rejects a missing manifest, a missing payload, an extra manifest entry, a digest mismatch, a wrong pack/version/revision, or a scope mismatch. Its CLI also rejects every `--pack-root` except the runtime-proven absolute root, so a generated or repository copy with a self-computed digest cannot cross the trust boundary. It never searches another path or accepts generated, downloaded, repository, package, or upload content as a substitute.
 
 ## Actual TrueForge mount path
 
@@ -41,19 +41,21 @@ The checked-in TrueForge documentation describes `/opt/tfy/skills/{name}` while 
 
 The first discovery session was `01m10wm7m05mmed1jb0bzwcmsv`, turn `01m10wmf0wx0qzm0b4bdzg1mrq.9ziser`. It proved the announced root with the initial inert commit before the final payload was pinned.
 
-The accepted final staging session was `01m10yextc3a062bmtg9mwp88f`, turn `01m10yexx7zfnn5gva7ytq1krj.ueyhrn`. Its trace contains exactly two sandbox executions after skill injection:
+The accepted final v1.0.2 staging is part of PREPARE session `01m1130f9gedf6np8tjw6xx4aj`, turn `01m1130fbn7mcn0bvw6mtc013e.ueyhrn`. After both support/evidence children completed, its first two sandbox executions were:
 
 1. exact `test -f` checks for `SKILL.md`, `manifest.json`, `verifier.bundle.cjs`, and all four fixtures, followed by the pinned `uv==0.12.5` install;
 2. root-pinned manifest and bundle `sha256sum -c` checks, followed by the pinned bundled verifier's pack-validation operation.
 
-Both checksum lines returned `OK`; the verifier returned `VERIFIER_PACK_READY` with the exact pack ID, version, source revision, and manifest digest above. No candidate or semantic reference read occurred in this staging-only replay.
+Both checksum lines returned `OK`; the verifier returned `VERIFIER_PACK_READY` with the exact pack ID, version, source revision, and manifest digest above. Only then did the model write the candidate. The initial candidate passed before the full-proof operation read the expected contract and four reference states.
+
+The earlier v1.0.0 final-staging turn `01m10yexx7zfnn5gva7ytq1krj.ueyhrn` and v1.0.1 live traces are retained only as pre-review evidence. A clean full build exposed a manifest/bundle digest cycle in v1.0.1. The final v1.0.2 trust-anchor module deliberately excludes manifest and bundle digests; clean product and skill rebuilds reproduce both final digests above. Neither earlier version is used as a final pin, and neither immutable tag was rewritten.
 
 One earlier final-payload staging attempt, session `01m10ycgbnpasgevay3qdaq6w0`, turn `01m10ycgd786f6rgkf3k84zmjb.ueyhrn`, was rejected as evidence because the model used exploratory filesystem commands after a missing direct Node executable. It ended `error`; no result from that trace is used as an acceptance claim.
 
 ## Contract migration and retained gates
 
 - Natural-language and exact-JSON remediation requests no longer require verifier uploads. A valid historical `verifier_inputs` object remains accepted as a deprecated compatibility shape, cannot select any file or pack, and is omitted from the executable `GuardianRequest`.
-- `ANALYSIS_ONLY` neither selects nor materializes the skill. The exact remediation support gate alone selects the one pinned pack.
+- `ANALYSIS_ONLY` does not enter Daytona, so the attached skill is not materialized into a sandbox. The exact remediation support gate alone selects the one pinned pack.
 - Pack validation completes before candidate generation. Candidate generation completes before semantic inspection of the expected contract or reference policies.
 - Candidate verification retains one initial attempt plus at most one diagnostics-only correction. Two failures return `NO_SAFE_REMEDIATION`.
 - A passing candidate still requires last-good and candidate `SECURE_AND_FUNCTIONAL`, suspect `EXPOSED`, and deny-all `SECURE_BUT_OPERATIONALLY_REJECTED`.
@@ -62,22 +64,24 @@ One earlier final-payload staging attempt, session `01m10ycgbnpasgevay3qdaq6w0`,
 
 ## Saved agent and live evidence
 
-Saved agent `secureops-guardian_v0` (`01m0w6s2eyqtzyb6q4y6ppsta9`) was updated from `exports/secureops-guardian.trueforge.json` and read back. The portable and saved manifests canonicalize byte-for-byte to SHA-256 `09e8c720078cac591f123aafa9de3428add30f1669a776577a3a4ddacc95d317`; both attach exactly `guardian-network-egress-v1` and retain the existing tools and three write approvals.
+Saved agent `secureops-guardian_v0` (`01m0w6s2eyqtzyb6q4y6ppsta9`) was updated from `exports/secureops-guardian.trueforge.json` and read back. The portable and saved manifests canonicalize byte-for-byte to SHA-256 `4517ec18384fd6a2fae17c33a977d1c2f24230e8f7a2aa9570cba733bd57829e`; both attach exactly `guardian-network-egress-v1` and retain the existing tools and three write approvals. The registered skill record separately read back source commit `bdea775220c07c20bd7f433cb3e12793d105b266` and path `guardian-network-egress-v1`.
 
-Live natural-language evidence used session `01m10yhd29xy7pesjn0nsn53ff`:
+Final accepted v1.0.2 execution evidence is:
 
 | Outcome | Turn | Evidence |
 | --- | --- | --- |
-| PREPARE interpretation | `01m10yhd36k53dmfmc4xnf68f5.ueyhrn` | One ask-user confirmation showed the exact scope and PREPARE ceiling; it requested no files and authorized no write. |
-| PREPARE remediation | `01m1101vszs121yh2yjx959wb0.ueyhrn` | Both bounded investigators completed, the skill returned `VERIFIER_PACK_READY`, the first candidate passed, the four-state proof passed, and the result carried the exact proposal hash, pack identity, and pack-binding digest. No GitHub write or approval occurred. |
-| OPEN_PR interpretation | `01m110cpfmzvgzvxvtzycqgk4w.ueyhrn` | A complete new natural-language request required a new OPEN_PR confirmation. |
-| PR reuse | `01m110fygfcp1fj7abm447n97v.ueyhrn` | Exact base/head, PR, branch candidate, proposal hash, and pack binding reconciled. It returned `PR_REUSED` for fixture PR #1 using seven reads and `get_openui_instructions`, with zero write calls and zero approval events. |
+| PREPARE remediation | Session `01m1130f9gedf6np8tjw6xx4aj`, turn `01m1130fbn7mcn0bvw6mtc013e.ueyhrn` | The primary request omitted `verifier_inputs`. Both bounded investigators completed before Daytona. The mounted files and root digests passed, the skill returned v1.0.2 `VERIFIER_PACK_READY`, the first candidate passed, the four-state proof passed, and proposal/UI carried the exact proposal hash, pack identity, and binding. No GitHub write or approval occurred. |
+| PR reuse | Session `01m113bjfcae4t1akpk5fbnqy3`, turn `01m113bjj2k82q8den9rejkycv.ueyhrn` | A fresh OPEN_PR run repeated both investigations and the full sandbox proof, then used exactly six reconciliation reads: base/head branch and PR listing, base file/commit, and remediation file/commit. It returned `PR_REUSED` for fixture PR #1 with zero write calls and zero approval events. The remote legacy body was not claimed to contain pack fields; the fresh proof, action receipt, run receipt, and UI carried v1.0.2 and its binding. |
+
+Natural-language session `01m112s4dp592vx6w6fk3z5hd3`, interpretation turn `01m112s4f8gf2yy1ddd8tggstr.ueyhrn`, separately proved the primary compiler asks only for scope/capability confirmation and never for five verifier files. Its subsequent execution turn stopped after one child with an empty response and is explicitly rejected as execution evidence; it performed no sandbox or write. Two other incomplete v1.0.2 attempts that did not satisfy the complete reuse read set are likewise excluded.
+
+Separate final v1.0.2 `ANALYSIS_ONLY` session `01m113pryvebr98t7gg8r40wq0`, turn `01m113ps18heenhwsyj0ca5d1z.ueyhrn`, completed with 23 events. Its trace contained exactly the six bounded official GitHub reads plus child/result/rendering events, zero `sandbox.created` events, zero Fixture tool calls, zero write calls, and zero approval events. TrueForge preloaded both configured MCP connectors, but preloading is not a Fixture call or skill materialization.
 
 The fixture PR remained open and unmerged at `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`. No Kubernetes API, cluster, merge, deployment, branch deletion, public fallback, or product-repository write was attempted by the live Guardian sessions.
 
 ## Verification
 
-The product gate passed formatting, lint, typecheck, build, bundle generation, `git diff --check`, all 241 Vitest tests, and the Phase 5, Phase 6, and Phase 7 deterministic matrices. Rebuilding `packages/policy-verifier/dist/cli.bundle.cjs` produced the exact pinned bundle digest `0cd2df8bde7f0377325f6f8338335f9a33a6ae4ad869b94f3bfc5458e9b05991`. The skill repository's `npm test` independently validated its manifest and every payload digest.
+The product gate passed formatting, lint, typecheck, build, bundle generation, `git diff --check`, all 239 Vitest tests, and the Phase 5, Phase 6, and Phase 7 deterministic matrices. Rebuilding `packages/policy-verifier/dist/cli.bundle.cjs` produced the exact pinned bundle digest `3b2b3be63ea60cc98106854858c3725edd2a0efc604e9389a9328b5299c6bee1`. Rebuilding the skill then reproduced manifest digest `cf91d512c8be9939add2cb7f5700151164a1953a7864c1a77708b3d706756aaf`. The skill repository's `npm test` independently validated its complete identity and scope, exact manifest file set, and every payload digest.
 
 ## Rollback
 

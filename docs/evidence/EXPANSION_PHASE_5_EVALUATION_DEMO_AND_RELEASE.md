@@ -140,6 +140,8 @@ Release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) was o
 
 Post-merge final-agent PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19) also received paused Qodo responses for both its [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120050) and official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120715). The [official response](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462121000) contains no findings, completed review, or approval; none is claimed.
 
+Post-merge README showcase PR [#20](https://github.com/jayesh9747/secureops-guardian/pull/20) received the same paused status on its [automatic Qodo attempt](https://github.com/jayesh9747/secureops-guardian/pull/20#issuecomment-5462253109). That response contains no findings, completed review, or approval; none is claimed.
+
 The release-gate implementation did not merge or submit. The later merge was an explicit operator action. The finalization pass made no fixture-content mutation; it only verified already-pushed public default branches.
 
 ## Release decision
@@ -153,6 +155,10 @@ After PR #18 merged, the exact merged manifest was saved under the final immutab
 Fresh final-name [session `01m16kn1n07evwtjtje2e7rfk1`](http://localhost:8791/sessions/01m16kn1n07evwtjtje2e7rfk1) used interpretation turn `01m16kn1pasy2fcwqh23ybe3ed.ueyhrn` and execution turn `01m16kpw5004hdkrr9s6gpfgck.ueyhrn`. It completed in `9m 12s`, returned `PR_REUSED`, created the exact two child threads (`01m16kqms5tjev5wa4z4a4jyhd`, `01m16kv1jrwhs7cvcv2gg96sd2`), and created one sandbox (`01m16kxq4e19yrm7bf4tnarnkp`). Persisted events contained no `tool.approval_required`, `create_branch`, `create_or_update_file`, or `create_pull_request` event. Exact-head reconciliation call `call_874188` found checkout PR #1 still open and unmerged at `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
 
 The final README frame is [`secureops-guardian-pr-reused.jpg`](./final-release/secureops-guardian-pr-reused.jpg). It shows the final agent name, `PR_REUSED`, `High`, complete evidence, both completed investigators, and the GitHub/sandbox execution groups without the historical agent list or credentials.
+
+Final-name confirmation [session `01m16n6h2k2hbv34b1nv5mkjd4`](http://localhost:8791/sessions/01m16n6h2k2hbv34b1nv5mkjd4) provides the UI/UX safety close-up used in the README. Interpretation turn `01m16n6h5aznyhbca349nw0veg.ueyhrn` stopped with one ask-user requirement while the rail showed zero agents, zero MCP calls, and zero sandboxes. Cancellation turn `01m16n8c8vgbjchnj1mgjwdd7d.ueyhrn` made no tool call and ended with no investigation, Daytona verification, or GitHub operation. The captured frame is [`human-confirmation-gate.jpg`](./final-release/human-confirmation-gate.jpg).
+
+The supporting UI gallery is [`four-state-verification.jpg`](./final-release/four-state-verification.jpg), [`proposed-change-and-approval-boundary.jpg`](./final-release/proposed-change-and-approval-boundary.jpg), and [`auditable-run-receipt.jpg`](./final-release/auditable-run-receipt.jpg). Each uses the final agent name and the same accepted PR-reuse session.
 
 Full verification from merged `origin/main` plus only the final-name metadata/docs change passed: formatting, lint, typecheck, build, Phases 5/6/7/10/11/12 matrices, 181 focused tests, and all 290 tests. The four public demo default refs were already pushed and were reverified without rewriting history:
 

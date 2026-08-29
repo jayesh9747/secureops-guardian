@@ -1,297 +1,234 @@
 # SecureOps Guardian
 
-SecureOps Guardian is one saved TrueForge agent that helps an on-call platform/security engineer inspect an exact GitHub change. It can analyze a bounded Kubernetes workload-security subset and, only for its proven Kubernetes NetworkPolicy subset, turn a supported security regression into a cited, sandbox-verified least-privilege remediation while retaining human control of every GitHub write.
+> An approval-gated incident-response agent that turns an exact GitHub security regression into an evidence-backed, sandbox-verified, reviewable pull request—without merging, deploying, or touching a live cluster.
 
-The demo joins real GitHub commit evidence from the public [`guardian-demo-checkout`](https://github.com/jayesh9747/guardian-demo-checkout) repository with explicitly synthetic incident observations. Unlike a generic incident summary, Guardian identifies one changed NetworkPolicy rule, rejects deny-all containment because it breaks checkout's database path, proves an exact replacement against four policy states, and creates or deterministically reuses one reviewable pull request only at the approval boundary.
+Built for [The Agent Harness Hackathon](https://www.wemakedevs.org/hackathons/trueforge) on TrueForge.
 
-Users select only `secureops-guardian` and describe an exact repository change in ordinary language; exact schema-version-1 JSON remains available for tests and advanced use. Guardian compiles natural language into the existing typed request without guessing a repository, branch, revision, or file. Missing facts produce one tool-free question, while remediation and pull-request interpretations require confirmation before preflight. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. The immutable FindingPack registry exposes `k8s-network-egress-v1` and the analysis-only `k8s-workload-security-v1`. Proven remediation remains limited to the NetworkPolicy pack.
+| | |
+| --- | --- |
+| **Team** | SecureOps Guardian |
+| **Created by** | [Jayesh Savaliya](https://github.com/jayesh9747) |
+| **Final agent** | `secureops-guardian` |
+| **Primary demo** | Kubernetes NetworkPolicy egress regression |
+| **Status** | Release gate passed; final saved agent and demo assets are on `main` |
 
-## Judge-visible result
+[Demo script](./docs/demo/PHASE_6_DEMO_SCRIPT.md) · [Architecture](./docs/current/ARCHITECTURE.md) · [Release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md) · [Fixture PR #1](https://github.com/jayesh9747/guardian-demo-checkout/pull/1)
 
-- Two bounded TrueForge child threads gather official GitHub MCP evidence and owned Fixture MCP evidence.
-- `SEC-NET-001` links unrestricted `0.0.0.0/0` egress to the changed manifest and synthetic forbidden-path observation.
-- A Daytona sandbox runs the static verifier without GitHub, cluster, cloud, SSH, or model credentials.
-- The result reports `High` severity, asset, causal commit, file, exposure, evidence IDs, and actual data access `Unknown`.
-- The four-state matrix reproduces the exposure, rejects deny-all, and accepts the least-privilege repair.
-- TrueForge separately approval-gates `create_branch`, `create_or_update_file`, and `create_pull_request` through the official GitHub MCP.
-- Retry verifies the existing branch and PR, then returns the same URL without another write or approval.
-- Stock TrueForge OpenUI renders a decision-first Incident Brief; deterministic Markdown and JSON representations remain available from the same validated identities.
+![SecureOps Guardian showing a completed investigation, PR reuse result, two subagents, MCP activity, and sandbox proof](./docs/evidence/final-release/secureops-guardian-pr-reused.jpg)
 
-## Demo preview
+## The problem
 
-The final saved agent keeps the decision in chat and the auditable execution trace in TrueForge's Investigation rail.
+A security alert rarely arrives with a complete answer. An on-call engineer still has to connect the alert to the exact code change, determine whether the change caused real exposure, design a fix that preserves required traffic, prove it, and prepare something another engineer can review.
 
-![SecureOps Guardian PR reuse demo with two completed investigators, sandbox verification, and GitHub reconciliation](./docs/evidence/final-release/secureops-guardian-pr-reused.jpg)
+A generic chatbot is unsafe for this job:
 
-Follow the exact three-minute narration and screen sequence in the [demo video script](./docs/demo/PHASE_6_DEMO_SCRIPT.md).
+- repository evidence and operational observations are disconnected;
+- a plausible patch may silently break production dependencies;
+- generated code needs an isolated place to run;
+- GitHub writes are irreversible enough to require human control; and
+- a long agent trace is difficult to audit during an incident.
 
-## Architecture and TrueForge capabilities
+## The solution
 
-```text
-Engineer -> saved TrueForge agent secureops-guardian
-  +-- natural language or exact JSON -> validated GuardianRequest
-  +-- parameterized scope preflight -> official GitHub MCP reads
-  +-- exact changed-file evidence -> deterministic FindingPack registry
-  |     +-- NetworkPolicy egress -> retained analysis/remediation path
-  |     `-- Pod/Deployment workload security -> analysis only
-  +-- exact supported case
-  |     +-- change-security-investigator -> official GitHub MCP reads
-  |     `-- exposure-evidence-investigator -> guardian-fixture MCP reads
-  +-- mode ceiling -> analysis | prepare | open PR
-  +-- pinned TrueForge skill -> digest-verified verifier pack (prepare/open only)
-  +-- Daytona -> candidate + four-state static verifier (prepare/open only)
-  +-- exact remote reuse or three separately approved writes (open only)
-  `-- stock Incident Brief + deterministic Markdown/JSON + Investigation rail
+SecureOps Guardian accepts an ordinary-language request about one exact repository change. It gathers bounded evidence, delegates two narrow investigations, runs a deterministic verifier in Daytona, presents a decision-first Incident Brief, and stops for a human before any GitHub write.
+
+For the primary demo, Guardian finds that commit `7b2f2ad5` added unrestricted `0.0.0.0/0` egress to checkout. It rejects a deny-all policy because checkout still needs DNS and PostgreSQL, verifies a least-privilege replacement across four states, and safely reuses the existing reviewable [pull request](https://github.com/jayesh9747/guardian-demo-checkout/pull/1).
+
+### What the user gets
+
+| Question | Guardian answers |
+| --- | --- |
+| What happened? | `High` severity `SEC-NET-001` on the exact changed NetworkPolicy |
+| Why does it matter? | Synthetic reachability evidence shows the declared forbidden TCP/443 path became reachable |
+| What caused it? | Exact commit, file, diff, blob, workload, and evidence identities |
+| Is the fix safe? | Four-state proof: last-good, suspect, deny-all, and candidate |
+| What can happen next? | Prepare a proposal or open/reuse a PR, with separate approval before every write |
+
+## Architecture
+
+```mermaid
+flowchart TD
+    U[On-call engineer<br/>natural-language request] --> G[secureops-guardian<br/>TrueForge root agent]
+    G --> C[Scope compiler<br/>repository + branch + exact revision + file]
+    C --> GH[Official GitHub MCP<br/>real repository evidence]
+    C --> P{FindingPack registry}
+
+    P -->|NetworkPolicy egress| I1[Change Security Investigator]
+    P -->|NetworkPolicy egress| I2[Exposure Evidence Investigator]
+    P -->|Pod / Deployment| WA[Analysis-only workload findings]
+
+    I1 --> E[Evidence and causal join]
+    I2 --> FX[Owned Fixture MCP<br/>synthetic incident observations]
+    FX --> E
+    GH --> E
+
+    E --> D[Daytona sandbox<br/>pinned verifier skill]
+    D --> V[Four-state deterministic proof]
+    V --> UI[Stock TrueForge Incident Brief<br/>summary + evidence + receipt]
+    V --> H{Human approval<br/>before each write}
+    H -->|approved| PR[GitHub branch / commit / PR]
+    H -->|denied or cancelled| NW[No write]
 ```
 
-TrueForge is the sole agent harness. [`@guardian/orchestration`](./packages/orchestration/src/index.ts) compiles natural-language requests at the planning seam and composes the reviewed investigation, sandbox verification, proposal, approval, receipt, reliability, and presentation modules behind one user-facing manifest. Phase-named manifests remain only as test fixtures/reference configurations. Dynamic child roles are instruction-scoped and share attached resources, not enforced authorization boundaries. See the [architecture](./docs/current/ARCHITECTURE.md) and [migration note](./docs/current/PHASE_7_MIGRATION.md).
+The architecture intentionally separates real GitHub evidence from owned synthetic incident observations. Static verification does not claim Kubernetes admission, CNI enforcement, packet behavior, data access, or exfiltration.
 
-| TrueForge capability | Guardian use |
+## Why TrueForge is essential
+
+This is not a chat wrapper. The harness performs the work the hackathon asks judges to see.
+
+| TrueForge capability | How Guardian uses it | What is visible in the demo |
+| --- | --- | --- |
+| MCP tools | Official GitHub MCP plus owned read-only Fixture MCP | Exact commits, files, blobs, alerts, deployments, reachability, and dependencies |
+| Dynamic subagents | Two bounded investigator roles | Separate child cards, findings, evidence, timing, and completion state |
+| Daytona sandbox | Runs the pinned verifier without GitHub or cluster credentials | Candidate generation and deterministic four-state proof |
+| Human-in-the-loop | Confirms interpreted scope and separately gates every GitHub write | “Waiting for you” state before action; cancellation produces no tools or writes |
+| Skills | Loads one immutable `guardian-network-egress-v1` verifier bundle | Pinned pack version and digest-bound result |
+| Persistent sessions | Keeps the investigation and action state across reconnects | Completed session remains inspectable and retry-safe |
+| Generative UI | Renders the typed Incident Brief in stock TrueForge OpenUI | Decision summary, progressive disclosures, controls, and receipt |
+
+## UI/UX: designed for an incident, not a transcript
+
+We kept the stock TrueForge interface and improved the product experience through a strict presentation contract—no custom dashboard or frontend fork.
+
+1. **Interpret before acting.** The user sees the repository, branch, revision, target file, selected pack, capability ceiling, and limitations before investigation begins.
+2. **Ask before the irreversible step.** Confirmation is visually distinct, says exactly what is permitted, and never substitutes for write approval.
+3. **Lead with the decision.** Every result starts with Finding, Key reason, What Guardian did, and Next action.
+4. **Use text, not color alone.** Status, severity, evidence completeness, pack, and repository are readable labelled chips.
+5. **Progressively disclose detail.** Evidence, causal chain, verification, proposed change, limitations, and receipt remain one click away.
+6. **Separate decision from execution.** The main chat is the decision surface; TrueForge's Investigation rail owns subagent, MCP, sandbox, timing, and failure detail.
+7. **Show only valid actions.** Analysis-only workload findings cannot expose remediation or PR controls.
+8. **Keep an audit trail.** Deterministic Markdown and JSON artifacts share the same request, proposal, pack, and receipt identities as the UI.
+
+### Human control before action
+
+![SecureOps Guardian waiting for confirmation of the exact OPEN_PR scope with zero agents, MCP calls, or sandboxes started](./docs/evidence/final-release/human-confirmation-gate.jpg)
+
+### Verification, proposed change, and receipt
+
+| Four-state proof | Reviewable proposed change |
 | --- | --- |
-| Model routing | `google-gemini/gemini-3-6-flash`, temperature `0` |
-| Dynamic sub-agents | Exactly two investigation child threads |
-| MCP | Official GitHub MCP plus read-only `guardian-fixture` |
-| Daytona | Credential-free candidate and verifier execution |
-| Skills | Immutable `guardian-network-egress-v1` verifier bundle |
-| Tool approval | Separate human decision for each of three GitHub writes |
-| Persistence | Reconnect/retry preserves proposal and pending action |
-| Generative UI | Stock OpenUI card; no frontend fork or dashboard |
+| ![Daytona four-state proof showing last-good, suspect, deny-all, and candidate states](./docs/evidence/final-release/four-state-verification.jpg) | ![Proposed NetworkPolicy change and reused pull request presented alongside the completed investigation rail](./docs/evidence/final-release/proposed-change-and-approval-boundary.jpg) |
 
-## Incident Brief and artifacts
+| Auditable receipt |
+| --- |
+| ![Machine-readable run receipt displayed with the completed subagents, MCP calls, and sandbox trace](./docs/evidence/final-release/auditable-run-receipt.jpg) |
 
-Before a remediation or write run, Guardian presents the interpreted repository, branch, exact
-commit/comparison, optional file, selected pack, capability ceiling, and non-action boundary.
-Confirmation binds request meaning only; it never replaces a GitHub write approval.
+## Demo flow
 
-Every terminal result answers four questions in order: Finding, Key reason, What Guardian did, and
-Next action. Text-labelled chips carry repository/revision, pack, status, severity, and evidence
-completeness. Evidence, causal chain, conditional verification, conditional proposed change,
-limitations, and the run receipt use progressive disclosure. The workload pack cannot render a
-verifier, proposal, approval, or PR action; an egress result exposes only a real review link when a
-pull request already exists.
+Use the one saved agent named `secureops-guardian` and enter:
 
-Typed builders produce deterministic copyable representations named
-`guardian-incident-brief.md`, `guardian-run-receipt.json`, and, only for an exact verified proposal,
-`guardian-verified-change.json`. Their request, receipt, proposal, pack, and target identities must
-match the OpenUI model or generation fails closed. Download is optional and deferred as a product
-contract; `ANALYSIS_ONLY` never creates a sandbox for export. The result stays in chat while child,
-MCP, sandbox, approval, timing, and failure detail stays in TrueForge's Investigation rail.
+```text
+Open a pull request for the security regression at https://github.com/jayesh9747/guardian-demo-checkout/commit/7b2f2ad51f9ef97334176fbfed3138465b62fcdb using base branch main and target file k8s/checkout-networkpolicy.yaml.
+```
 
-## Workload-security analysis
+The three-minute recording should show:
 
-`k8s-workload-security-v1@1.0.0` accepts one explicit Linux-or-unspecified `v1/Pod` or
-`apps/v1/Deployment` document. It deterministically evaluates privileged containers,
-`allowPrivilegeEscalation`, explicit UID 0, Restricted Linux capabilities, host namespaces, and
-`hostPath` across regular, init, and ephemeral containers. Rules are grounded in the Kubernetes
-[Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
+1. interpreted scope and the human confirmation boundary;
+2. two bounded investigators using GitHub and synthetic Fixture evidence;
+3. the `High` finding and four-state Daytona proof;
+4. the exact proposed change and pinned verifier identity;
+5. `PR_REUSED` for [checkout PR #1](https://github.com/jayesh9747/guardian-demo-checkout/pull/1), with zero write calls and zero approvals; and
+6. the run receipt and honest static/synthetic/`Unknown` limitations.
 
-The public [`guardian-demo-privileged-api`](https://github.com/jayesh9747/guardian-demo-privileged-api)
-suspect commit `2c7bdb3e07714e08d9504b3504587fbf18847f29` produces five exact-JSONPath findings from blob
-`b1a60bb96fad7f93bc95536d08381e5629a6a7bd`; its secure parent
-`d2ee0cdc4e27cc8af671f4c0de15081d1c996e36` produces none. This is repository analysis, not a
-Kubernetes admission or live-cluster result. The pack has no verifier, patch, proposal, approval,
-branch, commit, or pull-request route.
+See the timed [demo video script](./docs/demo/PHASE_6_DEMO_SCRIPT.md). The final-name cold rehearsal took `9m 12s`; the accepted guided walkthrough of the completed result took `168.3s`. We do not claim a three-minute cold model run.
 
-Saved agent: `secureops-guardian`, ID `01m16kjdg9xkg1hrv1x291whn8`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json); its canonical manifest SHA-256 is `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`. The `_v0` candidate was retained only long enough to validate the final name and is no longer a user-selectable entry point.
+## Demo repositories
 
-## Prerequisites
+| Repository | Purpose | Frozen demo state |
+| --- | --- | --- |
+| [`guardian-demo-checkout`](https://github.com/jayesh9747/guardian-demo-checkout) | Primary NetworkPolicy regression and remediation | Suspect `7b2f2ad`; open remediation PR #1 at `44fb8c7` |
+| [`guardian-demo-privileged-api`](https://github.com/jayesh9747/guardian-demo-privileged-api) | Workload-security breadth | Five exact Pod Security Standards findings at `2c7bdb3` |
+| [`guardian-demo-orders-egress`](https://github.com/jayesh9747/guardian-demo-orders-egress) | Benign-control proof | Pack-scoped `NO_DETERMINISTIC_FINDING` baseline |
+| [`guardian-demo-worker-crash`](https://github.com/jayesh9747/guardian-demo-worker-crash) | Reliability fixture | Preserved public crash/change history |
 
-- Node.js `>=22.14.0`, pnpm `11.19.0`, Git, Docker, and Docker Compose.
-- TrueForge pinned to `6026509d905fe255bf493e3845b1fca237bdf0fd`.
-- Google Gemini and Daytona providers configured in TrueForge.
-- A fine-grained GitHub credential scoped to `jayesh9747/guardian-demo-checkout`.
+All fixture repositories are public and pushed. The checkout remediation PR stays open and unmerged so retry behavior can prove exact PR reuse without destructive reset.
 
-Never put provider keys, Daytona credentials, GitHub tokens, authorization headers, or connector secrets in either repository, a prompt, screenshot, trace export, or recording.
+## Run it
 
-## Reproduce the release repositories
+### Prerequisites
+
+- Node.js `>=22.14.0` and pnpm `11.19.0`
+- Docker and Docker Compose
+- TrueForge with a Gemini model and Daytona configured
+- A fine-grained GitHub credential limited to the owned demo repository
+
+### Install and verify
 
 ```sh
 git clone https://github.com/jayesh9747/secureops-guardian.git
-git clone https://github.com/jayesh9747/guardian-demo-checkout.git
-git clone https://github.com/jayesh9747/guardian-demo-privileged-api.git
-git clone https://github.com/jayesh9747/guardian-demo-orders-egress.git
-git clone https://github.com/jayesh9747/guardian-demo-worker-crash.git
-git clone https://github.com/jayesh9747/secureops-guardian-verifier-skill.git
 cd secureops-guardian
 pnpm install --frozen-lockfile
+pnpm test
+pnpm phase12:matrix
 ```
 
-Frozen fixture evidence:
+The full suite currently passes **290 tests**; the focused release matrix passes **181 tests** across natural-language scope, finding packs, verifier delivery, mutation safety, reliability, presentation, artifacts, and the saved-agent contract.
 
-| Repository / role | Commit | Blob where applicable |
-| --- | --- | --- |
-| Checkout last-known-good | `a6d177b43396c7b4b45aa98cb2970d0489a7a4f9` | — |
-| Checkout suspect regression | `7b2f2ad51f9ef97334176fbfed3138465b62fcdb` | `477c7db7edd61de10fce67713d52e442f2358318` |
-| Checkout open remediation | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` | `1eddb230ac7c05bae199e6b9162a42da3bf039fa` |
-| Workload-security suspect | `2c7bdb3e07714e08d9504b3504587fbf18847f29` | `b1a60bb96fad7f93bc95536d08381e5629a6a7bd` |
-| Benign egress baseline | `cdf69ad291b2097f563a4915503405df063661f7` | `c691421469c9a372a5eb5d38d24f17bf25eccb0d` |
-
-Fixture PR [`#1`](https://github.com/jayesh9747/guardian-demo-checkout/pull/1) must remain open and unmerged for the reuse demo. Do not reset, rewrite, merge, close, or edit its branch to rehearse first-write behavior.
-
-## Run and configure the Fixture MCP
-
-The safe default binds to loopback. TrueForge in Docker needs this explicit host-interface opt-in:
+### Start the read-only Fixture MCP
 
 ```sh
 HOST=0.0.0.0 PORT=8788 pnpm --filter @guardian/fixture-mcp dev
 curl http://127.0.0.1:8788/health
 ```
 
-Expected health response: `{"status":"ok","synthetic":true}`.
+Expected response:
 
-Register a Streamable HTTP connector named `guardian-fixture` at `http://host.docker.internal:8788/mcp`, without authentication. Enable `get_security_alert`, `get_deployment`, `get_reachability_observations`, and `get_service_dependencies`. Every tool is read-only, stateless, model-free, and restricted to owned typed fixtures.
-
-## Configure TrueForge without secrets
-
-### Model and Daytona
-
-Configure the Gemini provider through TrueForge settings, select `google-gemini/gemini-3-6-flash`, and set temperature to `0`. Configure Daytona through TrueForge settings and confirm provider state `ready`. Keep all credentials only in TrueForge's secret configuration. The sandbox receives the registered verifier skill mount, not user-uploaded verifier files.
-
-### Pinned verifier skill
-
-Register the public `guardian-network-egress-v1` skill from [`secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill) at immutable commit `ade2d1453bba033dd3300a7c7aede6e28b97582d` (tag `guardian-network-egress-v1.0.4`) and attach it to `secureops-guardian`. The runtime-proven mount is `/opt/tf/skills/guardian-network-egress-v1`. The root contract pins manifest SHA-256 `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`; the manifest pins bundle SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9` and every fixture digest. Guardian never searches for, generates, downloads, or accepts a substitute pack.
-
-### Official GitHub MCP
-
-Create a Streamable HTTP connector named `github` with endpoint `https://api.githubcopilot.com/mcp/`. Put its authenticated header in the TrueForge secret field. Use a fine-grained credential limited to the fixture repository, with metadata read and only the Contents and Pull Requests permissions required by the demo.
-
-Investigation uses bounded read tools. The final idempotency check uses direct `list_pull_requests` with `state=open`, base `main`, and exact head `jayesh9747:guardian/fix-checkout-egress`; GitHub search is not the final reuse check.
-
-Enable only these writes and list all three separately under `require_approval_for_tools`:
-
-- `create_branch`
-- `create_or_update_file`
-- `create_pull_request`
-
-Do not enable merge, branch deletion, Actions, secrets, administration, issues, or deployment tools.
-
-### Stock Generative UI
-
-Use [`SECUREOPS_GUARDIAN_AGENT_SPEC`](./packages/orchestration/src/agent.ts) or import the saved [TrueForge export](./exports/secureops-guardian.trueforge.json). It enables the official GitHub MCP, Fixture MCP, Daytona, dynamic children, persistence-compatible session behavior, ask-user for missing scope only after an investigation intent, and stock Generative UI in one manifest. Greetings and capability questions receive direct tool-free responses. The Guardian adds no separate dashboard: its result stays in chat, while the companion TrueForge Investigation rail presents child-agent, MCP, sandbox, approval, timing, and failure events from the canonical session history.
-
-## Unified prompts and expected outcome
-
-Use the [natural-language current-fixture prompt](./docs/current/PHASE_7_PROMPTS.md#natural-language-current-fixture). The same document retains exact JSON templates for backward compatibility and provides an [arbitrary-repository `ANALYSIS_ONLY` template](./docs/current/PHASE_7_PROMPTS.md#arbitrary-repository-analysis_only) and an [`OPEN_PR` safety template](./docs/current/PHASE_7_PROMPTS.md#open_pr-safety-template).
-
-With the preserved fixture state, expect:
-
-- `High` finding for `checkout-api` at suspect commit `7b2f2ad51f9ef97334176fbfed3138465b62fcdb`;
-- changed file `k8s/checkout-networkpolicy.yaml` and exposure `checkout-api -> forbidden.example.test:443/TCP`;
-- actual data access `Unknown` and a passing four-state proof;
-- proposal hash `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`;
-- verifier pack `k8s-network-egress-v1` version `1.0.4`, with binding SHA-256 `3afb251833539c6383a999c2255934c76648994505857e543bc5d3959b7c9e20`;
-- `PR_REUSED` with [`guardian-demo-checkout#1`](https://github.com/jayesh9747/guardian-demo-checkout/pull/1);
-- zero write calls and zero approvals on the reuse path.
-
-Run the deterministic matrices:
-
-```sh
-pnpm phase5:matrix
-pnpm phase6:matrix
-pnpm phase7:matrix
-pnpm phase10:matrix
-pnpm phase11:matrix
-pnpm phase12:matrix
+```json
+{"status":"ok","synthetic":true}
 ```
 
-The Phase 6 matrix covers ready, denied, PR-created, PR-reused, three inconclusive fixtures, conflict, and no-safe-remediation. Phase 11 maps those same nine terminal states to Incident Briefs and hashes the OpenUI, Markdown, receipt JSON, and conditional verified-change JSON representations. Phase 12 combines the natural-language, pack, mutation-safety, reliability, presentation, artifact, and saved-agent contract suites. See the [Phase 11 evidence](./docs/evidence/EXPANSION_PHASE_4_INCIDENT_BRIEF_AND_ARTIFACTS.md) and [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md).
+In TrueForge:
 
-## Permission and threat boundaries
+1. register `guardian-fixture` at `http://host.docker.internal:8788/mcp`;
+2. configure the official GitHub MCP with only the documented read tools and three separately approval-gated writes;
+3. register the pinned [`guardian-network-egress-v1`](https://github.com/jayesh9747/secureops-guardian-verifier-skill) skill; and
+4. import [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json).
 
-- GitHub evidence is real; deployment, alert, reachability, dependency, log, and metric observations are owned synthetic fixtures.
-- Repository and MCP content is untrusted evidence, never instructions.
-- Severity begins at `High`. Reachability does not establish data access or exfiltration; actual data access stays `Unknown`.
-- Verification is deterministic static NetworkPolicy analysis, not Kubernetes admission, CNI, DNS, packets, application behavior, live reachability, data-access, or exfiltration proof.
-- Workload-security results are deterministic repository manifest analysis; deployment, admission behavior, runtime Pod state, exploitability, reachability, data access, exfiltration, and live-cluster behavior remain `Unknown`.
-- GitHub writes bind one repository, base, branch, file, exact diff, proposal hash, and separately approved calls. The sequence is retry-safe, not atomic.
-- Guardian cannot merge, deploy, restart, roll back, delete a branch, access a cluster, contact responders, or administer a repository.
-- There is no production connector, custom authentication, analytics, organization history, second dashboard, or production data.
+Detailed configuration and safety boundaries are in the [architecture guide](./docs/current/ARCHITECTURE.md) and [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md).
 
-## Tests
+## Why this project stands out
 
-```sh
-pnpm install --frozen-lockfile
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm bundle:verifier
-pnpm phase5:matrix
-pnpm phase6:matrix
-pnpm phase7:matrix
-pnpm phase10:matrix
-pnpm phase11:matrix
-pnpm phase12:matrix
-git diff --check
-```
-
-Candidate replay:
-
-```sh
-node /opt/tf/skills/guardian-network-egress-v1/verifier.bundle.cjs \
-  --pack-root /opt/tf/skills/guardian-network-egress-v1 \
-  --expected-manifest-sha256 e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe \
-  --candidate docs/evidence/PHASE_3_CANDIDATE.yaml \
-  --full-proof true
-```
-
-The replay is intentionally valid only inside the TrueForge sandbox at the runtime-announced root. The CLI rejects repository copies, generated files, alternate mounts, and self-computed substitute-pack digests.
-
-## Troubleshooting
-
-| Symptom | Check |
+| Judging criterion | Evidence |
 | --- | --- |
-| TrueForge cannot reach Fixture MCP | Use the explicit host bind, `host.docker.internal:8788/mcp`, and verify `/health`. |
-| Fixture MCP returns 403 | Keep the connector on allowed local/container hosts; do not expose it publicly. |
-| OpenUI fails | Confirm Generative UI is enabled, then rerun or display the complete Markdown recovery rendering. |
-| GitHub write asks for no approval | Stop and restore all three separate approval requirements. |
-| Retry wants to overwrite | Stop with `WRITE_CONFLICT`; exact remote content or binding differs. |
-| Demo cannot reach first write | Expected: PR #1 exists. Use truthful read-only reuse; never reset remote state. |
-| Verifier claims live behavior | Reject the claim; the verifier is static fixture-contract analysis only. |
+| Potential impact | Reduces a real on-call security workflow from disconnected investigation and patching to one reviewable, human-controlled journey |
+| Creativity | Joins change evidence, synthetic incident evidence, deterministic security proof, and idempotent PR reuse in one agent session |
+| Technical excellence | Typed contracts, immutable packs, exact identities, fail-closed gates, 290 tests, adversarial matrices, and reproducible public fixtures |
+| Sponsor tools | TrueForge visibly owns MCP, subagents, Daytona, skills, approvals, persistence, and Generative UI; Qodo evidence is linked below |
+| Control and safety | Analysis-only ceilings, one confirmation gate, three separate write approvals, no merge/deploy/cluster tools, and denial/no-write proof |
+| Presentation | A decision-first Incident Brief, progressive disclosure, labelled states, audit artifacts, final screenshots, and a timed demo script |
 
 ## Qodo Code Review Evidence
 
-Representative merged PR [#3](https://github.com/jayesh9747/secureops-guardian/pull/3) contains the Phase 2 investigation and evidence-validation implementation. Qodo's first deep review found three `High` gaps: the target-file finding was not bound to the exact diff/blob evidence, the reconstructed NetworkPolicy was not tied to its complete bounded identity, and trusted evidence labels could front fabricated payloads. Commit [`2fa5749`](https://github.com/jayesh9747/secureops-guardian/commit/2fa5749e4b07f09f131dd2f9f7ce4f3d4470edd0) fixed all three with exact provenance checks, full manifest validation, canonical fixture comparisons, and adversarial tests.
+Representative merged PR [#3](https://github.com/jayesh9747/secureops-guardian/pull/3) contains the core investigation and evidence-validation implementation. Qodo found three High-severity provenance gaps: findings were not bound tightly enough to the exact diff/blob, the reconstructed NetworkPolicy identity was incomplete, and trusted labels could front fabricated fixture payloads. Commit [`2fa5749`](https://github.com/jayesh9747/secureops-guardian/commit/2fa5749e4b07f09f131dd2f9f7ce4f3d4470edd0) fixed them with exact provenance checks, full manifest validation, canonical fixture comparison, and adversarial tests.
 
-Qodo's follow-up confirmed those findings resolved and surfaced two `Medium` issues: clean-checkout tests could depend on ignored build output, and requiring explicit `policyTypes: [Egress]` caused a false negative for an otherwise exact egress rule. Commit [`9b95dfb`](https://github.com/jayesh9747/secureops-guardian/commit/9b95dfb024d4408c057c9afa1138e500f5d5f7fc) fixed both. The review threads, evidence-backed replies, resolutions, and follow-up history remain visible on [PR #3](https://github.com/jayesh9747/secureops-guardian/pull/3); the detailed record is in the [Phase 2 evidence](./docs/evidence/PHASE_2_AGENT_INVESTIGATION.md#qodo-review). A final additional request was paused, so no later Qodo approval is claimed.
+Qodo's follow-up confirmed those High findings resolved and raised two Medium issues. Commit [`9b95dfb`](https://github.com/jayesh9747/secureops-guardian/commit/9b95dfb024d4408c057c9afa1138e500f5d5f7fc) fixed both. The complete review discussion and decisions remain visible in [PR #3](https://github.com/jayesh9747/secureops-guardian/pull/3).
 
-For Phase 6, Qodo's automatic attempt, an earlier manual request, and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407199824) on [PR #7](https://github.com/jayesh9747/secureops-guardian/pull/7) were paused for this user. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407200657) contains no findings or approval. An alternate two-axis review found one receipt-binding issue; reviewed commit `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`, recorded in the PR history and Phase 6 evidence, fixed it with fail-closed proposal/target/PR checks and adversarial tests.
+Qodo attempts on release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18), final-agent PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19), and README PR [#20](https://github.com/jayesh9747/secureops-guardian/pull/20) were paused for this user. Those paused responses contain no findings or approval, and none is claimed. The truthful history is recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
 
-For Phase 7, Qodo's automatic attempt and official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513497) on [PR #8](https://github.com/jayesh9747/secureops-guardian/pull/8) were also paused. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513076) contains no findings or approval. The alternate standards/spec review found valid comparison scopes were rejected by the composed journey and actionable receipt states could bypass proof/proposal stage binding; both were reproduced and remediated with focused tests.
+## Honest boundaries
 
-For Phase 12, Qodo's [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461905572) and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906267) on release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) were paused. The [official paused response](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906533) contains no findings, completed review, or approval; none is claimed. The independent Standards/Spec review is the controlling release review, recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
+- GitHub evidence is real; alert, deployment, reachability, and dependency observations are owned synthetic fixtures.
+- Verification is deterministic static NetworkPolicy analysis, not live Kubernetes, CNI, DNS, packet, or application proof.
+- Reachability does not prove data access or exfiltration; both remain `Unknown`.
+- Workload-security analysis supports a bounded Pod/Deployment subset and cannot remediate or write.
+- Guardian cannot merge, deploy, restart, roll back, delete branches, access a cluster, contact responders, or administer a repository.
+- The current public state demonstrates safe PR reuse. A new live first-write denial is not manufactured because that would require destructive fixture reset.
 
-For the post-merge final-agent follow-up PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19), both the [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120050) and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120715) received a [paused response](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462121000). Those responses contain no review findings or approval; none is claimed.
+## Documentation
 
-## AI-assistance disclosure
-
-AI coding assistants supported planning, implementation, tests, documentation, and review. The operator retained responsibility for scope, credentials, approvals, writes, evidence interpretation, review acceptance, recording, visibility, and submission. A paused Qodo response is never presented as approval.
-
-## Known limitations and retained roadmap
-
-- Any authorized repository can enter read-only preflight, but proven remediation remains limited to the exact owned Kubernetes NetworkPolicy case inside the documented static subset.
-- Remediation uses exactly one pinned verifier pack. The old five-filename exact-JSON envelope remains accepted only as a deprecated compatibility shape and never selects files or changes the pack.
-- The workload pack supports only `v1/Pod` and `apps/v1/Deployment` and cannot produce remediation or writes.
-- The preserved public state safely demonstrates PR reuse and live cancellation at interpreted-request confirmation, not a new live first-write denial or creation sequence. The first-write denial remains deterministic integration evidence because manufacturing it live would require a destructive fixture reset.
-- Phase-named exported specifications are retained only as historical test fixtures/reference configurations; no phase-named saved agent is registered.
-- There is no live cluster, production telemetry, CVE scan, packet capture, penetration test, compliance assessment, general incident response, or autonomous containment.
-- Broader remediation repositories, rules, workflows, history, analytics, and other retained features are not implemented.
-
-## Frozen references
-
-| Artifact | Reference |
+| Document | Purpose |
 | --- | --- |
-| Product Phase 12 release base | `3cd6d8e046fba93dde8921ae5c4bb955f7fbdc2c` |
-| Merged Phase 12 release | `0c94cbe638427a5c1494ffa30499757b808b57c9` |
-| Frozen Phase 5 core | `263e6a27307a667f08bfa832b436a754c0848a2e` |
-| Phase 5 documentation | `1777bfd070ac1ebd34e23a604767ae2e703c36ad` |
-| Fixture remediation | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |
-| Proposal SHA-256 | `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15` |
-| Pack-binding SHA-256 | `3afb251833539c6383a999c2255934c76648994505857e543bc5d3959b7c9e20` |
-| Saved/export manifest SHA-256 | `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0` |
-| Verifier payload | `ade2d1453bba033dd3300a7c7aede6e28b97582d` (`guardian-network-egress-v1.0.4`) |
-| Historical TrueForge source pin | `6026509d905fe255bf493e3845b1fca237bdf0fd` |
+| [Architecture](./docs/current/ARCHITECTURE.md) | Components, trust boundaries, and frozen identities |
+| [Prompt templates](./docs/current/PHASE_7_PROMPTS.md) | Natural-language and exact-JSON examples |
+| [Demo script](./docs/demo/PHASE_6_DEMO_SCRIPT.md) | Three-minute recording sequence and narration |
+| [Release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md) | Sessions, matrices, mutation proof, screenshots, and refs |
+| [Submission description](./docs/submission/PHASE_6_SUBMISSION_DESCRIPTION.md) | Concise hackathon submission copy |
+
+## Team
+
+**Team SecureOps Guardian** · Solo project by [Jayesh Savaliya](https://github.com/jayesh9747)
+
+AI assistants supported planning, implementation, testing, documentation, and review. The creator retained responsibility for scope, credentials, approvals, evidence acceptance, merges, recording, and submission.
 
 ## License
 

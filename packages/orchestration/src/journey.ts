@@ -12,6 +12,7 @@ import {
   buildReadyPresentation,
   buildRunRecordPresentation,
   renderGuardianIncidentBriefResponse,
+  type GuardianInvestigationRailInput,
   type GuardianPresentation,
 } from '@guardian/presentation';
 import {
@@ -140,7 +141,9 @@ function presentJourneyResult(input: {
     investigation_rail:
       input.investigation_rail === undefined
         ? null
-        : buildGuardianInvestigationRail(input.investigation_rail),
+        : buildGuardianInvestigationRail(
+            input.investigation_rail as GuardianInvestigationRailInput,
+          ),
     artifacts,
     openui: renderGuardianIncidentBriefResponse(incidentBrief),
     markdown: artifacts.markdown.content,

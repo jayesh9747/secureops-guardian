@@ -1,3 +1,4 @@
+import { FINDING_PACK_REGISTRY } from '@guardian/investigation';
 import { interpretedRequestCardSchema } from '@guardian/presentation';
 
 import type { GuardianRequestCompilation } from './intent.js';
@@ -16,22 +17,30 @@ export function buildInterpretedRequestCard(
     throw new Error('An interpreted-request card requires a confirmation-required compilation.');
   }
   const mode = compilation.interpreted_request.mode;
-  const isRegisteredSelection =
-    (selection.pack_id === 'k8s-network-egress-v1' &&
-      selection.pack_version === '1.0.4' &&
-      (selection.capability_ceiling === 'REMEDIATION_PROVEN' ||
-        selection.capability_ceiling === 'OPEN_PR_ELIGIBLE')) ||
-    (selection.pack_id === 'k8s-workload-security-v1' &&
-      selection.pack_version === '1.0.0' &&
-      selection.capability_ceiling === 'ANALYSIS_ONLY');
-  if (!isRegisteredSelection) {
+  const selectedPack = FINDING_PACK_REGISTRY.packs.find(
+    (pack) =>
+      pack.identity.pack_id === selection.pack_id &&
+      pack.identity.pack_version === selection.pack_version,
+  );
+  if (selectedPack === undefined) {
     throw new Error('Interpreted-request card requires a registered pack capability.');
   }
-  if (
-    (mode === 'ANALYSIS_ONLY' && selection.capability_ceiling !== 'ANALYSIS_ONLY') ||
-    (mode === 'PREPARE_REMEDIATION' && selection.capability_ceiling === 'OPEN_PR_ELIGIBLE')
-  ) {
-    throw new Error('Selected pack capability exceeds the interpreted request mode.');
+  const capabilityRank = {
+    ANALYSIS_ONLY: 0,
+    REMEDIATION_PROVEN: 1,
+    OPEN_PR_ELIGIBLE: 2,
+  } as const;
+  const requestedCeiling = {
+    ANALYSIS_ONLY: 'ANALYSIS_ONLY',
+    PREPARE_REMEDIATION: 'REMEDIATION_PROVEN',
+    OPEN_PR: 'OPEN_PR_ELIGIBLE',
+  } as const;
+  const expectedCeiling =
+    capabilityRank[selectedPack.capability] < capabilityRank[requestedCeiling[mode]]
+      ? selectedPack.capability
+      : requestedCeiling[mode];
+  if (selection.capability_ceiling !== expectedCeiling) {
+    throw new Error('Interpreted-request card requires a registered pack capability.');
   }
   return interpretedRequestCardSchema.parse({
     schema_version: 1,

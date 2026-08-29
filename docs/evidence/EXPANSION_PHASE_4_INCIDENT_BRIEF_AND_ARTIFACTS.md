@@ -136,11 +136,20 @@ The Proposed change tab displayed the exact verified diff and its two controllin
 
 ![Proposed change disclosure](./phase-11-visual/proposed-change.jpg)
 
+### Existing remediation PR reuse
+
+Session `01m16a3xz5qnnjx3ssc4fyhvzv` replayed the exact `OPEN_PR` request against the already-open
+fixture remediation. Guardian returned `PR_REUSED`, linked Pull Request #1, and explicitly stated
+that no new write or approval was required. The rail recorded two child rows, 16 GitHub MCP reads,
+and seven sandbox steps; it displayed no approval interaction.
+
+![Existing remediation PR reused without a write](./phase-11-visual/pr-reused.jpg)
+
 The live screenshots cover request confirmation and the important analysis terminal categories
-(finding, no finding, and inconclusive) plus verified remediation and its exact proposal. Denial,
-PR creation/reuse, remote conflict, and no-safe-remediation are retained deterministic scenarios;
-they were not replayed live because doing so would require approval/write state changes or
-destructive fixture resets.
+(finding, no finding, and inconclusive), verified remediation and its exact proposal, and read-only
+reuse of the existing remediation PR. Denial, PR creation, remote conflict, and no-safe-remediation
+remain deterministic scenarios; they were not replayed live because doing so would require an
+approval/write path or destructive fixture resets.
 
 ## Non-goals preserved
 

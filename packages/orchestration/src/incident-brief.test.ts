@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { FINDING_PACK_REGISTRY } from '@guardian/investigation';
 import {
   buildPhaseSixControllingArtifacts,
+  guardianIncidentBriefSchema,
   renderGuardianIncidentBriefOpenUi,
   renderInterpretedRequestCardOpenUi,
 } from '@guardian/presentation';
@@ -306,6 +307,7 @@ describe('Phase 11 egress Incident Brief', () => {
         expect(openui).toContain('TabItem("proposed-change", "Proposed change"');
       }
       const expectedStatusVariant = {
+        ANALYSIS_COMPLETE: 'neutral',
         SECURITY_REMEDIATION_READY: 'warning',
         DENIED: 'danger',
         PR_CREATED: 'success',
@@ -313,6 +315,8 @@ describe('Phase 11 egress Incident Brief', () => {
         INCONCLUSIVE: 'warning',
         WRITE_CONFLICT: 'danger',
         NO_SAFE_REMEDIATION: 'danger',
+        FINDINGS: 'danger',
+        NO_DETERMINISTIC_FINDING: 'success',
       }[item.brief.terminal_status];
       expect(openui).toMatch(
         new RegExp(`statusTag = Tag\\([^\\n]+, "${expectedStatusVariant}"\\)`, 'u'),
@@ -385,6 +389,10 @@ describe('Phase 11 egress Incident Brief', () => {
         proposal,
       }),
     ).toThrow(/receipt ID|request identity|run receipt/iu);
+
+    expect(() =>
+      guardianIncidentBriefSchema.parse({ ...ready.brief, terminal_status: 'UNKNOWN_FAILURE' }),
+    ).toThrow(/terminal_status/u);
   });
 });
 

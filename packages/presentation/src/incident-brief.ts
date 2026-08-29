@@ -43,7 +43,18 @@ export const guardianIncidentBriefSchema = z
           .strict(),
       })
       .strict(),
-    terminal_status: z.string().min(1),
+    terminal_status: z.enum([
+      'ANALYSIS_COMPLETE',
+      'SECURITY_REMEDIATION_READY',
+      'DENIED',
+      'PR_CREATED',
+      'PR_REUSED',
+      'INCONCLUSIVE',
+      'WRITE_CONFLICT',
+      'NO_SAFE_REMEDIATION',
+      'FINDINGS',
+      'NO_DETERMINISTIC_FINDING',
+    ]),
     severity: z.enum(['High', 'None', 'Unknown']),
     evidence_completeness: z.enum(['COMPLETE', 'PARTIAL', 'INCONCLUSIVE']),
     decision: z
@@ -206,13 +217,25 @@ function titleCaseStatus(status: string): string {
   return words.startsWith('Pr ') ? `PR ${words.slice(3).toLocaleLowerCase('en-US')}` : words;
 }
 
-function incidentStatusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' {
-  if (status === 'DENIED' || status === 'WRITE_CONFLICT' || status === 'NO_SAFE_REMEDIATION') {
-    return 'danger';
+function incidentStatusVariant(
+  status: GuardianIncidentBrief['terminal_status'],
+): 'success' | 'warning' | 'danger' | 'neutral' {
+  switch (status) {
+    case 'ANALYSIS_COMPLETE':
+      return 'neutral';
+    case 'SECURITY_REMEDIATION_READY':
+    case 'INCONCLUSIVE':
+      return 'warning';
+    case 'DENIED':
+    case 'WRITE_CONFLICT':
+    case 'NO_SAFE_REMEDIATION':
+    case 'FINDINGS':
+      return 'danger';
+    case 'PR_CREATED':
+    case 'PR_REUSED':
+    case 'NO_DETERMINISTIC_FINDING':
+      return 'success';
   }
-  if (status === 'INCONCLUSIVE' || status === 'SECURITY_REMEDIATION_READY') return 'warning';
-  if (status === 'ANALYSIS_COMPLETE') return 'neutral';
-  return 'success';
 }
 
 export function renderGuardianIncidentBriefOpenUi(untrustedBrief: GuardianIncidentBrief): string {

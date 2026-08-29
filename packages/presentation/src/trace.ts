@@ -94,7 +94,7 @@ const investigationRailInputSchema = z
 
 export type GuardianInvestigationRailInput = z.input<typeof investigationRailInputSchema>;
 
-export function buildGuardianInvestigationRail(input: unknown) {
+export function buildGuardianInvestigationRail(input: GuardianInvestigationRailInput) {
   const rail = investigationRailInputSchema.parse(input);
   return {
     sections: ['Findings', 'Evidence', 'Activity'] as const,

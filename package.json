@@ -19,6 +19,7 @@
     "phase7:matrix": "tsx packages/orchestration/src/cli.ts",
     "phase10:matrix": "tsx packages/orchestration/src/finding-pack-cli.ts",
     "phase11:matrix": "tsx packages/orchestration/src/incident-brief-cli.ts",
+    "phase12:matrix": "vitest run packages/orchestration/src/intent.test.ts packages/investigation/src/finding-packs.test.ts packages/policy-verifier/src/verifier.test.ts packages/policy-verifier/src/pack.test.ts packages/github-write/src/github-write.test.ts packages/reliability/src/reliability.test.ts packages/presentation/src/presentation.test.ts packages/orchestration/src/incident-brief.test.ts packages/orchestration/src/agent.test.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b --pretty false",

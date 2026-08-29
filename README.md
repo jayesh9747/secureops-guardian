@@ -84,7 +84,7 @@ suspect commit `2c7bdb3e07714e08d9504b3504587fbf18847f29` produces five exact-JS
 Kubernetes admission or live-cluster result. The pack has no verifier, patch, proposal, approval,
 branch, commit, or pull-request route.
 
-Saved agent: `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json). The immutable predecessor `secureops-guardian` remains saved so existing reference sessions keep resolving.
+Saved agent: `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json); its release-candidate canonical manifest SHA-256 is `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`. The immutable predecessor `secureops-guardian` remains saved so existing reference sessions keep resolving.
 
 ## Prerequisites
 
@@ -95,12 +95,13 @@ Saved agent: `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`. The exact
 
 Never put provider keys, Daytona credentials, GitHub tokens, authorization headers, or connector secrets in either repository, a prompt, screenshot, trace export, or recording.
 
-## Reproduce both repositories
+## Reproduce the release repositories
 
 ```sh
 git clone https://github.com/jayesh9747/secureops-guardian.git
 git clone https://github.com/jayesh9747/guardian-demo-checkout.git
 git clone https://github.com/jayesh9747/guardian-demo-privileged-api.git
+git clone https://github.com/jayesh9747/guardian-demo-orders-egress.git
 git clone https://github.com/jayesh9747/secureops-guardian-verifier-skill.git
 cd secureops-guardian
 pnpm install --frozen-lockfile
@@ -108,11 +109,13 @@ pnpm install --frozen-lockfile
 
 Frozen fixture evidence:
 
-| Role | Commit |
-| --- | --- |
-| Last-known-good | `a6d177b43396c7b4b45aa98cb2970d0489a7a4f9` |
-| Suspect regression | `7b2f2ad51f9ef97334176fbfed3138465b62fcdb` |
-| Open remediation | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |
+| Repository / role | Commit | Blob where applicable |
+| --- | --- | --- |
+| Checkout last-known-good | `a6d177b43396c7b4b45aa98cb2970d0489a7a4f9` | — |
+| Checkout suspect regression | `7b2f2ad51f9ef97334176fbfed3138465b62fcdb` | `477c7db7edd61de10fce67713d52e442f2358318` |
+| Checkout open remediation | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` | `1eddb230ac7c05bae199e6b9162a42da3bf039fa` |
+| Workload-security suspect | `2c7bdb3e07714e08d9504b3504587fbf18847f29` | `b1a60bb96fad7f93bc95536d08381e5629a6a7bd` |
+| Benign egress baseline | `cdf69ad291b2097f563a4915503405df063661f7` | `c691421469c9a372a5eb5d38d24f17bf25eccb0d` |
 
 Fixture PR [`#1`](https://github.com/jayesh9747/guardian-demo-checkout/pull/1) must remain open and unmerged for the reuse demo. Do not reset, rewrite, merge, close, or edit its branch to rehearse first-write behavior.
 
@@ -179,9 +182,10 @@ pnpm phase6:matrix
 pnpm phase7:matrix
 pnpm phase10:matrix
 pnpm phase11:matrix
+pnpm phase12:matrix
 ```
 
-The Phase 6 matrix covers ready, denied, PR-created, PR-reused, three inconclusive fixtures, conflict, and no-safe-remediation. Phase 11 maps those same nine terminal states to Incident Briefs and hashes the OpenUI, Markdown, receipt JSON, and conditional verified-change JSON representations. See the [Phase 11 evidence](./docs/evidence/EXPANSION_PHASE_4_INCIDENT_BRIEF_AND_ARTIFACTS.md).
+The Phase 6 matrix covers ready, denied, PR-created, PR-reused, three inconclusive fixtures, conflict, and no-safe-remediation. Phase 11 maps those same nine terminal states to Incident Briefs and hashes the OpenUI, Markdown, receipt JSON, and conditional verified-change JSON representations. Phase 12 combines the natural-language, pack, mutation-safety, reliability, presentation, artifact, and saved-agent contract suites. See the [Phase 11 evidence](./docs/evidence/EXPANSION_PHASE_4_INCIDENT_BRIEF_AND_ARTIFACTS.md) and [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md).
 
 ## Permission and threat boundaries
 
@@ -209,6 +213,7 @@ pnpm phase6:matrix
 pnpm phase7:matrix
 pnpm phase10:matrix
 pnpm phase11:matrix
+pnpm phase12:matrix
 git diff --check
 ```
 
@@ -242,9 +247,11 @@ Representative merged PR [#3](https://github.com/jayesh9747/secureops-guardian/p
 
 Qodo's follow-up confirmed those findings resolved and surfaced two `Medium` issues: clean-checkout tests could depend on ignored build output, and requiring explicit `policyTypes: [Egress]` caused a false negative for an otherwise exact egress rule. Commit [`9b95dfb`](https://github.com/jayesh9747/secureops-guardian/commit/9b95dfb024d4408c057c9afa1138e500f5d5f7fc) fixed both. The review threads, evidence-backed replies, resolutions, and follow-up history remain visible on [PR #3](https://github.com/jayesh9747/secureops-guardian/pull/3); the detailed record is in the [Phase 2 evidence](./docs/evidence/PHASE_2_AGENT_INVESTIGATION.md#qodo-review). A final additional request was paused, so no later Qodo approval is claimed.
 
-For Phase 6, Qodo's automatic attempt, an earlier manual request, and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407199824) on [PR #7](https://github.com/jayesh9747/secureops-guardian/pull/7) were paused for this user. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407200657) contains no findings or approval. An alternate two-axis review found one receipt-binding issue; commit [`33b9e51`](https://github.com/jayesh9747/secureops-guardian/commit/33b9e51282f73dce0a8afeb07bd20dd0a53edc74) fixed it with fail-closed proposal/target/PR checks and adversarial tests.
+For Phase 6, Qodo's automatic attempt, an earlier manual request, and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407199824) on [PR #7](https://github.com/jayesh9747/secureops-guardian/pull/7) were paused for this user. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/7#issuecomment-5407200657) contains no findings or approval. An alternate two-axis review found one receipt-binding issue; reviewed commit `33b9e51282f73dce0a8afeb07bd20dd0a53edc74`, recorded in the PR history and Phase 6 evidence, fixed it with fail-closed proposal/target/PR checks and adversarial tests.
 
 For Phase 7, Qodo's automatic attempt and official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513497) on [PR #8](https://github.com/jayesh9747/secureops-guardian/pull/8) were also paused. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513076) contains no findings or approval. The alternate standards/spec review found valid comparison scopes were rejected by the composed journey and actionable receipt states could bypass proof/proposal stage binding; both were reproduced and remediated with focused tests.
+
+For Phase 12, Qodo's [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461905572) and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906267) on release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) were paused. The [official paused response](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906533) contains no findings, completed review, or approval; none is claimed. The independent Standards/Spec review is the controlling release review, recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
 
 ## AI-assistance disclosure
 
@@ -255,7 +262,7 @@ AI coding assistants supported planning, implementation, tests, documentation, a
 - Any authorized repository can enter read-only preflight, but proven remediation remains limited to the exact owned Kubernetes NetworkPolicy case inside the documented static subset.
 - Remediation uses exactly one pinned verifier pack. The old five-filename exact-JSON envelope remains accepted only as a deprecated compatibility shape and never selects files or changes the pack.
 - The workload pack supports only `v1/Pod` and `apps/v1/Deployment` and cannot produce remediation or writes.
-- The preserved public state safely demonstrates PR reuse, not a new live creation or denial sequence.
+- The preserved public state safely demonstrates PR reuse and live cancellation at interpreted-request confirmation, not a new live first-write denial or creation sequence. The first-write denial remains deterministic integration evidence because manufacturing it live would require a destructive fixture reset.
 - Phase-named saved agents and exported specifications are retained only as historical test fixtures/reference configurations.
 - There is no live cluster, production telemetry, CVE scan, packet capture, penetration test, compliance assessment, general incident response, or autonomous containment.
 - Broader remediation repositories, rules, workflows, history, analytics, and other retained features are not implemented.
@@ -264,12 +271,15 @@ AI coding assistants supported planning, implementation, tests, documentation, a
 
 | Artifact | Reference |
 | --- | --- |
-| Product merged Phase 6 | `8fde66dfcd7f537f70192246ee3a7eb7173f53ba` |
+| Product Phase 12 release base | `3cd6d8e046fba93dde8921ae5c4bb955f7fbdc2c` |
 | Frozen Phase 5 core | `263e6a27307a667f08bfa832b436a754c0848a2e` |
 | Phase 5 documentation | `1777bfd070ac1ebd34e23a604767ae2e703c36ad` |
 | Fixture remediation | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |
 | Proposal SHA-256 | `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15` |
-| TrueForge runtime | `6026509d905fe255bf493e3845b1fca237bdf0fd` |
+| Pack-binding SHA-256 | `3afb251833539c6383a999c2255934c76648994505857e543bc5d3959b7c9e20` |
+| Saved/export manifest SHA-256 | `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0` |
+| Verifier payload | `ade2d1453bba033dd3300a7c7aede6e28b97582d` (`guardian-network-egress-v1.0.4`) |
+| Historical TrueForge source pin | `6026509d905fe255bf493e3845b1fca237bdf0fd` |
 
 ## License
 

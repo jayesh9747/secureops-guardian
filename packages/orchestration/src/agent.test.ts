@@ -87,6 +87,13 @@ describe('unified TrueForge manifest', () => {
       'one row per child with status, elapsed time, and one-sentence result',
       'MCP and Daytona calls under the responsible agent',
       'Findings, Evidence, and Activity remain separate',
+      'NO_DETERMINISTIC_FINDING, never NO_FINDING',
+      'Never broaden it to no vulnerabilities, secure, safe, clean, compliant',
+      'ANALYSIS_ONLY sandbox hard stop',
+      'A blob or download reference is not complete file content',
+      'capabilities.drop, never the parent capabilities path',
+      'Never emit JSX, HTML, React components, or Tailwind classes',
+      'root = Stack(',
       'Never merge, deploy, access a cluster',
     ]) {
       expect(instructions).toContain(requirement);

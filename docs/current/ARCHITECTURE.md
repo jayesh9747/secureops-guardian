@@ -45,6 +45,12 @@ User -> saved TrueForge agent secureops-guardian_v0
 
 TrueForge remains the sole agent harness. It owns the model loop, dynamic children, connector calls, Daytona sandbox, persistent session, tool approval, and stock Generative UI. The repository contains typed contracts and deterministic functions; it does not contain a second agent runtime or GitHub client.
 
+## Phase 12 release freeze
+
+The release candidate is based on product commit `3cd6d8e046fba93dde8921ae5c4bb955f7fbdc2c`. Saved agent `secureops-guardian_v0` (`01m0w6s2eyqtzyb6q4y6ppsta9`) and the portable export share canonical manifest SHA-256 `8a5c3eaff0e588e5b2ee6557c081378f7fee4cba55003b3813bfd877cc1c9d44`. The egress verifier remains pinned to payload commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, manifest SHA-256 `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`, and bundle SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9`.
+
+Live release replays made four saved-agent constraints explicit without changing the typed module architecture: terminal FindingPack vocabulary is exact; `ANALYSIS_ONLY` cannot enter a sandbox even when GitHub returns an offloaded blob reference; workload findings cite the leaf JSONPath; and OpenUI output must use stock assignment DSL beginning with `root = Stack(`, never JSX. When an offloaded GitHub blob cannot be read directly, the analysis route may reconstruct only from exact official parent/suspect commit evidence and must verify the cited Git blob identity; otherwise it returns `INCONCLUSIVE`. These are prompt-level fail-closed guards above the existing typed gates, not new capabilities.
+
 ## Deep orchestration module
 
 `@guardian/orchestration` places the Phase 7 seam above the retained Phase 2-6 modules. Its small public interface is:
@@ -170,7 +176,7 @@ Any repository authorized by the configured official GitHub MCP may enter parame
 
 The composed journey receives observed GitHub identities and remote state explicitly. It returns the exact preflight requirements in an `INCONCLUSIVE` receipt, consumes the preflight permission flags before entering later stages, and calls the retained OPEN_PR artifact gate before any Phase 5 action result is accepted.
 
-The initial remediation allowlist is `jayesh9747/guardian-demo-checkout`. Proven remediation covers the exact checkout Kubernetes NetworkPolicy fixture inside the verifier's documented static subset. Other repositories, files, revisions, or semantics return `INCONCLUSIVE` after preflight with the missing or unsupported requirements and without Daytona, proposal, approval, or writes.
+The initial remediation allowlist is `jayesh9747/guardian-demo-checkout`. Proven remediation covers the exact checkout Kubernetes NetworkPolicy fixture inside the verifier's documented static subset. The release evaluation additionally pins `jayesh9747/guardian-demo-privileged-api@2c7bdb3e07714e08d9504b3504587fbf18847f29` for workload findings and `jayesh9747/guardian-demo-orders-egress@cdf69ad291b2097f563a4915503405df063661f7` for benign no-finding behavior; both remain GitHub-only analysis. Other repositories, files, revisions, or semantics return `INCONCLUSIVE` after preflight with the missing or unsupported requirements and without Daytona, proposal, approval, or writes.
 
 Truthful product claim: “Guardian can inspect any authorized GitHub repository in read-only mode; proven remediation currently supports Kubernetes NetworkPolicy cases inside its documented static verifier subset.”
 

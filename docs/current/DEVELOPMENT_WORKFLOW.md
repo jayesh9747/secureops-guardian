@@ -18,6 +18,7 @@
 | Expansion Phase 2 — verifier skill bundle | `expansion-phase-2/verifier-skill-bundle` |
 | Expansion Phase 3 — finding packs and workload security | `expansion-phase-3/finding-packs` |
 | Expansion Phase 4 — Incident Brief and artifacts | `expansion-phase-4/incident-brief-artifacts` |
+| Expansion Phase 5 — evaluation, demo, and release | `expansion-phase-5/evaluation-demo-release` |
 
 Expansion Phase 2 also uses a separate public skill repository, `jayesh9747/secureops-guardian-verifier-skill`, with the same branch name. Its immutable tag/commit is reviewed in a separate, unmerged skill PR. Do not fold skill payloads into the product repository or open a TrueForge upstream PR.
 

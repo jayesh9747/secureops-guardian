@@ -1,4 +1,6 @@
 export * from './agent.js';
+export * from './finding-pack-evidence.js';
+export * from './finding-pack-routing.js';
 export * from './intent.js';
 export * from './journey.js';
 export * from './open-pr.js';

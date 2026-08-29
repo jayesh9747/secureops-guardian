@@ -12,7 +12,8 @@ import {
   type ChangeInvestigationResult,
   type ExposureInvestigationResult,
 } from './contracts.js';
-import { SECURITY_RULE_ID, evaluateSecNet001 } from './rule.js';
+import { FINDING_PACK_REGISTRY } from './finding-packs.js';
+import { SECURITY_RULE_ID } from './rule.js';
 import {
   validateChangeInvestigationResult,
   validateExposureInvestigationResult,
@@ -140,8 +141,31 @@ function synthesizeValidated(options: {
     );
   }
 
-  const rule = evaluateSecNet001(change.changed_file.reconstructed_suspect_manifest_yaml);
-  if (rule.status !== 'FAIL' || rule.observed_value !== '0.0.0.0/0') {
+  const packExecution = FINDING_PACK_REGISTRY.analyze({
+    requested_capability: 'OPEN_PR_ELIGIBLE',
+    changed_files: [
+      {
+        repository: change.repository,
+        revision: change.suspect_commit.sha,
+        file: change.changed_file.path,
+        patch: change.changed_file.exact_diff,
+        content: change.changed_file.reconstructed_suspect_manifest_yaml,
+        git_blob_sha: change.changed_file.manifest_blob_sha,
+        evidence_references: change.changed_file.references.evidence_ids.map(
+          (evidenceId, index) => ({
+            evidence_id: evidenceId,
+            source_ref: change.changed_file.references.source_refs[index] ?? '',
+          }),
+        ),
+      },
+    ],
+  });
+  const rule =
+    packExecution.outcome === 'ANALYZED' && packExecution.pack.pack_id === 'k8s-network-egress-v1'
+      ? packExecution.findings.find((finding) => finding.rule_id === SECURITY_RULE_ID)
+          ?.legacy_rule_result
+      : undefined;
+  if (rule === undefined || rule.status !== 'FAIL' || rule.observed_value !== '0.0.0.0/0') {
     defects.push(`Rule ${SECURITY_RULE_ID} did not identify unrestricted IPv4 egress.`);
   }
   if (!change.parsed_network_policy.egress_ip_block_cidrs.includes('0.0.0.0/0')) {
@@ -175,6 +199,11 @@ function synthesizeValidated(options: {
   if (!alertMatches) defects.push('Missing matching post-deployment forbidden-path alert.');
 
   if (defects.length > 0) return inconclusive(exposure.case_id, defects);
+  if (rule === undefined) {
+    return inconclusive(exposure.case_id, [
+      `Rule ${SECURITY_RULE_ID} did not return registry-bound evidence.`,
+    ]);
+  }
   if (forbiddenReachability === undefined) {
     return inconclusive(exposure.case_id, [
       'Missing post-deployment forbidden reachability observation.',

@@ -26,9 +26,10 @@ proposal, approval, GitHub-write, or runtime behavior.
   agree before generation. Artifact generation recomputes the complete proposal hash and verifier
   pack binding, so altered candidate YAML, diff, target, proof, or pack content fails closed.
 - The typed Investigation rail projection validates one row per child, elapsed time, a
-  one-sentence result, and tool ownership. The composed journey returns that projection from
-  production orchestration, including elapsed time for running children; execution detail is not
-  copied into the Incident Brief.
+  one-sentence result, and tool ownership. Journey and workload routing accept observed rail input
+  and return its validated projection, including elapsed time for running children; they return no
+  projection when the caller has no rail evidence instead of inventing rows or timings. Execution
+  detail is not copied into the Incident Brief.
 - Normal prose uses normal stock UI type. Monospace is limited to identifiers, hashes, paths, YAML,
   diffs, and receipts. Tags include text, so status does not depend on color. No unhandled button is
   emitted; a real PR may expose only a review link.

@@ -112,6 +112,21 @@ describe('Phase 11 interpreted-request card', () => {
     expect(openui).toContain('k8s-workload-security-v1@1.0.0');
     expect(openui).toContain('Capability: ANALYSIS_ONLY');
     expect(openui).not.toMatch(/Capability: REMEDIATION_PROVEN|Capability: OPEN_PR_ELIGIBLE/u);
+
+    expect(() =>
+      buildInterpretedRequestCard(compilation, {
+        pack_id: 'k8s-workload-security-v1',
+        pack_version: '1.0.0',
+        capability_ceiling: 'OPEN_PR_ELIGIBLE',
+      }),
+    ).toThrow(/registered pack capability/u);
+    expect(() =>
+      buildInterpretedRequestCard(compilation, {
+        pack_id: 'arbitrary-pack',
+        pack_version: '9.9.9',
+        capability_ceiling: 'ANALYSIS_ONLY',
+      }),
+    ).toThrow(/registered pack capability/u);
   });
 });
 
@@ -290,6 +305,18 @@ describe('Phase 11 egress Incident Brief', () => {
       } else {
         expect(openui).toContain('TabItem("proposed-change", "Proposed change"');
       }
+      const expectedStatusVariant = {
+        SECURITY_REMEDIATION_READY: 'warning',
+        DENIED: 'danger',
+        PR_CREATED: 'success',
+        PR_REUSED: 'success',
+        INCONCLUSIVE: 'warning',
+        WRITE_CONFLICT: 'danger',
+        NO_SAFE_REMEDIATION: 'danger',
+      }[item.brief.terminal_status];
+      expect(openui).toMatch(
+        new RegExp(`statusTag = Tag\\([^\\n]+, "${expectedStatusVariant}"\\)`, 'u'),
+      );
     }
   });
 

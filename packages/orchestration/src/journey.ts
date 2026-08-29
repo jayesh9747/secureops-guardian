@@ -57,6 +57,7 @@ const journeyContextSchema = z
   .object({
     preflight_observation: preflightObservationSchema,
     github_analysis: githubAnalysisEvidenceSchema,
+    investigation_rail: z.unknown().optional(),
     remote_snapshot: z.unknown().optional(),
   })
   .strict();
@@ -119,81 +120,12 @@ function exactFixtureRemoteSnapshot(): RemoteSnapshot {
   };
 }
 
-function buildJourneyInvestigationRail(
-  receipt: GuardianRunReceipt,
-  incidentBrief: ReturnType<typeof buildGuardianIncidentBrief>,
-) {
-  const children: Array<{
-    child_id: string;
-    agent: string;
-    status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-    started_at_ms: number;
-    completed_at_ms: number;
-    result: string;
-    tool_groups: Array<{ provider: string; tools: string[] }>;
-  }> = [
-    {
-      child_id: 'child:github-evidence',
-      agent: 'change-security-investigator',
-      status: 'COMPLETED' as const,
-      started_at_ms: 0,
-      completed_at_ms: 0,
-      result: 'Collected and bound the exact repository evidence to the requested revision.',
-      tool_groups: [
-        {
-          provider: 'Official GitHub MCP',
-          tools: receipt.tool_event_references.filter((reference) =>
-            reference.includes(':evidence:github:'),
-          ),
-        },
-      ],
-    },
-  ];
-  const githubTools = children[0]?.tool_groups[0]?.tools;
-  if (githubTools === undefined || githubTools.length === 0) {
-    throw new Error('Journey Investigation rail requires GitHub tool-event evidence.');
-  }
-  if (receipt.stages.incident_evidence_join !== 'NOT_RUN') {
-    children.push({
-      child_id: 'child:incident-evidence',
-      agent: 'exposure-evidence-investigator',
-      status: receipt.stages.incident_evidence_join === 'COMPLETED' ? 'COMPLETED' : 'FAILED',
-      started_at_ms: 0,
-      completed_at_ms: 0,
-      result:
-        receipt.stages.incident_evidence_join === 'COMPLETED'
-          ? 'Joined the owned incident evidence to the exact repository change.'
-          : 'Stopped because the required owned incident evidence was incomplete.',
-      tool_groups: [{ provider: 'Fixture MCP', tools: ['incident-evidence-join'] }],
-    });
-  }
-  if (receipt.stages.daytona_proof === 'COMPLETED') {
-    children.push({
-      child_id: 'child:deterministic-verifier',
-      agent: 'SecureOps Guardian verifier',
-      status: 'COMPLETED',
-      started_at_ms: 0,
-      completed_at_ms: 0,
-      result: 'Completed the bounded deterministic four-state policy verification.',
-      tool_groups: [{ provider: 'Daytona sandbox', tools: ['four-state-policy-verifier'] }],
-    });
-  }
-  return buildGuardianInvestigationRail({
-    observed_at_ms: 0,
-    children,
-    findings: [incidentBrief.decision.finding],
-    evidence: [...incidentBrief.disclosures.evidence],
-    activity: [
-      `Run ${receipt.receipt_id} reached terminal status ${receipt.terminal_status} without duplicating its execution trace in chat.`,
-    ],
-  });
-}
-
 function presentJourneyResult(input: {
   request: GuardianRequest;
   receipt: GuardianRunReceipt;
   presentation: GuardianPresentation | null;
   proposal: ReturnType<typeof buildPhaseSixControllingArtifacts>['proposal'] | null;
+  investigation_rail?: unknown;
 }) {
   const incidentBrief = buildGuardianIncidentBrief(input);
   const artifacts = buildIncidentBriefArtifacts({
@@ -205,7 +137,10 @@ function presentJourneyResult(input: {
     receipt: input.receipt,
     presentation: input.presentation,
     incident_brief: incidentBrief,
-    investigation_rail: buildJourneyInvestigationRail(input.receipt, incidentBrief),
+    investigation_rail:
+      input.investigation_rail === undefined
+        ? null
+        : buildGuardianInvestigationRail(input.investigation_rail),
     artifacts,
     openui: renderGuardianIncidentBriefResponse(incidentBrief),
     markdown: artifacts.markdown.content,
@@ -327,6 +262,7 @@ function buildInconclusiveResult(options: {
     receipt,
     presentation: null,
     proposal: null,
+    investigation_rail: options.context.investigation_rail,
   });
 }
 
@@ -411,6 +347,7 @@ export function runCurrentFixtureJourney(input: unknown, untrustedContext: Guard
       receipt,
       presentation: null,
       proposal: null,
+      investigation_rail: context.investigation_rail,
     });
   }
 
@@ -476,6 +413,7 @@ export function runCurrentFixtureJourney(input: unknown, untrustedContext: Guard
       receipt,
       presentation,
       proposal,
+      investigation_rail: context.investigation_rail,
     });
   }
 
@@ -546,5 +484,6 @@ export function runCurrentFixtureJourney(input: unknown, untrustedContext: Guard
     receipt,
     presentation,
     proposal,
+    investigation_rail: context.investigation_rail,
   });
 }

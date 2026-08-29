@@ -81,16 +81,7 @@ describe('unified current-fixture journey', () => {
     expect(result.markdown).toContain('SecureOps Guardian Incident Brief');
     expect(result.markdown).not.toContain('owned synthetic incident evidence');
     expect(result.artifacts.verified_change).toBeNull();
-    expect(result.investigation_rail).toMatchObject({
-      sections: ['Findings', 'Evidence', 'Activity'],
-      child_rows: [
-        {
-          agent: 'change-security-investigator',
-          status: 'COMPLETED',
-          elapsed_ms: 0,
-        },
-      ],
-    });
+    expect(result.investigation_rail).toBeNull();
   });
 
   it('prepares an exact proposal without requesting approval or calling GitHub writes', () => {
@@ -266,6 +257,23 @@ describe('unified current-fixture journey', () => {
         tool_event_references: ['deterministic:tool:get_commit:evidence:github:commit:arbitrary'],
         limitations: ['GitHub repository evidence does not establish live workload behavior.'],
       },
+      investigation_rail: {
+        observed_at_ms: 2_500,
+        children: [
+          {
+            child_id: 'child:github',
+            agent: 'change-security-investigator',
+            status: 'COMPLETED',
+            started_at_ms: 1_000,
+            completed_at_ms: 2_250,
+            result: 'Collected the exact arbitrary-repository commit evidence.',
+            tool_groups: [{ provider: 'Official GitHub MCP', tools: ['get_commit'] }],
+          },
+        ],
+        findings: [],
+        evidence: ['evidence:github:commit:arbitrary'],
+        activity: ['The GitHub evidence child completed.'],
+      },
     };
 
     const result = runCurrentFixtureJourney(input, context);
@@ -278,6 +286,16 @@ describe('unified current-fixture journey', () => {
     expect(result.markdown).toContain('octo-org/arbitrary-repository');
     expect(result.markdown).not.toContain(SUSPECT_COMMIT_SHA);
     expect(result.markdown).toContain('Target file: Not selected');
+    expect(result.investigation_rail).toMatchObject({
+      sections: ['Findings', 'Evidence', 'Activity'],
+      child_rows: [
+        {
+          agent: 'change-security-investigator',
+          elapsed_ms: 1_250,
+          tool_groups: [{ provider: 'Official GitHub MCP', tools: ['get_commit'] }],
+        },
+      ],
+    });
   });
 
   it('rejects spoofed Fixture tool references at the journey context boundary', () => {

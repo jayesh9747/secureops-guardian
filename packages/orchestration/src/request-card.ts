@@ -16,6 +16,17 @@ export function buildInterpretedRequestCard(
     throw new Error('An interpreted-request card requires a confirmation-required compilation.');
   }
   const mode = compilation.interpreted_request.mode;
+  const isRegisteredSelection =
+    (selection.pack_id === 'k8s-network-egress-v1' &&
+      selection.pack_version === '1.0.4' &&
+      (selection.capability_ceiling === 'REMEDIATION_PROVEN' ||
+        selection.capability_ceiling === 'OPEN_PR_ELIGIBLE')) ||
+    (selection.pack_id === 'k8s-workload-security-v1' &&
+      selection.pack_version === '1.0.0' &&
+      selection.capability_ceiling === 'ANALYSIS_ONLY');
+  if (!isRegisteredSelection) {
+    throw new Error('Interpreted-request card requires a registered pack capability.');
+  }
   if (
     (mode === 'ANALYSIS_ONLY' && selection.capability_ceiling !== 'ANALYSIS_ONLY') ||
     (mode === 'PREPARE_REMEDIATION' && selection.capability_ceiling === 'OPEN_PR_ELIGIBLE')

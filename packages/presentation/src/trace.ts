@@ -92,9 +92,9 @@ const investigationRailInputSchema = z
     }
   });
 
-export function buildGuardianInvestigationRail(
-  input: z.input<typeof investigationRailInputSchema>,
-) {
+export type GuardianInvestigationRailInput = z.input<typeof investigationRailInputSchema>;
+
+export function buildGuardianInvestigationRail(input: unknown) {
   const rail = investigationRailInputSchema.parse(input);
   return {
     sections: ['Findings', 'Evidence', 'Activity'] as const,

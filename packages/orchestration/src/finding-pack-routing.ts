@@ -3,8 +3,10 @@ import {
   type FindingPackChangedFileEvidence,
 } from '@guardian/investigation';
 import {
+  buildGuardianInvestigationRail,
   renderGuardianIncidentBriefMarkdown,
   renderGuardianIncidentBriefResponse,
+  type GuardianInvestigationRailInput,
 } from '@guardian/presentation';
 
 import {
@@ -17,6 +19,7 @@ import { planGuardianRun } from './plan.js';
 export function routeFindingPackAnalysis(
   input: unknown,
   changedFiles: readonly FindingPackChangedFileEvidence[],
+  investigationRail?: GuardianInvestigationRailInput,
 ) {
   const plan = planGuardianRun(input);
   const requestedCapability = {
@@ -82,6 +85,8 @@ export function routeFindingPackAnalysis(
     capability_ceiling: effectiveCapabilityCeiling,
     analysis,
     incident_brief: incidentBrief,
+    investigation_rail:
+      investigationRail === undefined ? null : buildGuardianInvestigationRail(investigationRail),
     artifacts,
     openui: incidentBrief === null ? null : renderGuardianIncidentBriefResponse(incidentBrief),
     markdown: incidentBrief === null ? null : renderGuardianIncidentBriefMarkdown(incidentBrief),

@@ -206,6 +206,15 @@ function titleCaseStatus(status: string): string {
   return words.startsWith('Pr ') ? `PR ${words.slice(3).toLocaleLowerCase('en-US')}` : words;
 }
 
+function incidentStatusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' {
+  if (status === 'DENIED' || status === 'WRITE_CONFLICT' || status === 'NO_SAFE_REMEDIATION') {
+    return 'danger';
+  }
+  if (status === 'INCONCLUSIVE' || status === 'SECURITY_REMEDIATION_READY') return 'warning';
+  if (status === 'ANALYSIS_COMPLETE') return 'neutral';
+  return 'success';
+}
+
 export function renderGuardianIncidentBriefOpenUi(untrustedBrief: GuardianIncidentBrief): string {
   const brief = guardianIncidentBriefSchema.parse(untrustedBrief);
   const statusLabel = titleCaseStatus(brief.terminal_status);
@@ -267,7 +276,7 @@ export function renderGuardianIncidentBriefOpenUi(untrustedBrief: GuardianIncide
     `repositoryTag = Tag(${JSON.stringify(`Repository: ${brief.identity.target.repository}`)}, null, "md", "neutral")`,
     `revisionTag = Tag(${JSON.stringify(`Revision: ${brief.identity.target.revision}`)}, null, "md", "neutral")`,
     `packTag = Tag(${JSON.stringify(`Pack: ${brief.identity.pack.pack_id}@${brief.identity.pack.pack_version}`)}, null, "md", "neutral")`,
-    `statusTag = Tag(${JSON.stringify(`Status: ${statusLabel}`)}, null, "md", ${JSON.stringify(brief.evidence_completeness === 'INCONCLUSIVE' ? 'warning' : 'success')})`,
+    `statusTag = Tag(${JSON.stringify(`Status: ${statusLabel}`)}, null, "md", ${JSON.stringify(incidentStatusVariant(brief.terminal_status))})`,
     `severityTag = Tag(${JSON.stringify(`Severity: ${brief.severity}`)}, null, "md", ${JSON.stringify(brief.severity === 'High' ? 'danger' : 'neutral')})`,
     `evidenceTag = Tag(${JSON.stringify(`Evidence: ${evidenceLabel}`)}, null, "md", ${JSON.stringify(brief.evidence_completeness === 'COMPLETE' ? 'success' : 'warning')})`,
     `scopeText = MarkDownRenderer(${JSON.stringify(`Target: \`${brief.identity.target.file ?? 'changed files only'}\` · Request: \`${brief.identity.request.request_id}\` · Receipt: \`${brief.identity.receipt.receipt_id}\``)}, "clear")`,

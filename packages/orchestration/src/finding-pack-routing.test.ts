@@ -54,7 +54,25 @@ const changedFile = {
 
 describe('natural-language FindingPack routing', () => {
   it('routes exact changed-file evidence to workload analysis with no higher-capability route', () => {
-    const result = routeFindingPackAnalysis(naturalLanguageRequest, [changedFile]);
+    const result = routeFindingPackAnalysis(naturalLanguageRequest, [changedFile], {
+      observed_at_ms: 2_500,
+      children: [
+        {
+          child_id: 'child:github',
+          agent: 'change-security-investigator',
+          status: 'COMPLETED',
+          started_at_ms: 1_000,
+          completed_at_ms: 2_250,
+          result: 'Collected the exact workload commit and manifest evidence.',
+          tool_groups: [
+            { provider: 'Official GitHub MCP', tools: ['get_commit', 'get_file_contents'] },
+          ],
+        },
+      ],
+      findings: ['Five deterministic workload findings require review.'],
+      evidence: ['evidence:github:diff:privileged-api'],
+      activity: ['The workload analysis child completed.'],
+    });
 
     expect(result.request).toMatchObject({
       mode: 'ANALYSIS_ONLY',
@@ -84,6 +102,16 @@ describe('natural-language FindingPack routing', () => {
     expect(result.openui).not.toContain('TabItem("verification"');
     expect(result.openui).not.toContain('TabItem("proposed-change"');
     expect(result.artifacts?.verified_change).toBeNull();
+    expect(result.investigation_rail).toMatchObject({
+      child_rows: [
+        {
+          elapsed_ms: 1_250,
+          tool_groups: [
+            { provider: 'Official GitHub MCP', tools: ['get_commit', 'get_file_contents'] },
+          ],
+        },
+      ],
+    });
   });
 
   it('fails closed when changed-file evidence does not match the explicit target', () => {

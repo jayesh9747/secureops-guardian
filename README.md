@@ -262,6 +262,8 @@ For Phase 7, Qodo's automatic attempt and official [`/agentic_review` request](h
 
 For Phase 12, Qodo's [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461905572) and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906267) on release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) were paused. The [official paused response](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906533) contains no findings, completed review, or approval; none is claimed. The independent Standards/Spec review is the controlling release review, recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
 
+For the post-merge final-agent follow-up PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19), both the [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120050) and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120715) received a [paused response](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462121000). Those responses contain no review findings or approval; none is claimed.
+
 ## AI-assistance disclosure
 
 AI coding assistants supported planning, implementation, tests, documentation, and review. The operator retained responsibility for scope, credentials, approvals, writes, evidence interpretation, review acceptance, recording, visibility, and submission. A paused Qodo response is never presented as approval.

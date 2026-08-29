@@ -65,7 +65,6 @@ function patchMatchesPostimage(patch: string, content: string): boolean {
     ? content.slice(0, -1).split('\n')
     : content.split('\n');
   let foundHunk = false;
-  let foundPostimageMutation = false;
   for (let index = 0; index < patchLines.length; index += 1) {
     const header = patchLines[index];
     if (header === undefined || !header.startsWith('@@ ')) continue;
@@ -83,6 +82,7 @@ function patchMatchesPostimage(patch: string, content: string): boolean {
       return false;
     }
     const postimage: string[] = [];
+    let hunkHasAddedPostimageMutation = false;
     for (index += 1; index < patchLines.length; index += 1) {
       const line = patchLines[index];
       if (line === undefined) return false;
@@ -92,14 +92,14 @@ function patchMatchesPostimage(patch: string, content: string): boolean {
       }
       if (line.startsWith(' ') || (line.startsWith('+') && !line.startsWith('+++'))) {
         postimage.push(line.slice(1));
-        if (line.startsWith('+')) foundPostimageMutation = true;
+        if (line.startsWith('+')) hunkHasAddedPostimageMutation = true;
       } else if (line.startsWith('-') && !line.startsWith('---')) {
         // Deletion text cannot be validated from the postimage blob alone.
       } else if (!line.startsWith('\\ No newline at end of file')) {
         return false;
       }
     }
-    if (postimage.length !== newCount) return false;
+    if (!hunkHasAddedPostimageMutation || postimage.length !== newCount) return false;
     const contentPostimage = contentLines.slice(newStart - 1, newStart - 1 + newCount);
     if (
       contentPostimage.length !== newCount ||
@@ -108,7 +108,7 @@ function patchMatchesPostimage(patch: string, content: string): boolean {
       return false;
     }
   }
-  return foundHunk && foundPostimageMutation;
+  return foundHunk;
 }
 
 function isSafeRepositoryRelativePath(rawPath: string): boolean {

@@ -58,6 +58,10 @@ describe('exact changed-file evidence', () => {
     ['deletion with matching context', '@@ -1,2 +1 @@\n-completely-fabricated\n apiVersion: v1'],
     ['out-of-range addition', '@@ -0,0 +999,1 @@\n+not-the-manifest'],
     ['zero-coordinate addition', '@@ -0,0 +0,1 @@\n+not-the-manifest'],
+    [
+      'multi-hunk deletion hidden behind a valid addition',
+      '@@ -0,0 +1,1 @@\n+apiVersion: v1\n@@ -99,2 +2,1 @@\n-completely-fabricated\n kind: Pod',
+    ],
   ])('rejects an unverifiable %s hunk', (_name, patch) => {
     expect(exactFileEvidenceIsBound(evidence(patch))).toBe(false);
   });

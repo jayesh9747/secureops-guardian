@@ -140,13 +140,38 @@ export interface FindingPack<
 
 const REGISTERED_FINDING_PACKS = Object.freeze([EGRESS_PACK, WORKLOAD_PACK] as const);
 
+interface RegisteredFindingPackExecutor {
+  readonly identity: FindingPackIdentity;
+  readonly capability: FindingPackCapability;
+  readonly scope_predicate: (file: FindingPackChangedFileEvidence) => boolean;
+  readonly analyze: (file: FindingPackChangedFileEvidence) => FindingPackExecution;
+}
+
+function createRegisteredExecutor<
+  I extends FindingPackIdentity,
+  R extends FindingPackRuleId,
+  C extends FindingPackCapability,
+>(pack: FindingPack<I, R, C>): RegisteredFindingPackExecutor {
+  return Object.freeze({
+    identity: pack.identity,
+    capability: pack.capability,
+    scope_predicate: pack.scope_predicate,
+    analyze: (file: FindingPackChangedFileEvidence): FindingPackExecution => pack.analyze(file),
+  });
+}
+
+const REGISTERED_EXECUTORS: readonly RegisteredFindingPackExecutor[] = Object.freeze([
+  createRegisteredExecutor(EGRESS_PACK),
+  createRegisteredExecutor(WORKLOAD_PACK),
+]);
+
 export const FINDING_PACK_REGISTRY = Object.freeze({
   packs: REGISTERED_FINDING_PACKS,
   analyze(request: FindingPackRequest): FindingPackExecution {
-    const matches = REGISTERED_FINDING_PACKS.flatMap((pack) =>
+    const matches = REGISTERED_EXECUTORS.flatMap((executor) =>
       request.changed_files
-        .filter((file) => pack.scope_predicate(file))
-        .map((file) => ({ pack, file })),
+        .filter((file) => executor.scope_predicate(file))
+        .map((file) => ({ executor, file })),
     );
     if (matches.length !== 1) {
       return {
@@ -168,19 +193,17 @@ export const FINDING_PACK_REGISTRY = Object.freeze({
       REMEDIATION_PROVEN: 1,
       OPEN_PR_ELIGIBLE: 2,
     };
-    if (capabilityRank[request.requested_capability] > capabilityRank[match.pack.capability]) {
+    if (capabilityRank[request.requested_capability] > capabilityRank[match.executor.capability]) {
       return {
         outcome: 'INCONCLUSIVE',
         pack: null,
         severity: 'Unknown',
         missing_or_unsupported_requirements: [
-          `${match.pack.identity.pack_id} cannot satisfy ${request.requested_capability}.`,
+          `${match.executor.identity.pack_id} cannot satisfy ${request.requested_capability}.`,
         ],
         routes: WORKLOAD_ROUTES,
       };
     }
-    return match.pack.capability === 'ANALYSIS_ONLY'
-      ? WORKLOAD_PACK.analyze(match.file)
-      : EGRESS_PACK.analyze(match.file);
+    return match.executor.analyze(match.file);
   },
 });

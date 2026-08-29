@@ -2,8 +2,26 @@ import { createHash } from 'node:crypto';
 
 import { VERIFIER_PACK_IDENTITY } from '@guardian/shared';
 
-import { evaluateSecNet001, parseNetworkPolicyFacts, type SecurityRuleResult } from './rule.js';
-import { analyzeWorkloadSecurity, extractSupportedWorkload } from './workload-security.js';
+import {
+  evaluateSecNet001,
+  parseNetworkPolicyFacts,
+  SECURITY_RULE_ID,
+  type SecurityRuleResult,
+} from './rule.js';
+import {
+  analyzeWorkloadSecurity,
+  extractSupportedWorkload,
+  WORKLOAD_PACK_IDENTITY,
+  WORKLOAD_RULE_ID_LIST,
+  type WorkloadRuleId,
+} from './workload-security.js';
+
+const EGRESS_PACK_IDENTITY = Object.freeze({
+  pack_id: 'k8s-network-egress-v1',
+  pack_version: '1.0.4',
+} as const);
+export type FindingPackIdentity = typeof EGRESS_PACK_IDENTITY | typeof WORKLOAD_PACK_IDENTITY;
+export type FindingPackRuleId = typeof SECURITY_RULE_ID | WorkloadRuleId;
 
 export type FindingPackCapability = 'ANALYSIS_ONLY' | 'REMEDIATION_PROVEN' | 'OPEN_PR_ELIGIBLE';
 
@@ -55,7 +73,7 @@ export interface FindingPackChangedFileEvidence {
 }
 
 export interface FindingPackFinding {
-  readonly rule_id: string;
+  readonly rule_id: FindingPackRuleId;
   readonly severity: 'High';
   readonly object_identity: {
     readonly api_version: string;
@@ -76,7 +94,7 @@ export interface FindingPackFinding {
 
 export interface FindingPackAnalysis<C extends FindingPackCapability = FindingPackCapability> {
   readonly outcome: 'ANALYZED';
-  readonly pack: { readonly pack_id: string; readonly pack_version: string };
+  readonly pack: FindingPackIdentity;
   readonly capability: C;
   readonly severity: 'High' | 'None';
   readonly repository: string;
@@ -132,13 +150,10 @@ export interface FindingPackEvidenceContract {
 }
 
 export interface FindingPack<C extends FindingPackCapability = FindingPackCapability> {
-  readonly identity: {
-    readonly pack_id: string;
-    readonly pack_version: string;
-  };
+  readonly identity: FindingPackIdentity;
   readonly supported_file_kinds: readonly string[];
   readonly required_evidence: FindingPackEvidenceContract;
-  readonly deterministic_rules: readonly string[];
+  readonly deterministic_rules: readonly FindingPackRuleId[];
   readonly capability: C;
   readonly verifier_pack: FindingPackVerifier<C>;
   readonly routes: FindingPackRoutes[C];
@@ -190,6 +205,46 @@ function gitBlobSha(content: string): string {
     .digest('hex');
 }
 
+function patchMatchesPostimage(patch: string, content: string): boolean {
+  const patchLines = patch.split('\n');
+  const contentLines = content.endsWith('\n')
+    ? content.slice(0, -1).split('\n')
+    : content.split('\n');
+  let foundHunk = false;
+  for (let index = 0; index < patchLines.length; index += 1) {
+    const header = patchLines[index];
+    if (header === undefined || !header.startsWith('@@ ')) continue;
+    const match = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/u.exec(header);
+    if (match === null) return false;
+    foundHunk = true;
+    const newStart = Number(match[1]);
+    const newCount = match[2] === undefined ? 1 : Number(match[2]);
+    const postimage: string[] = [];
+    for (index += 1; index < patchLines.length; index += 1) {
+      const line = patchLines[index];
+      if (line === undefined) return false;
+      if (line.startsWith('@@ ')) {
+        index -= 1;
+        break;
+      }
+      if (line.startsWith(' ') || (line.startsWith('+') && !line.startsWith('+++'))) {
+        postimage.push(line.slice(1));
+      } else if (!line.startsWith('-') && !line.startsWith('\\ No newline at end of file')) {
+        return false;
+      }
+    }
+    if (postimage.length !== newCount) return false;
+    if (
+      contentLines.slice(newStart - 1, newStart - 1 + newCount).some((line, lineIndex) => {
+        return line !== postimage[lineIndex];
+      })
+    ) {
+      return false;
+    }
+  }
+  return foundHunk;
+}
+
 function isSafeRepositoryRelativePath(rawPath: string): boolean {
   if (rawPath.length === 0 || rawPath.length > 1024) return false;
   let decodedPath = rawPath;
@@ -226,6 +281,7 @@ function evidenceIsBound(file: FindingPackChangedFileEvidence): boolean {
     /^[0-9a-f]{40}$/u.test(file.revision) &&
     isSafeRepositoryRelativePath(file.file) &&
     file.patch.length > 0 &&
+    patchMatchesPostimage(file.patch, file.content) &&
     /^[0-9a-f]{40}$/u.test(file.git_blob_sha) &&
     gitBlobSha(file.content) === file.git_blob_sha &&
     file.evidence_references.length >= 2 &&
@@ -277,7 +333,7 @@ function analyzeEgress(
       : [];
   return {
     outcome: 'ANALYZED',
-    pack: { pack_id: 'k8s-network-egress-v1', pack_version: '1.0.4' },
+    pack: EGRESS_PACK_IDENTITY,
     capability: 'OPEN_PR_ELIGIBLE',
     severity: findings.length === 0 ? 'None' : 'High',
     repository: file.repository,
@@ -326,10 +382,10 @@ function presentAnalysis(analysis: FindingPackAnalysis): FindingPackPresentation
 }
 
 const EGRESS_PACK: FindingPack<'OPEN_PR_ELIGIBLE'> = Object.freeze({
-  identity: Object.freeze({ pack_id: 'k8s-network-egress-v1', pack_version: '1.0.4' }),
+  identity: EGRESS_PACK_IDENTITY,
   supported_file_kinds: Object.freeze(['networking.k8s.io/v1/NetworkPolicy']),
   required_evidence: EXACT_GITHUB_FILE_EVIDENCE,
-  deterministic_rules: Object.freeze(['SEC-NET-001']),
+  deterministic_rules: Object.freeze([SECURITY_RULE_ID] as const),
   capability: 'OPEN_PR_ELIGIBLE',
   verifier_pack: VERIFIER_PACK_IDENTITY,
   routes: EGRESS_ROUTES,
@@ -340,17 +396,10 @@ const EGRESS_PACK: FindingPack<'OPEN_PR_ELIGIBLE'> = Object.freeze({
 });
 
 const WORKLOAD_PACK: FindingPack<'ANALYSIS_ONLY'> = Object.freeze({
-  identity: Object.freeze({ pack_id: 'k8s-workload-security-v1', pack_version: '1.0.0' }),
+  identity: WORKLOAD_PACK_IDENTITY,
   supported_file_kinds: Object.freeze(['v1/Pod', 'apps/v1/Deployment']),
   required_evidence: EXACT_GITHUB_FILE_EVIDENCE,
-  deterministic_rules: Object.freeze([
-    'K8S-WORKLOAD-001',
-    'K8S-WORKLOAD-002',
-    'K8S-WORKLOAD-003',
-    'K8S-WORKLOAD-004',
-    'K8S-WORKLOAD-005',
-    'K8S-WORKLOAD-006',
-  ]),
+  deterministic_rules: WORKLOAD_RULE_ID_LIST,
   capability: 'ANALYSIS_ONLY',
   verifier_pack: null,
   routes: WORKLOAD_ROUTES,

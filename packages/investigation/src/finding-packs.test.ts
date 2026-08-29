@@ -36,6 +36,14 @@ const nonRootPod = readFileSync(
   new URL('../fixtures/workload/non-root-pod.yaml', import.meta.url),
   'utf8',
 );
+const podRootContainerOverridePod = readFileSync(
+  new URL('../fixtures/workload/pod-root-container-override-pod.yaml', import.meta.url),
+  'utf8',
+);
+const podRootContainerContradictionPod = readFileSync(
+  new URL('../fixtures/workload/pod-root-container-contradiction-pod.yaml', import.meta.url),
+  'utf8',
+);
 const unsafeCapabilitiesPod = readFileSync(
   new URL('../fixtures/workload/unsafe-capabilities-pod.yaml', import.meta.url),
   'utf8',
@@ -85,6 +93,11 @@ function blobSha(content: string): string {
     .digest('hex');
 }
 
+function postimagePatch(content: string): string {
+  const lines = (content.endsWith('\n') ? content.slice(0, -1) : content).split('\n');
+  return `@@ -0,0 +1,${String(lines.length)} @@\n${lines.map((line) => `+${line}`).join('\n')}`;
+}
+
 function workloadRequest(content: string, gitBlobSha: string) {
   return {
     requested_capability: 'ANALYSIS_ONLY' as const,
@@ -93,7 +106,7 @@ function workloadRequest(content: string, gitBlobSha: string) {
         repository: 'jayesh9747/guardian-demo-privileged-api',
         revision: '2c7bdb3e07714e08d9504b3504587fbf18847f29',
         file: 'k8s/api-deployment.yaml',
-        patch: '@@ repository-observed changed file @@',
+        patch: postimagePatch(content),
         content,
         git_blob_sha: gitBlobSha,
         evidence_references: [
@@ -271,12 +284,37 @@ describe('FindingPack registry contract', () => {
     expect(positive.findings).toContainEqual(
       expect.objectContaining({
         rule_id: 'K8S-WORKLOAD-003',
-        container_identity: null,
+        container_identity: { container_type: 'container', name: 'app' },
         json_path: '$.spec.securityContext.runAsUser',
         observed_value: { runAsUser: 0, runAsNonRoot: true },
       }),
     );
     expect(negative.findings.map((finding) => finding.rule_id)).not.toContain('K8S-WORKLOAD-003');
+  });
+
+  it('uses effective container overrides for Pod-level UID 0 attribution', () => {
+    const overridden = FINDING_PACK_REGISTRY.analyze(
+      workloadRequest(podRootContainerOverridePod, blobSha(podRootContainerOverridePod)),
+    );
+    const contradiction = FINDING_PACK_REGISTRY.analyze(
+      workloadRequest(podRootContainerContradictionPod, blobSha(podRootContainerContradictionPod)),
+    );
+    expect(overridden.outcome).toBe('ANALYZED');
+    expect(contradiction.outcome).toBe('ANALYZED');
+    if (overridden.outcome !== 'ANALYZED' || contradiction.outcome !== 'ANALYZED') return;
+
+    expect(overridden.findings.filter((finding) => finding.rule_id === 'K8S-WORKLOAD-003')).toEqual(
+      [],
+    );
+    expect(
+      contradiction.findings.filter((finding) => finding.rule_id === 'K8S-WORKLOAD-003'),
+    ).toEqual([
+      expect.objectContaining({
+        container_identity: { container_type: 'container', name: 'catalog-api' },
+        json_path: '$.spec.securityContext.runAsUser',
+        observed_value: { runAsUser: 0, runAsNonRoot: true },
+      }),
+    ]);
   });
 
   it('reports unsafe added capabilities and a missing drop ALL independently', () => {
@@ -411,6 +449,15 @@ describe('FindingPack registry contract', () => {
 
     expect(FINDING_PACK_REGISTRY.analyze(wrongBlob).outcome).toBe('INCONCLUSIVE');
     expect(FINDING_PACK_REGISTRY.analyze(wrongSource).outcome).toBe('INCONCLUSIVE');
+  });
+
+  it('rejects a patch whose claimed postimage does not match the exact blob content', () => {
+    const request = workloadRequest(privilegedDeployment, blobSha(privilegedDeployment));
+    const changedFile = request.changed_files[0];
+    if (changedFile === undefined) throw new Error('Expected one workload changed file.');
+    changedFile.patch = '@@ -1 +1 @@\n+not-the-manifest';
+
+    expect(FINDING_PACK_REGISTRY.analyze(request)).toMatchObject({ outcome: 'INCONCLUSIVE' });
   });
 
   it('rejects unsafe repository paths and non-canonical Kubernetes identities', () => {

@@ -17,6 +17,10 @@ const content = readFileSync(
   new URL('../../investigation/fixtures/workload/privileged-deployment.yaml', import.meta.url),
   'utf8',
 );
+const contentLines = (content.endsWith('\n') ? content.slice(0, -1) : content).split('\n');
+const patch = `@@ -0,0 +1,${String(contentLines.length)} @@\n${contentLines
+  .map((line) => `+${line}`)
+  .join('\n')}`;
 const analysis = FINDING_PACK_REGISTRY.analyze({
   requested_capability: 'ANALYSIS_ONLY',
   changed_files: [
@@ -24,7 +28,7 @@ const analysis = FINDING_PACK_REGISTRY.analyze({
       repository,
       revision,
       file,
-      patch: '@@ -14,19 +14,20 @@ spec:',
+      patch,
       content,
       git_blob_sha: blobSha,
       evidence_references: [

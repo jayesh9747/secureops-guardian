@@ -12,6 +12,10 @@ const manifest = readFileSync(
   new URL('../../investigation/fixtures/workload/privileged-deployment.yaml', import.meta.url),
   'utf8',
 );
+const manifestLines = (manifest.endsWith('\n') ? manifest.slice(0, -1) : manifest).split('\n');
+const manifestPatch = `@@ -0,0 +1,${String(manifestLines.length)} @@\n${manifestLines
+  .map((line) => `+${line}`)
+  .join('\n')}`;
 
 const naturalLanguageRequest = {
   source: 'NATURAL_LANGUAGE',
@@ -31,7 +35,7 @@ const changedFile = {
   repository: REPOSITORY,
   revision: REVISION,
   file: FILE,
-  patch: '@@ -14,19 +14,20 @@ spec:',
+  patch: manifestPatch,
   content: manifest,
   git_blob_sha: BLOB_SHA,
   evidence_references: [
@@ -72,6 +76,27 @@ describe('natural-language FindingPack routing', () => {
     const result = routeFindingPackAnalysis(naturalLanguageRequest, [
       { ...changedFile, file: 'k8s/other.yaml' },
     ]);
+
+    expect(result.analysis).toMatchObject({
+      outcome: 'INCONCLUSIVE',
+      routes: { verifier: false, proposal: false, approval: false, github_writes: [] },
+    });
+  });
+
+  it('returns a typed capability stop for an OPEN_PR workload request', () => {
+    const result = routeFindingPackAnalysis(
+      {
+        mode: 'OPEN_PR',
+        scope: {
+          schema_version: 1,
+          repository: REPOSITORY,
+          base_branch: 'main',
+          suspect: { kind: 'commit', commit_sha: REVISION },
+          target_file: FILE,
+        },
+      },
+      [changedFile],
+    );
 
     expect(result.analysis).toMatchObject({
       outcome: 'INCONCLUSIVE',

@@ -8,6 +8,23 @@ import type {
 
 type JsonRecord = Record<string, unknown>;
 
+export const WORKLOAD_PACK_IDENTITY = Object.freeze({
+  pack_id: 'k8s-workload-security-v1',
+  pack_version: '1.0.0',
+} as const);
+export const WORKLOAD_RULE_IDS = Object.freeze({
+  privileged: 'K8S-WORKLOAD-001',
+  privilege_escalation: 'K8S-WORKLOAD-002',
+  root_execution: 'K8S-WORKLOAD-003',
+  capabilities: 'K8S-WORKLOAD-004',
+  host_namespaces: 'K8S-WORKLOAD-005',
+  host_path: 'K8S-WORKLOAD-006',
+} as const);
+export type WorkloadRuleId = (typeof WORKLOAD_RULE_IDS)[keyof typeof WORKLOAD_RULE_IDS];
+export const WORKLOAD_RULE_ID_LIST: readonly WorkloadRuleId[] = Object.freeze(
+  Object.values(WORKLOAD_RULE_IDS),
+);
+
 const DNS_LABEL = /^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$/u;
 const DNS_SUBDOMAIN = /^[a-z0-9](?:[-a-z0-9.]*[a-z0-9])?$/u;
 
@@ -198,7 +215,7 @@ function privilegedFindings(
     if (securityContext?.privileged !== true) return [];
     return [
       {
-        rule_id: 'K8S-WORKLOAD-001',
+        rule_id: WORKLOAD_RULE_IDS.privileged,
         severity: 'High' as const,
         object_identity: workload.object_identity,
         container_identity: { container_type: container.type, name: container.name },
@@ -221,7 +238,7 @@ function privilegeEscalationFindings(
     if (observed === false) return [];
     return [
       {
-        rule_id: 'K8S-WORKLOAD-002',
+        rule_id: WORKLOAD_RULE_IDS.privilege_escalation,
         severity: 'High' as const,
         object_identity: workload.object_identity,
         container_identity: { container_type: container.type, name: container.name },
@@ -240,48 +257,33 @@ function rootExecutionFindings(
 ): FindingPackFinding[] {
   const findings: FindingPackFinding[] = [];
   const podSecurityContext = recordAt(workload.pod_spec, 'securityContext');
-  if (podSecurityContext?.runAsUser === 0) {
-    findings.push({
-      rule_id: 'K8S-WORKLOAD-003',
-      severity: 'High',
-      object_identity: workload.object_identity,
-      container_identity: null,
-      json_path: `${workload.pod_spec_path}.securityContext.runAsUser`,
-      evidence_references: evidence.evidence_references,
-      observed_value: {
-        runAsUser: 0,
-        runAsNonRoot:
-          typeof podSecurityContext.runAsNonRoot === 'boolean'
-            ? podSecurityContext.runAsNonRoot
-            : null,
-      },
-      summary:
-        podSecurityContext.runAsNonRoot === true
-          ? 'Pod explicitly runs as UID 0 while also declaring runAsNonRoot.'
-          : 'Pod explicitly runs as UID 0.',
-    });
-  }
   for (const container of workload.containers) {
     const securityContext = recordAt(container.value, 'securityContext');
-    if (securityContext?.runAsUser !== 0) continue;
+    const containerRunAsUser = securityContext?.runAsUser;
+    const effectiveRunAsUser =
+      typeof containerRunAsUser === 'number' ? containerRunAsUser : podSecurityContext?.runAsUser;
+    if (effectiveRunAsUser !== 0) continue;
     const effectiveRunAsNonRoot =
-      typeof securityContext.runAsNonRoot === 'boolean'
+      typeof securityContext?.runAsNonRoot === 'boolean'
         ? securityContext.runAsNonRoot
         : typeof podSecurityContext?.runAsNonRoot === 'boolean'
           ? podSecurityContext.runAsNonRoot
           : null;
     findings.push({
-      rule_id: 'K8S-WORKLOAD-003',
+      rule_id: WORKLOAD_RULE_IDS.root_execution,
       severity: 'High',
       object_identity: workload.object_identity,
       container_identity: { container_type: container.type, name: container.name },
-      json_path: `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.runAsUser`,
+      json_path:
+        containerRunAsUser === 0
+          ? `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.runAsUser`
+          : `${workload.pod_spec_path}.securityContext.runAsUser`,
       evidence_references: evidence.evidence_references,
       observed_value: { runAsUser: 0, runAsNonRoot: effectiveRunAsNonRoot },
       summary:
         effectiveRunAsNonRoot === true
-          ? 'Container explicitly runs as UID 0 while effective runAsNonRoot is true.'
-          : 'Container explicitly runs as UID 0.',
+          ? 'Container effectively runs as UID 0 while effective runAsNonRoot is true.'
+          : 'Container effectively runs as UID 0.',
     });
   }
   return findings;
@@ -299,7 +301,7 @@ function capabilityFindings(
     const drop = capabilities?.drop;
     if (!Array.isArray(drop) || !drop.includes('ALL')) {
       findings.push({
-        rule_id: 'K8S-WORKLOAD-004',
+        rule_id: WORKLOAD_RULE_IDS.capabilities,
         severity: 'High',
         object_identity: workload.object_identity,
         container_identity: { container_type: container.type, name: container.name },
@@ -314,7 +316,7 @@ function capabilityFindings(
     for (const [index, capability] of add.entries()) {
       if (capability === 'NET_BIND_SERVICE') continue;
       findings.push({
-        rule_id: 'K8S-WORKLOAD-004',
+        rule_id: WORKLOAD_RULE_IDS.capabilities,
         severity: 'High',
         object_identity: workload.object_identity,
         container_identity: { container_type: container.type, name: container.name },
@@ -336,7 +338,7 @@ function hostNamespaceFindings(
     if (workload.pod_spec[field] !== true) return [];
     return [
       {
-        rule_id: 'K8S-WORKLOAD-005',
+        rule_id: WORKLOAD_RULE_IDS.host_namespaces,
         severity: 'High' as const,
         object_identity: workload.object_identity,
         container_identity: null,
@@ -359,7 +361,7 @@ function hostPathFindings(
     if (!isRecord(volume) || volume.hostPath === undefined || volume.hostPath === null) return [];
     return [
       {
-        rule_id: 'K8S-WORKLOAD-006',
+        rule_id: WORKLOAD_RULE_IDS.host_path,
         severity: 'High' as const,
         object_identity: workload.object_identity,
         container_identity: null,
@@ -389,7 +391,7 @@ export function analyzeWorkloadSecurity(
   ];
   return {
     outcome: 'ANALYZED',
-    pack: { pack_id: 'k8s-workload-security-v1', pack_version: '1.0.0' },
+    pack: WORKLOAD_PACK_IDENTITY,
     capability: 'ANALYSIS_ONLY',
     severity: findings.length === 0 ? 'None' : 'High',
     repository: evidence.repository,

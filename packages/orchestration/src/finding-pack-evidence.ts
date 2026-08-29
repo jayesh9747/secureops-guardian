@@ -10,6 +10,65 @@ const SUSPECT_REVISION = '2c7bdb3e07714e08d9504b3504587fbf18847f29';
 const SUSPECT_BLOB_SHA = 'b1a60bb96fad7f93bc95536d08381e5629a6a7bd';
 const BENIGN_REVISION = 'd2ee0cdc4e27cc8af671f4c0de15081d1c996e36';
 const BENIGN_BLOB_SHA = '3e8b0f62ef1ba0553b1b4b310444f9a207b9fc9a';
+const SUSPECT_PATCH = `@@ -14,19 +14,20 @@ spec:
+         app: catalog-api
+     spec:
+       securityContext:
+-        runAsNonRoot: true
+-        runAsUser: 10001
++        runAsNonRoot: false
++        runAsUser: 0
+         seccompProfile:
+           type: RuntimeDefault
+       containers:
+         - name: catalog-api
+           image: ghcr.io/example/catalog-api:1.4.0
+           securityContext:
+-            allowPrivilegeEscalation: false
++            allowPrivilegeEscalation: true
++            privileged: true
+             readOnlyRootFilesystem: true
+             capabilities:
+-              drop:
+-                - ALL
++              add:
++                - SYS_ADMIN
+           ports:
+             - name: http
+               containerPort: 8080`;
+const BENIGN_PATCH = `@@ -0,0 +1,32 @@
++apiVersion: apps/v1
++kind: Deployment
++metadata:
++  name: catalog-api
++  namespace: commerce
++spec:
++  replicas: 2
++  selector:
++    matchLabels:
++      app: catalog-api
++  template:
++    metadata:
++      labels:
++        app: catalog-api
++    spec:
++      securityContext:
++        runAsNonRoot: true
++        runAsUser: 10001
++        seccompProfile:
++          type: RuntimeDefault
++      containers:
++        - name: catalog-api
++          image: ghcr.io/example/catalog-api:1.4.0
++          securityContext:
++            allowPrivilegeEscalation: false
++            readOnlyRootFilesystem: true
++            capabilities:
++              drop:
++                - ALL
++          ports:
++            - name: http
++              containerPort: 8080`;
 
 function repositoryEvidence(options: {
   revision: string;
@@ -21,7 +80,7 @@ function repositoryEvidence(options: {
     repository: REPOSITORY,
     revision: options.revision,
     file: FILE,
-    patch: `@@ exact ${options.role} repository evidence @@`,
+    patch: options.role === 'suspect' ? SUSPECT_PATCH : BENIGN_PATCH,
     content: options.content,
     git_blob_sha: options.gitBlobSha,
     evidence_references: [

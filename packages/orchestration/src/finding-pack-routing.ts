@@ -10,9 +10,11 @@ export function routeFindingPackAnalysis(
   changedFiles: readonly FindingPackChangedFileEvidence[],
 ) {
   const plan = planGuardianRun(input);
-  if (plan.mode !== 'ANALYSIS_ONLY') {
-    throw new Error('Finding-pack analysis routing accepts only ANALYSIS_ONLY requests.');
-  }
+  const requestedCapability = {
+    ANALYSIS_ONLY: 'ANALYSIS_ONLY',
+    PREPARE_REMEDIATION: 'REMEDIATION_PROVEN',
+    OPEN_PR: 'OPEN_PR_ELIGIBLE',
+  } as const;
   const revision =
     plan.scope.suspect.kind === 'commit'
       ? plan.scope.suspect.commit_sha
@@ -29,7 +31,7 @@ export function routeFindingPackAnalysis(
     plan.scope.target_file === undefined ||
     scopedFiles.some((file) => file.file === plan.scope.target_file);
   const analysis = FINDING_PACK_REGISTRY.analyze({
-    requested_capability: 'ANALYSIS_ONLY',
+    requested_capability: requestedCapability[plan.mode],
     changed_files: allEvidenceMatchesScope && targetResolved ? scopedFiles : [],
   });
 

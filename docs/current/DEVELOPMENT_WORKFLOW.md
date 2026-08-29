@@ -16,6 +16,7 @@
 | 7 | `phase-7/unified-guardian` |
 | Expansion Phase 1 — natural-language request compiler | `expansion-phase-1/natural-language-request-compiler` |
 | Expansion Phase 2 — verifier skill bundle | `expansion-phase-2/verifier-skill-bundle` |
+| Expansion Phase 3 — finding packs and workload security | `expansion-phase-3/finding-packs` |
 
 Expansion Phase 2 also uses a separate public skill repository, `jayesh9747/secureops-guardian-verifier-skill`, with the same branch name. Its immutable tag/commit is reviewed in a separate, unmerged skill PR. Do not fold skill payloads into the product repository or open a TrueForge upstream PR.
 

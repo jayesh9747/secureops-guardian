@@ -19,7 +19,7 @@ The release revalidated, rather than rebuilt, the four merged expansion gates: [
 | Product release base | `3cd6d8e046fba93dde8921ae5c4bb955f7fbdc2c` |
 | Saved agent | `secureops-guardian_v0`, immutable ID `01m0w6s2eyqtzyb6q4y6ppsta9` |
 | Canonical saved/export manifest SHA-256 | `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0` |
-| Verifier tag object | `783d75b01820ea195d88146eda0ba09ae288b32f` |
+| Verifier tag object | `783d75dcb057f004263a5f93b24dbd36dc4a1b72` |
 | Verifier tag/payload | `guardian-network-egress-v1.0.4` / `ade2d1453bba033dd3300a7c7aede6e28b97582d` |
 | Verifier skill review head | `c1b107cc3d3427a21eca51f8bb227bbd2d8a93b1` |
 | Manifest SHA-256 | `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe` |
@@ -40,7 +40,7 @@ The historical documented TrueForge source pin remains `6026509d905fe255bf493e38
 
 ### Workload analysis
 
-Accepted [session `01m16cd5dtc76v5djytwmsz71b`](http://localhost:8791/sessions/01m16cd5dtc76v5djytwmsz71b), turn `01m16cd5gbmtc5wv17s6w7fms0.ueyhrn`, reconstructed an offloaded GitHub blob from the exact parent and suspect full-patch responses and matched the cited blob identity. Its exact tool-call references were `call_564004` (`get_commit` suspect), `call_807813` (`get_file_contents`), `call_429176` (`list_commits`), `call_708085` (`get_commit` parent), and presentation-only `call_525973` (`get_openui_instructions`). It returned these exact paths:
+Accepted final-manifest [session `01m16j0267dqrsv34j5npgr8zm`](http://localhost:8791/sessions/01m16j0267dqrsv34j5npgr8zm), turn `01m16j0270qb18jh45sb3p1yh8.ueyhrn`, reconstructed an offloaded GitHub blob from the exact parent and suspect full-patch responses and matched the cited blob identity. Its exact tool-call references were `call_767598` (`get_commit` suspect), `call_767617` (`get_file_contents`), `call_786958` (`list_commits`), `call_917154` (`get_commit` parent), and presentation-only `call_563409` (`get_openui_instructions`). It returned these exact paths:
 
 - `$.spec.template.spec.containers[0].securityContext.privileged`
 - `$.spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation`
@@ -48,7 +48,7 @@ Accepted [session `01m16cd5dtc76v5djytwmsz71b`](http://localhost:8791/sessions/0
 - `$.spec.template.spec.containers[0].securityContext.capabilities.drop`
 - `$.spec.template.spec.containers[0].securityContext.capabilities.add[0]`
 
-The trace made four official GitHub reads and no sandbox, Fixture, approval, proposal, or write call. Deployment, admission, runtime Pod state, exploitability, reachability, data access, and exfiltration remain `Unknown`.
+The trace made four official GitHub reads and no sandbox, Fixture, approval, proposal, or write call. Deployment, admission, runtime Pod state, exploitability, reachability, data access, and exfiltration remain `Unknown`. The earlier otherwise-correct workload session `01m16cd5dtc76v5djytwmsz71b` is historical only because it predates the final saved-manifest freeze; it is not used as release evidence.
 
 ### Benign analysis
 

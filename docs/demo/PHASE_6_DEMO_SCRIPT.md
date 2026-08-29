@@ -25,7 +25,7 @@ The timed rows contain roughly 250 words of screen direction and narration plus 
 
 If the primary session is unavailable, use accepted rehearsal `01m16fzxwk9pt3h39bt2rqg9x0`. It has the same frozen manifest, proposal, pack binding, child roles, one sandbox, six-read reconciliation, valid stock OpenUI, `PR_REUSED`, and zero approval/write events.
 
-Use workload session `01m16cd5dtc76v5djytwmsz71b` only as short backup evidence of pack breadth. It shows five exact workload-security findings and stops at GitHub-only `ANALYSIS_ONLY`. Use benign session `01m16fewfgxz7r5a0c9e7fvt0e` to show a pack-, subset-, file-, and revision-scoped `NO_DETERMINISTIC_FINDING` with three GitHub reads and zero sandbox/Fixture/approval/write. Neither should replace the checkout story in the primary video.
+Use final-manifest workload session `01m16j0267dqrsv34j5npgr8zm` only as short backup evidence of pack breadth. It shows five exact workload-security findings and stops at GitHub-only `ANALYSIS_ONLY`. Use benign session `01m16fewfgxz7r5a0c9e7fvt0e` to show a pack-, subset-, file-, and revision-scoped `NO_DETERMINISTIC_FINDING` with three GitHub reads and zero sandbox/Fixture/approval/write. Neither should replace the checkout story in the primary video.
 
 If OpenUI fails during a backup take:
 

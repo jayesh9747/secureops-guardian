@@ -8,6 +8,7 @@ import {
 } from '@guardian/policy-verifier';
 import { z } from 'zod';
 
+import { computeGuardianRequestSha256 } from './intent.js';
 import { guardianModeSchema, repositoryScopeSchema } from './scope.js';
 
 const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/u);
@@ -37,6 +38,13 @@ export const guardianRunReceiptSchema = z
   .object({
     schema_version: z.literal(1),
     receipt_id: z.string().regex(/^guardian-run:sha256:[0-9a-f]{64}$/u),
+    request_identity: z
+      .object({
+        request_id: z.string().regex(/^guardian-request:sha256:[0-9a-f]{64}$/u),
+        request_sha256: sha256Schema,
+      })
+      .strict()
+      .optional(),
     execution_basis: z.enum(['DETERMINISTIC_INTEGRATION', 'TRUEFORGE_SESSION']),
     mode: guardianModeSchema,
     terminal_status: z.enum([
@@ -74,7 +82,20 @@ export const guardianRunReceiptSchema = z
     tool_event_references: z.array(z.string().min(1)),
     approval_event_references: z.array(z.string().min(1)),
     missing_or_unsupported_requirements: z.array(z.string().min(1)),
+    proposal_id: z
+      .string()
+      .regex(/^proposal:sha256:[0-9a-f]{64}$/u)
+      .nullable()
+      .optional(),
     proposal_hash_sha256: sha256Schema.nullable(),
+    finding_pack: z
+      .object({
+        pack_id: z.string().min(1),
+        pack_version: z.string().min(1),
+        capability: z.enum(['ANALYSIS_ONLY', 'REMEDIATION_PROVEN', 'OPEN_PR_ELIGIBLE']),
+      })
+      .strict()
+      .optional(),
     verifier_pack: verifierPackIdentitySchema.nullable(),
     verifier_pack_binding_sha256: sha256Schema.nullable(),
     action_receipt: actionReceiptSchema.nullable(),
@@ -99,6 +120,15 @@ export const guardianRunReceiptSchema = z
       .digest('hex')}`;
     if (receipt.receipt_id !== expectedId) {
       context.addIssue({ code: 'custom', message: 'Guardian run receipt ID is invalid.' });
+    }
+    if (
+      receipt.request_identity !== undefined &&
+      (receipt.request_identity.request_id !==
+        `guardian-request:sha256:${receipt.request_identity.request_sha256}` ||
+        receipt.request_identity.request_sha256 !==
+          computeGuardianRequestSha256({ mode: receipt.mode, scope: receipt.scope }))
+    ) {
+      context.addIssue({ code: 'custom', message: 'Guardian run request identity is invalid.' });
     }
 
     if (receipt.terminal_status === 'INCONCLUSIVE') {
@@ -179,12 +209,23 @@ export const guardianRunReceiptSchema = z
     }
 
     if (receipt.proposal_hash_sha256 === null) {
+      if (receipt.proposal_id !== undefined && receipt.proposal_id !== null) {
+        context.addIssue({
+          code: 'custom',
+          message: 'A receipt without a proposal hash cannot carry a proposal ID.',
+        });
+      }
       if (receipt.verifier_pack !== null || receipt.verifier_pack_binding_sha256 !== null) {
         context.addIssue({
           code: 'custom',
           message: 'A receipt without a proposal cannot carry verifier pack binding state.',
         });
       }
+    } else if (
+      receipt.proposal_id !== undefined &&
+      receipt.proposal_id !== `proposal:sha256:${receipt.proposal_hash_sha256}`
+    ) {
+      context.addIssue({ code: 'custom', message: 'Run receipt proposal ID is invalid.' });
     } else if (receipt.verifier_pack === null || receipt.verifier_pack_binding_sha256 === null) {
       context.addIssue({
         code: 'custom',
@@ -201,6 +242,18 @@ export const guardianRunReceiptSchema = z
           message: 'Run receipt verifier pack binding is invalid.',
         });
       }
+    }
+
+    if (
+      receipt.finding_pack !== undefined &&
+      receipt.verifier_pack !== null &&
+      (receipt.finding_pack.pack_id !== receipt.verifier_pack.pack_id ||
+        receipt.finding_pack.pack_version !== receipt.verifier_pack.pack_version)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Run receipt finding-pack identity does not match its verifier pack.',
+      });
     }
 
     const action = receipt.action_receipt;
@@ -259,10 +312,18 @@ export const guardianRunReceiptSchema = z
 type GuardianRunReceiptCore = Omit<z.input<typeof guardianRunReceiptSchema>, 'receipt_id'>;
 
 export function buildGuardianRunReceipt(core: GuardianRunReceiptCore) {
+  const requestSha256 = computeGuardianRequestSha256({ mode: core.mode, scope: core.scope });
+  const identifiedCore = {
+    ...core,
+    request_identity: {
+      request_id: `guardian-request:sha256:${requestSha256}`,
+      request_sha256: requestSha256,
+    },
+  };
   const receiptId = `guardian-run:sha256:${createHash('sha256')
-    .update(canonicalJson(core))
+    .update(canonicalJson(identifiedCore))
     .digest('hex')}`;
-  return guardianRunReceiptSchema.parse({ ...core, receipt_id: receiptId });
+  return guardianRunReceiptSchema.parse({ ...identifiedCore, receipt_id: receiptId });
 }
 
 export type GuardianRunReceipt = z.infer<typeof guardianRunReceiptSchema>;

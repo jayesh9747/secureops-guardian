@@ -451,7 +451,7 @@ function verifierInputsNeed(
   };
 }
 
-function canonicalRequestDigest(request: GuardianRequest): string {
+export function computeGuardianRequestSha256(request: GuardianRequest): string {
   return createHash('sha256').update(JSON.stringify(request)).digest('hex');
 }
 
@@ -611,7 +611,7 @@ function compileNaturalLanguageInput(
     return { status: 'READY', source: 'NATURAL_LANGUAGE', request };
   }
 
-  const interpretedRequestSha256 = canonicalRequestDigest(request);
+  const interpretedRequestSha256 = computeGuardianRequestSha256(request);
   if (input.confirmation?.interpreted_request_sha256 === interpretedRequestSha256) {
     if (
       input.verifier_inputs !== undefined &&

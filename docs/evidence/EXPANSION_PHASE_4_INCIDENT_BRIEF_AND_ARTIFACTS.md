@@ -139,9 +139,9 @@ The Proposed change tab displayed the exact verified diff and its two controllin
 ### Existing remediation PR reuse
 
 Session `01m16a3xz5qnnjx3ssc4fyhvzv` replayed the exact `OPEN_PR` request against the already-open
-fixture remediation. Guardian returned `PR_REUSED`, linked Pull Request #1, and explicitly stated
-that no new write or approval was required. The rail recorded two child rows, 16 GitHub MCP reads,
-and seven sandbox steps; it displayed no approval interaction.
+fixture remediation. Guardian returned `PR_REUSED`, identified Pull Request #1 with its exact URL in
+the receipt, and explicitly stated that no new write or approval was required. The rail recorded two
+child rows, 16 GitHub MCP reads, and seven sandbox steps; it displayed no approval interaction.
 
 ![Existing remediation PR reused without a write](./phase-11-visual/pr-reused.jpg)
 

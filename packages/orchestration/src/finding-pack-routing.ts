@@ -2,7 +2,16 @@ import {
   FINDING_PACK_REGISTRY,
   type FindingPackChangedFileEvidence,
 } from '@guardian/investigation';
+import {
+  renderGuardianIncidentBriefMarkdown,
+  renderGuardianIncidentBriefResponse,
+} from '@guardian/presentation';
 
+import {
+  buildFindingPackIncidentBrief,
+  buildFindingPackInconclusiveIncidentBrief,
+} from './incident-brief.js';
+import { buildIncidentBriefArtifacts } from './incident-brief-artifacts.js';
 import { planGuardianRun } from './plan.js';
 
 export function routeFindingPackAnalysis(
@@ -44,10 +53,37 @@ export function routeFindingPackAnalysis(
           approval_request: false,
           github_writes: [],
         };
+  const incidentBrief = (() => {
+    if (analysis.outcome === 'INCONCLUSIVE') {
+      return buildFindingPackInconclusiveIncidentBrief({
+        request: { mode: plan.mode, scope: plan.scope },
+        analysis,
+      });
+    }
+    if (analysis.capability === 'ANALYSIS_ONLY') {
+      return buildFindingPackIncidentBrief({
+        request: { mode: plan.mode, scope: plan.scope },
+        analysis,
+      });
+    }
+    return null;
+  })();
+  const artifacts =
+    incidentBrief === null
+      ? null
+      : buildIncidentBriefArtifacts({
+          brief: incidentBrief,
+          receipt: incidentBrief.disclosures.run_receipt,
+          proposal: null,
+        });
 
   return {
     request: { mode: plan.mode, scope: plan.scope },
     capability_ceiling: effectiveCapabilityCeiling,
     analysis,
+    incident_brief: incidentBrief,
+    artifacts,
+    openui: incidentBrief === null ? null : renderGuardianIncidentBriefResponse(incidentBrief),
+    markdown: incidentBrief === null ? null : renderGuardianIncidentBriefMarkdown(incidentBrief),
   };
 }

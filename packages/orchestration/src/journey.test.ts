@@ -51,7 +51,7 @@ describe('unified current-fixture journey', () => {
         daytona_proof: 'NOT_PERMITTED',
         proposal: 'ABSENT',
         github_action: 'NOT_PERMITTED',
-        presentation: 'MARKDOWN',
+        presentation: 'OPENUI_WITH_MARKDOWN_FALLBACK',
       },
       proposal_hash_sha256: null,
       verifier_pack: null,
@@ -69,9 +69,28 @@ describe('unified current-fixture journey', () => {
         reference.includes(':evidence:github:'),
       ),
     ).toBe(true);
-    expect(result.openui).toBeNull();
-    expect(result.markdown).toContain('GitHub-only analysis');
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'ANALYSIS_COMPLETE',
+      evidence_completeness: 'PARTIAL',
+      disclosures: { verification: null, proposed_change: null },
+      controls: [],
+    });
+    expect(result.openui).toMatch(/^```openui\nroot = Stack\(\[incidentBrief\]/u);
+    expect(result.openui).not.toContain('TabItem("verification"');
+    expect(result.openui).not.toContain('TabItem("proposed-change"');
+    expect(result.markdown).toContain('SecureOps Guardian Incident Brief');
     expect(result.markdown).not.toContain('owned synthetic incident evidence');
+    expect(result.artifacts.verified_change).toBeNull();
+    expect(result.investigation_rail).toMatchObject({
+      sections: ['Findings', 'Evidence', 'Activity'],
+      child_rows: [
+        {
+          agent: 'change-security-investigator',
+          status: 'COMPLETED',
+          elapsed_ms: 0,
+        },
+      ],
+    });
   });
 
   it('prepares an exact proposal without requesting approval or calling GitHub writes', () => {
@@ -88,7 +107,7 @@ describe('unified current-fixture journey', () => {
         daytona_proof: 'COMPLETED',
         proposal: 'CREATED',
         github_action: 'NOT_PERMITTED',
-        presentation: 'MARKDOWN',
+        presentation: 'OPENUI_WITH_MARKDOWN_FALLBACK',
       },
       action_receipt: null,
       approval_event_references: [],
@@ -98,8 +117,18 @@ describe('unified current-fixture journey', () => {
       pack_id: 'k8s-network-egress-v1',
     });
     expect(result.receipt.verifier_pack_binding_sha256).toMatch(/^[0-9a-f]{64}$/u);
-    expect(result.openui).toBeNull();
-    expect(result.markdown).toContain('No GitHub write or approval is permitted in this mode.');
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'SECURITY_REMEDIATION_READY',
+      disclosures: {
+        verification: { state: 'FOUR_STATE_VERIFIED' },
+        proposed_change: { proposal_hash_sha256: result.receipt.proposal_hash_sha256 },
+      },
+      controls: [],
+    });
+    expect(result.openui).toContain('TabItem("verification", "Verification"');
+    expect(result.openui).toContain('TabItem("proposed-change", "Proposed change"');
+    expect(result.openui).not.toContain('Button(');
+    expect(result.artifacts.verified_change).not.toBeNull();
   });
 
   it('routes the exact parent-to-suspect comparison through the same prepared journey', () => {
@@ -126,9 +155,9 @@ describe('unified current-fixture journey', () => {
         },
       },
     });
-    expect(result.markdown).toContain(`Comparison base: \`${LAST_GOOD_COMMIT_SHA}\``);
-    expect(result.markdown).toContain(`Comparison head: \`${SUSPECT_COMMIT_SHA}\``);
-    expect(result.markdown).not.toContain('- Suspect commit:');
+    expect(result.markdown).toContain(
+      `Revision: \`${LAST_GOOD_COMMIT_SHA}...${SUSPECT_COMMIT_SHA}\``,
+    );
   });
 
   it('returns a fail-closed receipt with the preflight requirements instead of throwing', () => {
@@ -151,7 +180,16 @@ describe('unified current-fixture journey', () => {
     expect(result.receipt.missing_or_unsupported_requirements).toContain(
       'The supported remediation base branch is main.',
     );
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'INCONCLUSIVE',
+      severity: 'Unknown',
+      evidence_completeness: 'INCONCLUSIVE',
+      disclosures: { verification: null, proposed_change: null },
+      controls: [],
+    });
+    expect(result.openui).toContain('Tag("Status: Inconclusive"');
     expect(result.markdown).toContain('INCONCLUSIVE');
+    expect(result.artifacts.verified_change).toBeNull();
   });
 
   it('composes the frozen modules end to end and reuses the exact existing PR', () => {
@@ -188,6 +226,14 @@ describe('unified current-fixture journey', () => {
     expect(result.openui).toContain('TabItem("receipt", "Run receipt"');
     expect(result.openui).not.toContain('## SecureOps Guardian');
     expect(result.openui).not.toContain('Journey Trace & Execution Log');
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'PR_REUSED',
+      identity: {
+        receipt: { receipt_id: result.receipt.receipt_id },
+        proposal: { proposal_hash_sha256: result.receipt.proposal_hash_sha256 },
+      },
+    });
+    expect(result.artifacts.verified_change).not.toBeNull();
     expect(result.markdown).toContain('PR_REUSED');
     expect(result.markdown).toContain(
       'https://github.com/jayesh9747/guardian-demo-checkout/pull/1',
@@ -231,7 +277,7 @@ describe('unified current-fixture journey', () => {
     });
     expect(result.markdown).toContain('octo-org/arbitrary-repository');
     expect(result.markdown).not.toContain(SUSPECT_COMMIT_SHA);
-    expect(result.markdown).toContain('Not supplied or resolved');
+    expect(result.markdown).toContain('Target file: Not selected');
   });
 
   it('rejects spoofed Fixture tool references at the journey context boundary', () => {

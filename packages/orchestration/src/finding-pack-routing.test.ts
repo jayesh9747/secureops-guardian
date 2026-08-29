@@ -72,6 +72,18 @@ describe('natural-language FindingPack routing', () => {
       approval_request: false,
       github_writes: [],
     });
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'FINDINGS',
+      identity: {
+        pack: { pack_id: 'k8s-workload-security-v1', capability: 'ANALYSIS_ONLY' },
+      },
+      disclosures: { verification: null, proposed_change: null },
+      controls: [],
+    });
+    expect(result.openui).toContain('Tag("Pack: k8s-workload-security-v1@1.0.0"');
+    expect(result.openui).not.toContain('TabItem("verification"');
+    expect(result.openui).not.toContain('TabItem("proposed-change"');
+    expect(result.artifacts?.verified_change).toBeNull();
   });
 
   it('fails closed when changed-file evidence does not match the explicit target', () => {
@@ -83,6 +95,16 @@ describe('natural-language FindingPack routing', () => {
       outcome: 'INCONCLUSIVE',
       routes: { verifier: false, proposal: false, approval: false, github_writes: [] },
     });
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'INCONCLUSIVE',
+      evidence_completeness: 'INCONCLUSIVE',
+      disclosures: { verification: null, proposed_change: null },
+      controls: [],
+    });
+    expect(result.artifacts?.verified_change).toBeNull();
+    expect(result.openui).toContain('Tag("Status: Inconclusive"');
+    expect(result.openui).not.toContain('TabItem("verification"');
+    expect(result.openui).not.toContain('TabItem("proposed-change"');
   });
 
   it('returns a typed capability stop for an OPEN_PR workload request', () => {
@@ -110,6 +132,11 @@ describe('natural-language FindingPack routing', () => {
       proposal_creation: false,
       approval_request: false,
       github_writes: [],
+    });
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'INCONCLUSIVE',
+      identity: { pack: { capability: 'ANALYSIS_ONLY' } },
+      controls: [],
     });
   });
 });

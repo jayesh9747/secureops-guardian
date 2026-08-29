@@ -8,9 +8,11 @@ import {
 } from '@guardian/github-write';
 import {
   buildPhaseSixControllingArtifacts,
+  buildGuardianInvestigationRail,
+  buildReadyPresentation,
   buildRunRecordPresentation,
-  renderGuardianMarkdown,
-  renderGuardianResponse,
+  renderGuardianIncidentBriefResponse,
+  type GuardianPresentation,
 } from '@guardian/presentation';
 import {
   buildDeterministicChangeResult,
@@ -26,6 +28,9 @@ import {
 } from '@guardian/shared';
 import { z } from 'zod';
 
+import { buildIncidentBriefArtifacts } from './incident-brief-artifacts.js';
+import { buildGuardianIncidentBrief } from './incident-brief.js';
+
 import {
   evaluatePreflight,
   preflightObservationSchema,
@@ -33,7 +38,12 @@ import {
 } from './preflight.js';
 import { planGuardianRun } from './plan.js';
 import { evaluateOpenPrArtifacts } from './open-pr.js';
-import { buildGuardianRunReceipt, githubReadToolEventReferenceSchema } from './receipt.js';
+import {
+  buildGuardianRunReceipt,
+  githubReadToolEventReferenceSchema,
+  type GuardianRunReceipt,
+} from './receipt.js';
+import type { GuardianRequest } from './scope.js';
 
 const githubAnalysisEvidenceSchema = z
   .object({
@@ -109,6 +119,99 @@ function exactFixtureRemoteSnapshot(): RemoteSnapshot {
   };
 }
 
+function buildJourneyInvestigationRail(
+  receipt: GuardianRunReceipt,
+  incidentBrief: ReturnType<typeof buildGuardianIncidentBrief>,
+) {
+  const children: Array<{
+    child_id: string;
+    agent: string;
+    status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    started_at_ms: number;
+    completed_at_ms: number;
+    result: string;
+    tool_groups: Array<{ provider: string; tools: string[] }>;
+  }> = [
+    {
+      child_id: 'child:github-evidence',
+      agent: 'change-security-investigator',
+      status: 'COMPLETED' as const,
+      started_at_ms: 0,
+      completed_at_ms: 0,
+      result: 'Collected and bound the exact repository evidence to the requested revision.',
+      tool_groups: [
+        {
+          provider: 'Official GitHub MCP',
+          tools: receipt.tool_event_references.filter((reference) =>
+            reference.includes(':evidence:github:'),
+          ),
+        },
+      ],
+    },
+  ];
+  const githubTools = children[0]?.tool_groups[0]?.tools;
+  if (githubTools === undefined || githubTools.length === 0) {
+    throw new Error('Journey Investigation rail requires GitHub tool-event evidence.');
+  }
+  if (receipt.stages.incident_evidence_join !== 'NOT_RUN') {
+    children.push({
+      child_id: 'child:incident-evidence',
+      agent: 'exposure-evidence-investigator',
+      status: receipt.stages.incident_evidence_join === 'COMPLETED' ? 'COMPLETED' : 'FAILED',
+      started_at_ms: 0,
+      completed_at_ms: 0,
+      result:
+        receipt.stages.incident_evidence_join === 'COMPLETED'
+          ? 'Joined the owned incident evidence to the exact repository change.'
+          : 'Stopped because the required owned incident evidence was incomplete.',
+      tool_groups: [{ provider: 'Fixture MCP', tools: ['incident-evidence-join'] }],
+    });
+  }
+  if (receipt.stages.daytona_proof === 'COMPLETED') {
+    children.push({
+      child_id: 'child:deterministic-verifier',
+      agent: 'SecureOps Guardian verifier',
+      status: 'COMPLETED',
+      started_at_ms: 0,
+      completed_at_ms: 0,
+      result: 'Completed the bounded deterministic four-state policy verification.',
+      tool_groups: [{ provider: 'Daytona sandbox', tools: ['four-state-policy-verifier'] }],
+    });
+  }
+  return buildGuardianInvestigationRail({
+    observed_at_ms: 0,
+    children,
+    findings: [incidentBrief.decision.finding],
+    evidence: [...incidentBrief.disclosures.evidence],
+    activity: [
+      `Run ${receipt.receipt_id} reached terminal status ${receipt.terminal_status} without duplicating its execution trace in chat.`,
+    ],
+  });
+}
+
+function presentJourneyResult(input: {
+  request: GuardianRequest;
+  receipt: GuardianRunReceipt;
+  presentation: GuardianPresentation | null;
+  proposal: ReturnType<typeof buildPhaseSixControllingArtifacts>['proposal'] | null;
+}) {
+  const incidentBrief = buildGuardianIncidentBrief(input);
+  const artifacts = buildIncidentBriefArtifacts({
+    brief: incidentBrief,
+    receipt: input.receipt,
+    proposal: input.proposal,
+  });
+  return {
+    receipt: input.receipt,
+    presentation: input.presentation,
+    incident_brief: incidentBrief,
+    investigation_rail: buildJourneyInvestigationRail(input.receipt, incidentBrief),
+    artifacts,
+    openui: renderGuardianIncidentBriefResponse(incidentBrief),
+    markdown: artifacts.markdown.content,
+  };
+}
+
 export function buildCurrentFixtureJourneyContext(input: unknown): GuardianJourneyContext {
   const plan = planGuardianRun(input);
   if (plan.scope.repository !== DEMO_REPOSITORY) {
@@ -160,25 +263,6 @@ export function buildCurrentFixtureJourneyContext(input: unknown): GuardianJourn
   };
 }
 
-function scopeMarkdownLines(
-  scope: ReturnType<typeof planGuardianRun>['scope'],
-  resolvedTargetFile: string | null,
-): string {
-  const suspectLines =
-    scope.suspect.kind === 'commit'
-      ? [`- Suspect commit: \`${scope.suspect.commit_sha}\``]
-      : [
-          `- Comparison base: \`${scope.suspect.base_sha}\``,
-          `- Comparison head: \`${scope.suspect.head_sha}\``,
-        ];
-  return [
-    `- Repository: \`${scope.repository}\``,
-    `- Base branch: \`${scope.base_branch}\``,
-    ...suspectLines,
-    `- Target file: ${resolvedTargetFile === null ? '**Not supplied or resolved**' : `\`${resolvedTargetFile}\``}`,
-  ].join('\n');
-}
-
 function buildInconclusiveResult(options: {
   plan: ReturnType<typeof planGuardianRun>;
   preflight: Extract<PreflightEvaluation, { outcome: 'INCONCLUSIVE' }>;
@@ -208,13 +292,26 @@ function buildInconclusiveResult(options: {
       daytona_proof: isAnalysisOnly ? 'NOT_PERMITTED' : 'NOT_RUN',
       proposal: 'ABSENT',
       github_action: 'NOT_REACHED',
-      presentation: 'MARKDOWN',
+      presentation: 'OPENUI_WITH_MARKDOWN_FALLBACK',
     },
     evidence_ids: options.context.github_analysis.evidence_ids,
     tool_event_references: options.context.github_analysis.tool_event_references,
     approval_event_references: [],
     missing_or_unsupported_requirements: requirements,
+    proposal_id: null,
     proposal_hash_sha256: null,
+    finding_pack:
+      options.context.preflight_observation.resolved_target_file === TARGET_NETWORK_POLICY_FILE
+        ? {
+            pack_id: 'k8s-network-egress-v1',
+            pack_version: '1.0.4',
+            capability: 'OPEN_PR_ELIGIBLE',
+          }
+        : {
+            pack_id: 'no-matching-pack',
+            pack_version: 'not-applicable',
+            capability: 'ANALYSIS_ONLY',
+          },
     verifier_pack: null,
     verifier_pack_binding_sha256: null,
     action_receipt: null,
@@ -225,17 +322,12 @@ function buildInconclusiveResult(options: {
     ],
     guardian_did_not_merge_deploy_or_access_cluster: true,
   });
-  const markdown = `## SecureOps Guardian — inconclusive
-
-- Terminal status: \`INCONCLUSIVE\`
-${scopeMarkdownLines(options.plan.scope, options.context.preflight_observation.resolved_target_file)}
-
-### Missing or unsupported requirements
-
-${requirements.map((requirement) => `- ${requirement}`).join('\n')}
-
-No sandbox, proposal, approval, or GitHub action was reached.`;
-  return { receipt, presentation: null, openui: null, markdown };
+  return presentJourneyResult({
+    request: { mode: options.plan.mode, scope: options.plan.scope },
+    receipt,
+    presentation: null,
+    proposal: null,
+  });
 }
 
 function stopReadyPreflight(
@@ -270,18 +362,6 @@ export function runCurrentFixtureJourney(input: unknown, untrustedContext: Guard
     ) {
       throw new Error('ANALYSIS_READY contradicts the plan capability ceiling.');
     }
-    const markdown = `## SecureOps Guardian — GitHub-only analysis
-
-- Terminal status: \`ANALYSIS_COMPLETE\`
-${scopeMarkdownLines(plan.scope, context.preflight_observation.resolved_target_file)}
-- Repository signal: official GitHub evidence for the requested revision was inspected
-- Deployment: **Unknown**
-- Runtime exposure: **Unknown**
-- Actual data access: **Unknown**
-- Actual data exfiltration: **Unknown**
-- Live-cluster behavior: **Unknown**
-
-GitHub-only analysis does not establish deployment, runtime exposure, data access, exfiltration, or live-cluster behavior. No Fixture MCP read, Daytona sandbox, proposal, approval, or GitHub write is permitted in this mode.`;
     const receipt = buildGuardianRunReceipt({
       schema_version: 1,
       execution_basis: 'DETERMINISTIC_INTEGRATION',
@@ -296,13 +376,26 @@ GitHub-only analysis does not establish deployment, runtime exposure, data acces
         daytona_proof: 'NOT_PERMITTED',
         proposal: 'ABSENT',
         github_action: 'NOT_PERMITTED',
-        presentation: 'MARKDOWN',
+        presentation: 'OPENUI_WITH_MARKDOWN_FALLBACK',
       },
       evidence_ids: context.github_analysis.evidence_ids,
       tool_event_references: context.github_analysis.tool_event_references,
       approval_event_references: [],
       missing_or_unsupported_requirements: [],
+      proposal_id: null,
       proposal_hash_sha256: null,
+      finding_pack:
+        context.preflight_observation.resolved_target_file === TARGET_NETWORK_POLICY_FILE
+          ? {
+              pack_id: 'k8s-network-egress-v1',
+              pack_version: '1.0.4',
+              capability: 'OPEN_PR_ELIGIBLE',
+            }
+          : {
+              pack_id: 'no-matching-pack',
+              pack_version: 'not-applicable',
+              capability: 'ANALYSIS_ONLY',
+            },
       verifier_pack: null,
       verifier_pack_binding_sha256: null,
       action_receipt: null,
@@ -313,7 +406,12 @@ GitHub-only analysis does not establish deployment, runtime exposure, data acces
       ],
       guardian_did_not_merge_deploy_or_access_cluster: true,
     });
-    return { receipt, presentation: null, openui: null, markdown };
+    return presentJourneyResult({
+      request: { mode: plan.mode, scope: plan.scope },
+      receipt,
+      presentation: null,
+      proposal: null,
+    });
   }
 
   if (!preflight.sandbox_permitted || !preflight.proposal_permitted) {
@@ -330,7 +428,13 @@ GitHub-only analysis does not establish deployment, runtime exposure, data acces
     tool_event_references: toolEventReferences,
     approval_event_references: [] as string[],
     missing_or_unsupported_requirements: [] as string[],
+    proposal_id: proposal.proposal_id,
     verifier_pack: proposal.verifier_pack,
+    finding_pack: {
+      pack_id: proposal.verifier_pack.pack_id,
+      pack_version: proposal.verifier_pack.pack_version,
+      capability: 'OPEN_PR_ELIGIBLE' as const,
+    },
     verifier_pack_binding_sha256: proposal.verifier_pack_binding_sha256,
     runtime_claims: {
       deployment: 'SupportedByOwnedSyntheticEvidence' as const,
@@ -346,17 +450,6 @@ GitHub-only analysis does not establish deployment, runtime exposure, data acces
     if (preflight.approval_permitted || preflight.github_writes_permitted.length > 0) {
       throw new Error('PREPARE_REMEDIATION contradicts the plan capability ceiling.');
     }
-    const markdown = `## SecureOps Guardian — remediation prepared
-
-- Terminal status: \`SECURITY_REMEDIATION_READY\`
-- Proposal SHA-256: \`${proposal.proposal_hash_sha256}\`
-${scopeMarkdownLines(plan.scope, context.preflight_observation.resolved_target_file)}
-- Actual data access: **Unknown**
-
-No GitHub write or approval is permitted in this mode.
-
-\`\`\`diff
-${proposal.canonical_diff}\`\`\``;
     const receipt = buildGuardianRunReceipt({
       ...sharedReceipt,
       terminal_status: 'SECURITY_REMEDIATION_READY',
@@ -368,7 +461,7 @@ ${proposal.canonical_diff}\`\`\``;
         daytona_proof: 'COMPLETED',
         proposal: 'CREATED',
         github_action: 'NOT_PERMITTED',
-        presentation: 'MARKDOWN',
+        presentation: 'OPENUI_WITH_MARKDOWN_FALLBACK',
       },
       proposal_hash_sha256: proposal.proposal_hash_sha256,
       action_receipt: null,
@@ -377,7 +470,13 @@ ${proposal.canonical_diff}\`\`\``;
         'PREPARE_REMEDIATION produces a proposal but cannot request approval or write to GitHub.',
       ],
     });
-    return { receipt, presentation: null, openui: null, markdown };
+    const presentation = buildReadyPresentation({ finding, proposal });
+    return presentJourneyResult({
+      request: { mode: plan.mode, scope: plan.scope },
+      receipt,
+      presentation,
+      proposal,
+    });
   }
 
   if (
@@ -442,11 +541,10 @@ ${proposal.canonical_diff}\`\`\``;
       'This receipt is deterministic integration evidence; a live TrueForge receipt must identify its session separately.',
     ],
   });
-
-  return {
+  return presentJourneyResult({
+    request: { mode: plan.mode, scope: plan.scope },
     receipt,
     presentation,
-    openui: renderGuardianResponse(presentation, { runReceipt: receipt }),
-    markdown: renderGuardianMarkdown(presentation),
-  };
+    proposal,
+  });
 }

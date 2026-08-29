@@ -13,7 +13,7 @@ import {
   renderGuardianResponse,
 } from './render.js';
 import { guardianPresentationSchema } from './schema.js';
-import { GUARDIAN_TRACE_SEQUENCE } from './trace.js';
+import { buildGuardianInvestigationRail, GUARDIAN_TRACE_SEQUENCE } from './trace.js';
 
 const matrix = buildPhaseSixPresentationMatrix();
 
@@ -361,5 +361,97 @@ describe('Phase 6 TrueForge configuration and trace labels', () => {
     expect(PHASE_SIX_AGENT_SPEC.manifest.instructions).toContain(
       'TrueForge Investigation rail owns the execution trace',
     );
+  });
+
+  it('keeps one concise child row and agent-owned tool group in the Investigation rail', () => {
+    const rail = buildGuardianInvestigationRail({
+      observed_at_ms: 2_600,
+      children: [
+        {
+          child_id: 'child:github',
+          agent: 'change-security-investigator',
+          status: 'COMPLETED',
+          started_at_ms: 1_000,
+          completed_at_ms: 2_250,
+          result: 'Matched the suspect commit, diff, and manifest to SEC-NET-001 evidence.',
+          tool_groups: [
+            {
+              provider: 'Official GitHub MCP',
+              tools: ['get_commit', 'get_file_contents'],
+            },
+          ],
+        },
+        {
+          child_id: 'child:fixture',
+          agent: 'exposure-evidence-investigator',
+          status: 'COMPLETED',
+          started_at_ms: 1_100,
+          completed_at_ms: 2_600,
+          result: 'Linked the owned synthetic alert and reachability observations to checkout-api.',
+          tool_groups: [
+            {
+              provider: 'Fixture MCP',
+              tools: ['get_security_alert', 'get_reachability_observations'],
+            },
+          ],
+        },
+      ],
+      findings: ['High unrestricted-egress finding'],
+      evidence: ['evidence:github:diff:checkout-networkpolicy'],
+      activity: ['Daytona four-state proof completed after both children.'],
+    });
+
+    expect(rail.sections).toEqual(['Findings', 'Evidence', 'Activity']);
+    expect(rail.child_rows).toEqual([
+      {
+        child_id: 'child:github',
+        agent: 'change-security-investigator',
+        status: 'COMPLETED',
+        elapsed_ms: 1_250,
+        result: 'Matched the suspect commit, diff, and manifest to SEC-NET-001 evidence.',
+        tool_groups: [
+          {
+            provider: 'Official GitHub MCP',
+            tools: ['get_commit', 'get_file_contents'],
+          },
+        ],
+      },
+      {
+        child_id: 'child:fixture',
+        agent: 'exposure-evidence-investigator',
+        status: 'COMPLETED',
+        elapsed_ms: 1_500,
+        result: 'Linked the owned synthetic alert and reachability observations to checkout-api.',
+        tool_groups: [
+          {
+            provider: 'Fixture MCP',
+            tools: ['get_security_alert', 'get_reachability_observations'],
+          },
+        ],
+      },
+    ]);
+    expect(rail.findings).not.toBe(rail.evidence);
+    expect(rail.evidence).not.toBe(rail.activity);
+  });
+
+  it('reports elapsed time for a running child from the rail observation time', () => {
+    const rail = buildGuardianInvestigationRail({
+      observed_at_ms: 1_500,
+      children: [
+        {
+          child_id: 'child:github',
+          agent: 'change-security-investigator',
+          status: 'RUNNING',
+          started_at_ms: 1_000,
+          result: 'Collecting the exact commit and target manifest evidence.',
+          tool_groups: [{ provider: 'Official GitHub MCP', tools: ['get_commit'] }],
+        },
+      ],
+      findings: [],
+      evidence: [],
+      activity: ['Official GitHub MCP evidence collection is running.'],
+    });
+
+    expect(rail.child_rows[0]).toMatchObject({ status: 'RUNNING', elapsed_ms: 500 });
   });
 });

@@ -15,7 +15,7 @@ Users select only `secureops-guardian_v0` and describe an exact repository chang
 - The four-state matrix reproduces the exposure, rejects deny-all, and accepts the least-privilege repair.
 - TrueForge separately approval-gates `create_branch`, `create_or_update_file`, and `create_pull_request` through the official GitHub MCP.
 - Retry verifies the existing branch and PR, then returns the same URL without another write or approval.
-- Stock TrueForge OpenUI renders the result; a complete Markdown recovery rendering is available if the card cannot render.
+- Stock TrueForge OpenUI renders a decision-first Incident Brief; deterministic Markdown and JSON representations remain available from the same validated identities.
 
 ## Architecture and TrueForge capabilities
 
@@ -33,7 +33,7 @@ Engineer -> saved TrueForge agent secureops-guardian_v0
   +-- pinned TrueForge skill -> digest-verified verifier pack (prepare/open only)
   +-- Daytona -> candidate + four-state static verifier (prepare/open only)
   +-- exact remote reuse or three separately approved writes (open only)
-  `-- stock OpenUI or Markdown + machine-readable run receipt
+  `-- stock Incident Brief + deterministic Markdown/JSON + Investigation rail
 ```
 
 TrueForge is the sole agent harness. [`@guardian/orchestration`](./packages/orchestration/src/index.ts) compiles natural-language requests at the planning seam and composes the reviewed investigation, sandbox verification, proposal, approval, receipt, reliability, and presentation modules behind one user-facing manifest. Phase-named manifests remain only as test fixtures/reference configurations. Dynamic child roles are instruction-scoped and share attached resources, not enforced authorization boundaries. See the [architecture](./docs/current/ARCHITECTURE.md) and [migration note](./docs/current/PHASE_7_MIGRATION.md).
@@ -48,6 +48,26 @@ TrueForge is the sole agent harness. [`@guardian/orchestration`](./packages/orch
 | Tool approval | Separate human decision for each of three GitHub writes |
 | Persistence | Reconnect/retry preserves proposal and pending action |
 | Generative UI | Stock OpenUI card; no frontend fork or dashboard |
+
+## Incident Brief and artifacts
+
+Before a remediation or write run, Guardian presents the interpreted repository, branch, exact
+commit/comparison, optional file, selected pack, capability ceiling, and non-action boundary.
+Confirmation binds request meaning only; it never replaces a GitHub write approval.
+
+Every terminal result answers four questions in order: Finding, Key reason, What Guardian did, and
+Next action. Text-labelled chips carry repository/revision, pack, status, severity, and evidence
+completeness. Evidence, causal chain, conditional verification, conditional proposed change,
+limitations, and the run receipt use progressive disclosure. The workload pack cannot render a
+verifier, proposal, approval, or PR action; an egress result exposes only a real review link when a
+pull request already exists.
+
+Typed builders produce deterministic copyable representations named
+`guardian-incident-brief.md`, `guardian-run-receipt.json`, and, only for an exact verified proposal,
+`guardian-verified-change.json`. Their request, receipt, proposal, pack, and target identities must
+match the OpenUI model or generation fails closed. Download is optional and deferred as a product
+contract; `ANALYSIS_ONLY` never creates a sandbox for export. The result stays in chat while child,
+MCP, sandbox, approval, timing, and failure detail stays in TrueForge's Investigation rail.
 
 ## Workload-security analysis
 
@@ -158,9 +178,10 @@ pnpm phase5:matrix
 pnpm phase6:matrix
 pnpm phase7:matrix
 pnpm phase10:matrix
+pnpm phase11:matrix
 ```
 
-The Phase 6 matrix covers ready, denied, PR-created, PR-reused, three inconclusive fixtures, conflict, and no-safe-remediation. It separately hashes every complete OpenUI response and Markdown recovery rendering to detect presentation drift. See the [three-minute demo script](./docs/demo/PHASE_6_DEMO_SCRIPT.md).
+The Phase 6 matrix covers ready, denied, PR-created, PR-reused, three inconclusive fixtures, conflict, and no-safe-remediation. Phase 11 maps those same nine terminal states to Incident Briefs and hashes the OpenUI, Markdown, receipt JSON, and conditional verified-change JSON representations. See the [Phase 11 evidence](./docs/evidence/EXPANSION_PHASE_4_INCIDENT_BRIEF_AND_ARTIFACTS.md).
 
 ## Permission and threat boundaries
 
@@ -186,6 +207,8 @@ pnpm bundle:verifier
 pnpm phase5:matrix
 pnpm phase6:matrix
 pnpm phase7:matrix
+pnpm phase10:matrix
+pnpm phase11:matrix
 git diff --check
 ```
 

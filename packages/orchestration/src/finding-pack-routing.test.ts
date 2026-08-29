@@ -54,7 +54,25 @@ const changedFile = {
 
 describe('natural-language FindingPack routing', () => {
   it('routes exact changed-file evidence to workload analysis with no higher-capability route', () => {
-    const result = routeFindingPackAnalysis(naturalLanguageRequest, [changedFile]);
+    const result = routeFindingPackAnalysis(naturalLanguageRequest, [changedFile], {
+      observed_at_ms: 2_500,
+      children: [
+        {
+          child_id: 'child:github',
+          agent: 'change-security-investigator',
+          status: 'COMPLETED',
+          started_at_ms: 1_000,
+          completed_at_ms: 2_250,
+          result: 'Collected the exact workload commit and manifest evidence.',
+          tool_groups: [
+            { provider: 'Official GitHub MCP', tools: ['get_commit', 'get_file_contents'] },
+          ],
+        },
+      ],
+      findings: ['Five deterministic workload findings require review.'],
+      evidence: ['evidence:github:diff:privileged-api'],
+      activity: ['The workload analysis child completed.'],
+    });
 
     expect(result.request).toMatchObject({
       mode: 'ANALYSIS_ONLY',
@@ -72,6 +90,28 @@ describe('natural-language FindingPack routing', () => {
       approval_request: false,
       github_writes: [],
     });
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'FINDINGS',
+      identity: {
+        pack: { pack_id: 'k8s-workload-security-v1', capability: 'ANALYSIS_ONLY' },
+      },
+      disclosures: { verification: null, proposed_change: null },
+      controls: [],
+    });
+    expect(result.openui).toContain('Tag("Pack: k8s-workload-security-v1@1.0.0"');
+    expect(result.openui).not.toContain('TabItem("verification"');
+    expect(result.openui).not.toContain('TabItem("proposed-change"');
+    expect(result.artifacts?.verified_change).toBeNull();
+    expect(result.investigation_rail).toMatchObject({
+      child_rows: [
+        {
+          elapsed_ms: 1_250,
+          tool_groups: [
+            { provider: 'Official GitHub MCP', tools: ['get_commit', 'get_file_contents'] },
+          ],
+        },
+      ],
+    });
   });
 
   it('fails closed when changed-file evidence does not match the explicit target', () => {
@@ -83,6 +123,16 @@ describe('natural-language FindingPack routing', () => {
       outcome: 'INCONCLUSIVE',
       routes: { verifier: false, proposal: false, approval: false, github_writes: [] },
     });
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'INCONCLUSIVE',
+      evidence_completeness: 'INCONCLUSIVE',
+      disclosures: { verification: null, proposed_change: null },
+      controls: [],
+    });
+    expect(result.artifacts?.verified_change).toBeNull();
+    expect(result.openui).toContain('Tag("Status: Inconclusive"');
+    expect(result.openui).not.toContain('TabItem("verification"');
+    expect(result.openui).not.toContain('TabItem("proposed-change"');
   });
 
   it('returns a typed capability stop for an OPEN_PR workload request', () => {
@@ -110,6 +160,11 @@ describe('natural-language FindingPack routing', () => {
       proposal_creation: false,
       approval_request: false,
       github_writes: [],
+    });
+    expect(result.incident_brief).toMatchObject({
+      terminal_status: 'INCONCLUSIVE',
+      identity: { pack: { capability: 'ANALYSIS_ONLY' } },
+      controls: [],
     });
   });
 });

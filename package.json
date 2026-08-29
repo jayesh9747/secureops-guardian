@@ -18,6 +18,7 @@
     "phase6:matrix": "tsx packages/presentation/src/cli.ts",
     "phase7:matrix": "tsx packages/orchestration/src/cli.ts",
     "phase10:matrix": "tsx packages/orchestration/src/finding-pack-cli.ts",
+    "phase11:matrix": "tsx packages/orchestration/src/incident-brief-cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b --pretty false",

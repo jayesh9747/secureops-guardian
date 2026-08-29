@@ -1,6 +1,6 @@
 # Unified SecureOps Guardian architecture
 
-Updated: 27 August 2026.
+Updated: 29 August 2026.
 
 ## User-facing system
 
@@ -37,7 +37,10 @@ User -> saved TrueForge agent secureops-guardian_v0
           |           +-- existing exact PR -> PR_REUSED, reads only
           |           `-- missing remote state -> three separately approved writes
           |
-          `-- stock OpenUI or complete Markdown + machine-readable run receipt
+          `-- validated Incident Brief
+                +-- stock OpenUI decision surface
+                +-- deterministic Markdown/receipt/change representations
+                `-- Investigation rail execution trace
 ```
 
 TrueForge remains the sole agent harness. It owns the model loop, dynamic children, connector calls, Daytona sandbox, persistent session, tool approval, and stock Generative UI. The repository contains typed contracts and deterministic functions; it does not contain a second agent runtime or GitHub client.
@@ -52,6 +55,9 @@ TrueForge remains the sole agent harness. It owns the model loop, dynamic childr
 - `evaluatePreflight`: compares observed source identities to scope and support requirements.
 - `runCurrentFixtureJourney`: consumes an explicit validated observation/remote-state context and composes the existing investigation, verifier, proposal, remote, receipt, and presentation modules.
 - `buildGuardianRunReceipt`: validates and hashes the cross-stage machine-readable receipt.
+- `buildInterpretedRequestCard`: binds the visible higher-capability interpretation to the typed request digest.
+- `buildGuardianIncidentBrief` and `buildFindingPackIncidentBrief`: map validated egress/workload results to one decision-first result contract.
+- `buildIncidentBriefArtifacts`: generates deterministic Markdown, receipt JSON, and conditional verified-change JSON after cross-representation identity checks.
 - `SECUREOPS_GUARDIAN_AGENT_SPEC`: the one exported TrueForge manifest.
 
 The orchestration module calls the existing typed modules. It does not reimplement their evidence provenance, verifier, proposal binding, remote decision, receipt, persistence, or presentation gates.
@@ -134,6 +140,29 @@ The legacy proposal hash remains stable for compatibility. A separate pack-bindi
 | `OPEN_PR` | Yes | Optional | Only after support/evidence gates | Yes | Three separately gated writes or read-only reuse |
 
 The final manifest attaches the Fixture and write tools so one saved agent can execute every mode, but the mode contract and typed plan make Fixture reads unreachable in `ANALYSIS_ONLY` and writes unreachable in both non-writing modes. TrueForge remains the enforced human-approval seam for each write.
+
+## Incident Brief and execution-trace seam
+
+Every terminal typed result maps to one `GuardianIncidentBrief`. Its default view contains exactly
+Finding, Key reason, What Guardian did, and Next action, followed by text-labelled repository,
+revision, pack, status, severity, and evidence-completeness tags. Evidence, causal chain,
+limitations, and the run receipt remain behind disclosures. Verification exists only when the
+receipt proves it ran; Proposed change exists only when an exact verified proposal is present.
+Only a real pull-request URL can produce a control. The workload pack therefore has no verifier,
+proposal, approval, or PR control.
+
+The same parsed brief and receipt generate `guardian-incident-brief.md` and
+`guardian-run-receipt.json`; a verified proposal additionally generates
+`guardian-verified-change.json`. Request ID/digest, receipt ID, proposal ID/hash/pack binding, pack,
+repository, branch, revision, and file are checked before any representation is returned. The
+Markdown and JSON strings are deterministic and copyable. File download is not part of the typed
+product contract: the stock harness may expose an existing sandbox artifact in remediation modes,
+but `ANALYSIS_ONLY` never creates a sandbox merely to export or download a file.
+
+TrueForge's canonical session events remain the execution source of truth. The typed Investigation
+rail projection validates one row per child, one-sentence results, elapsed time, and tool grouping.
+Child activity, MCP/Daytona calls, timings, and failures are not duplicated inside the Incident
+Brief. Stock TrueForge is the required renderer; no local UI fork is needed for product correctness.
 
 ## Read breadth and remediation depth
 

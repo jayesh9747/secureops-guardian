@@ -1,6 +1,6 @@
 # Unified Guardian prompt templates
 
-These prompts target the one saved TrueForge agent named `secureops-guardian_v0`. Natural language is the primary input after Expansion Phase 1. Exact JSON remains supported for regression tests and advanced use.
+These prompts target the one saved TrueForge agent named `secureops-guardian`. Natural language is the primary input after Expansion Phase 1. Exact JSON remains supported for regression tests and advanced use.
 
 ## Natural-language current fixture
 

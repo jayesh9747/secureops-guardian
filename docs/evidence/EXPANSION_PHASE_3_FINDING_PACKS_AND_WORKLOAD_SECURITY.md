@@ -130,6 +130,11 @@ pnpm phase10:matrix
 The gate must reproduce the five suspect findings, zero benign findings, the workload higher-route
 stop, and the frozen egress proposal hash above.
 
+After final acceptance-review remediation, formatting, lint, typecheck, 26 test files / 281 tests,
+build, verifier bundling, the retained Phase 5–7 matrices, the Phase 10 matrix, and diff hygiene all
+passed. The rebuilt verifier bundle remained byte-identical at
+`028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9`.
+
 ## Review and PR handoff
 
 The first independent Standards/Spec review found typed-identity and duplicated-construction
@@ -138,6 +143,16 @@ review found contradictory effective capability metadata, field-level UID-0 sema
 context-only patch bypass, and incomplete OpenUI identity. Each applicable finding was reproduced,
 fixed with regression coverage, and rerun through the complete gate. The final Standards review
 and final Spec review both reported zero findings on reviewed head `1ca2968`.
+
+A later expanded acceptance audit reproduced exact-evidence bypasses for deletion-only,
+out-of-range, and mixed valid/forged multi-hunk patches; incomplete per-label Kubernetes
+DNS-subdomain validation; missing container identity in Markdown recovery; weak structural
+coupling between pack identity, rules, and analyzer output; and registry composition duplication.
+The fixes were developed with adversarial failing tests, extracted exact-evidence and pack-adapter
+modules, require an added in-range exact-postimage mutation in every hunk, validate every DNS
+label, preserve full object/container identity in both presentation formats, couple identity/rules
+through generics, and derive metadata plus execution from one registration tuple. Final Standards
+and Spec reviews reported no findings on implementation head `06f694f`.
 
 Product PR [#16](https://github.com/jayesh9747/secureops-guardian/pull/16) is open and non-draft from
 `expansion-phase-3/finding-packs` into `main`; GitHub reported it cleanly mergeable and GitGuardian

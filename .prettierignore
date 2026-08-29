@@ -3,4 +3,5 @@ dist
 coverage
 pnpm-lock.yaml
 docs/evidence/PHASE_3_PROPOSAL.json
+packages/investigation/fixtures/workload/malformed-yaml.yaml
 **/*.md

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: root-default-contradiction
+  namespace: commerce
+spec:
+  securityContext:
+    runAsUser: 0
+  containers:
+    - name: catalog-api
+      image: ghcr.io/example/catalog-api:1.4.0
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL

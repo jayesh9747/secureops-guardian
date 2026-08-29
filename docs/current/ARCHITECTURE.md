@@ -19,6 +19,10 @@ User -> saved TrueForge agent secureops-guardian_v0
           |
           +-- scope preflight -> official GitHub MCP reads
           |
+          +-- exact changed-file evidence -> FindingPack registry
+          |     +-- k8s-network-egress-v1 -> retained egress analysis/remediation route
+          |     `-- k8s-workload-security-v1 -> deterministic analysis only
+          |
           +-- exact supported fixture in PREPARE_REMEDIATION or OPEN_PR only
           |     +-- change-security-investigator -> official GitHub MCP reads
           |     +-- exposure-evidence-investigator -> Fixture MCP reads
@@ -51,6 +55,39 @@ TrueForge remains the sole agent harness. It owns the model loop, dynamic childr
 - `SECUREOPS_GUARDIAN_AGENT_SPEC`: the one exported TrueForge manifest.
 
 The orchestration module calls the existing typed modules. It does not reimplement their evidence provenance, verifier, proposal binding, remote decision, receipt, persistence, or presentation gates.
+
+## FindingPack registry seam
+
+`@guardian/investigation` owns one deep `FindingPack` registry. Callers supply an exact requested
+capability plus immutable changed-file evidence: repository, full revision, file, patch, exact file
+bytes, Git blob SHA, and matching patch/blob evidence references. The registry validates the Git
+blob identity, selects exactly one scope predicate, evaluates deterministic rules, and returns a
+typed analysis result. Zero matches and multiple matches return `INCONCLUSIVE`; callers do not
+choose a model-authored fallback.
+
+The registry exposes exactly two immutable packs:
+
+| Pack | Supported scope | Maximum capability | Higher routes |
+| --- | --- | --- | --- |
+| `k8s-network-egress-v1@1.0.4` | Existing bounded checkout `NetworkPolicy` | `OPEN_PR_ELIGIBLE` | Existing pinned verifier, proposal, approval, and retry-safe write/reuse route |
+| `k8s-workload-security-v1@1.0.0` | One Linux-or-unspecified `v1/Pod` or `apps/v1/Deployment` | `ANALYSIS_ONLY` | Structurally absent |
+
+The existing SEC-NET-001 synthesis now enters through this registry and retains its byte-compatible
+legacy rule result. The frozen proposal hash remains
+`2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
+
+The workload pack canonically extracts the Pod spec and every regular, init, and ephemeral
+container. Its six rule families implement the documented Kubernetes Pod Security Standards subset
+for privileged containers, privilege escalation, explicit root execution, Linux capabilities, host
+namespaces, and `hostPath`. Findings carry pack version, repository/full revision/file, Git evidence,
+Kubernetes apiVersion/kind/namespace/name, exact container identity, stable JSONPath, deterministic
+`High` severity, known/refuted/unknown Claims, and limitations. See
+[`FINDING_PACKS.md`](./FINDING_PACKS.md).
+
+`@guardian/orchestration` routes compiled natural-language `ANALYSIS_ONLY` requests to the registry
+only after scope and changed-file evidence agree. `@guardian/presentation` maps the typed result to
+stock OpenUI or Markdown. No custom UI fork is required. Workload results cannot materialize the
+egress skill, enter Daytona, create a candidate/proposal, request approval, or call a GitHub write.
 
 ## Natural-language compiler seam
 

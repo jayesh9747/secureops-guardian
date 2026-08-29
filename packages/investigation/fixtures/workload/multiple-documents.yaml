@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: first
+  namespace: tests
+spec:
+  containers:
+    - name: app
+      image: example.test/app:1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: second
+  namespace: tests
+spec:
+  containers:
+    - name: app
+      image: example.test/app:1

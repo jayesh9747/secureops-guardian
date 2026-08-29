@@ -79,3 +79,15 @@ _Avoid_: Prompt execution, scope guessing
 **Interpreted Request Confirmation**:
 A human confirmation bound to the exact generated request digest for natural-language remediation or pull-request intent. It confirms meaning but does not authorize any GitHub write.
 _Avoid_: Write approval, blanket consent
+
+**FindingPack**:
+An immutable versioned module that owns a bounded evidence contract, scope predicate, deterministic rules, typed analysis result, capability ceiling, allowed runtime Claims, and presentation adapter.
+_Avoid_: Scanner plugin, prompt rule list
+
+**Analysis-only FindingPack**:
+A FindingPack whose interface and runtime route permit repository analysis but expose no verifier, Candidate Remediation, Remediation Proposal, approval, or Controlled External Write.
+_Avoid_: Unverified remediation pack, read-only recommendation engine
+
+**Stable Field Location**:
+A JSONPath bound to an exact Kubernetes object and, where applicable, exact container type/name. It remains the primary finding location when YAML formatting changes.
+_Avoid_: Line number, approximate manifest area

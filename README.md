@@ -1,10 +1,10 @@
 # SecureOps Guardian
 
-SecureOps Guardian is one saved TrueForge agent that helps an on-call platform/security engineer inspect an exact GitHub change and, for its proven Kubernetes NetworkPolicy subset, turn a supported security regression into a cited, sandbox-verified least-privilege remediation while retaining human control of every GitHub write.
+SecureOps Guardian is one saved TrueForge agent that helps an on-call platform/security engineer inspect an exact GitHub change. It can analyze a bounded Kubernetes workload-security subset and, only for its proven Kubernetes NetworkPolicy subset, turn a supported security regression into a cited, sandbox-verified least-privilege remediation while retaining human control of every GitHub write.
 
 The demo joins real GitHub commit evidence from the public [`guardian-demo-checkout`](https://github.com/jayesh9747/guardian-demo-checkout) repository with explicitly synthetic incident observations. Unlike a generic incident summary, Guardian identifies one changed NetworkPolicy rule, rejects deny-all containment because it breaks checkout's database path, proves an exact replacement against four policy states, and creates or deterministically reuses one reviewable pull request only at the approval boundary.
 
-Users select only `secureops-guardian_v0` and describe an exact repository change in ordinary language; exact schema-version-1 JSON remains available for tests and advanced use. Guardian compiles natural language into the existing typed request without guessing a repository, branch, revision, or file. Missing facts produce one tool-free question, while remediation and pull-request interpretations require confirmation before preflight. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. Guardian can inspect any authorized GitHub repository in read-only mode; proven remediation currently supports Kubernetes NetworkPolicy cases inside its documented static verifier subset.
+Users select only `secureops-guardian_v0` and describe an exact repository change in ordinary language; exact schema-version-1 JSON remains available for tests and advanced use. Guardian compiles natural language into the existing typed request without guessing a repository, branch, revision, or file. Missing facts produce one tool-free question, while remediation and pull-request interpretations require confirmation before preflight. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. The immutable FindingPack registry exposes `k8s-network-egress-v1` and the analysis-only `k8s-workload-security-v1`. Proven remediation remains limited to the NetworkPolicy pack.
 
 ## Judge-visible result
 
@@ -23,6 +23,9 @@ Users select only `secureops-guardian_v0` and describe an exact repository chang
 Engineer -> saved TrueForge agent secureops-guardian_v0
   +-- natural language or exact JSON -> validated GuardianRequest
   +-- parameterized scope preflight -> official GitHub MCP reads
+  +-- exact changed-file evidence -> deterministic FindingPack registry
+  |     +-- NetworkPolicy egress -> retained analysis/remediation path
+  |     `-- Pod/Deployment workload security -> analysis only
   +-- exact supported case
   |     +-- change-security-investigator -> official GitHub MCP reads
   |     `-- exposure-evidence-investigator -> guardian-fixture MCP reads
@@ -46,6 +49,21 @@ TrueForge is the sole agent harness. [`@guardian/orchestration`](./packages/orch
 | Persistence | Reconnect/retry preserves proposal and pending action |
 | Generative UI | Stock OpenUI card; no frontend fork or dashboard |
 
+## Workload-security analysis
+
+`k8s-workload-security-v1@1.0.0` accepts one explicit Linux-or-unspecified `v1/Pod` or
+`apps/v1/Deployment` document. It deterministically evaluates privileged containers,
+`allowPrivilegeEscalation`, explicit UID 0, Restricted Linux capabilities, host namespaces, and
+`hostPath` across regular, init, and ephemeral containers. Rules are grounded in the Kubernetes
+[Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
+
+The public [`guardian-demo-privileged-api`](https://github.com/jayesh9747/guardian-demo-privileged-api)
+suspect commit `2c7bdb3e07714e08d9504b3504587fbf18847f29` produces five exact-JSONPath findings from blob
+`b1a60bb96fad7f93bc95536d08381e5629a6a7bd`; its secure parent
+`d2ee0cdc4e27cc8af671f4c0de15081d1c996e36` produces none. This is repository analysis, not a
+Kubernetes admission or live-cluster result. The pack has no verifier, patch, proposal, approval,
+branch, commit, or pull-request route.
+
 Saved agent: `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json). The immutable predecessor `secureops-guardian` remains saved so existing reference sessions keep resolving.
 
 ## Prerequisites
@@ -62,6 +80,7 @@ Never put provider keys, Daytona credentials, GitHub tokens, authorization heade
 ```sh
 git clone https://github.com/jayesh9747/secureops-guardian.git
 git clone https://github.com/jayesh9747/guardian-demo-checkout.git
+git clone https://github.com/jayesh9747/guardian-demo-privileged-api.git
 git clone https://github.com/jayesh9747/secureops-guardian-verifier-skill.git
 cd secureops-guardian
 pnpm install --frozen-lockfile
@@ -138,6 +157,7 @@ Run the deterministic matrices:
 pnpm phase5:matrix
 pnpm phase6:matrix
 pnpm phase7:matrix
+pnpm phase10:matrix
 ```
 
 The Phase 6 matrix covers ready, denied, PR-created, PR-reused, three inconclusive fixtures, conflict, and no-safe-remediation. It separately hashes every complete OpenUI response and Markdown recovery rendering to detect presentation drift. See the [three-minute demo script](./docs/demo/PHASE_6_DEMO_SCRIPT.md).
@@ -148,6 +168,7 @@ The Phase 6 matrix covers ready, denied, PR-created, PR-reused, three inconclusi
 - Repository and MCP content is untrusted evidence, never instructions.
 - Severity begins at `High`. Reachability does not establish data access or exfiltration; actual data access stays `Unknown`.
 - Verification is deterministic static NetworkPolicy analysis, not Kubernetes admission, CNI, DNS, packets, application behavior, live reachability, data-access, or exfiltration proof.
+- Workload-security results are deterministic repository manifest analysis; deployment, admission behavior, runtime Pod state, exploitability, reachability, data access, exfiltration, and live-cluster behavior remain `Unknown`.
 - GitHub writes bind one repository, base, branch, file, exact diff, proposal hash, and separately approved calls. The sequence is retry-safe, not atomic.
 - Guardian cannot merge, deploy, restart, roll back, delete a branch, access a cluster, contact responders, or administer a repository.
 - There is no production connector, custom authentication, analytics, organization history, second dashboard, or production data.
@@ -210,6 +231,7 @@ AI coding assistants supported planning, implementation, tests, documentation, a
 
 - Any authorized repository can enter read-only preflight, but proven remediation remains limited to the exact owned Kubernetes NetworkPolicy case inside the documented static subset.
 - Remediation uses exactly one pinned verifier pack. The old five-filename exact-JSON envelope remains accepted only as a deprecated compatibility shape and never selects files or changes the pack.
+- The workload pack supports only `v1/Pod` and `apps/v1/Deployment` and cannot produce remediation or writes.
 - The preserved public state safely demonstrates PR reuse, not a new live creation or denial sequence.
 - Phase-named saved agents and exported specifications are retained only as historical test fixtures/reference configurations.
 - There is no live cluster, production telemetry, CVE scan, packet capture, penetration test, compliance assessment, general incident response, or autonomous containment.

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: hostpath
+  namespace: tests
+spec:
+  containers:
+    - name: app
+      image: example.test/app:1
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+  volumes:
+    - name: node-data
+      hostPath:
+        path: /var/lib/example
+        type: Directory

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: restricted-capabilities
+  namespace: tests
+spec:
+  containers:
+    - name: app
+      image: example.test/app:1
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+          add: [NET_BIND_SERVICE]

@@ -131,6 +131,30 @@ describe('unified TrueForge manifest', () => {
     expect(instructions).not.toContain('same-turn uploads');
   });
 
+  it('routes exact repository evidence through two packs without widening workload capability', () => {
+    const instructions = SECUREOPS_GUARDIAN_AGENT_SPEC.manifest.instructions;
+
+    for (const requirement of [
+      'FindingPack registry',
+      'k8s-network-egress-v1',
+      'k8s-workload-security-v1',
+      'K8S-WORKLOAD-001: privileged containers',
+      'K8S-WORKLOAD-006: hostPath volumes',
+      'never emit a separate runAsNonRoot finding',
+      'emit one finding for missing drop ALL and one finding for each unsafe added capability',
+      'never call exec or create a sandbox',
+      'v1/Pod',
+      'apps/v1/Deployment',
+      'stable JSONPath',
+      'ambiguous',
+      'Pod Security Standards',
+      'ANALYSIS_ONLY and has no verifier, proposal, approval, or GitHub-write route',
+      'deployment, admission behavior, runtime Pod state, exploitability, reachability, data access, exfiltration, and live-cluster behavior Unknown',
+    ]) {
+      expect(instructions).toContain(requirement);
+    }
+  });
+
   it('keeps the portable saved-agent instructions synchronized', async () => {
     const exported = portableExportSchema.parse(
       JSON.parse(

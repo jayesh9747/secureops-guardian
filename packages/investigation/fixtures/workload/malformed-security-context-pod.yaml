@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: malformed-security-context
+  namespace: tests
+spec:
+  containers:
+    - name: app
+      image: example.test/app:1
+      securityContext:
+        privileged: 'false'
+        allowPrivilegeEscalation: 'false'
+        runAsUser: '0'
+        capabilities:
+          drop: ALL

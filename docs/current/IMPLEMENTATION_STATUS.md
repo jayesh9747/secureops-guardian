@@ -1,6 +1,6 @@
 # SecureOps Guardian implementation status
 
-Updated: 27 August 2026.
+Updated: 29 August 2026.
 
 ## Purpose
 
@@ -12,15 +12,16 @@ This file is navigation and handoff state, not a product specification. The acti
 
 - Completed and merged: original Phase 0 through Phase 7. Phase 7 PR [#8](https://github.com/jayesh9747/secureops-guardian/pull/8) merged as `cfa65ef288d2ae615c1dd2d58d1086655177420c` after the operator's alternate-review remediation and acceptance.
 - Post-Phase-7 reliability and UI-contract fixes are merged through PR [#12](https://github.com/jayesh9747/secureops-guardian/pull/12): conversation-only greeting routing, separation of result from execution trace, decision-first results, and fail-closed verifier-input handling.
-- Product `main`: `08684b89ef97d5487b236ea94e894bdda77e5c4c` after the Phase 8 acceptance-gap correction PR #14 merged.
+- Product `main`: `5d4eaff1676c4496b37da9321baab778f304a54f` after Expansion Phase 2 PR #15 merged.
 - Expansion Phase 1 — Natural-language request compiler was implemented in PR [#13](https://github.com/jayesh9747/secureops-guardian/pull/13) and its six acceptance gaps were corrected in merged PR [#14](https://github.com/jayesh9747/secureops-guardian/pull/14), reviewed head `5baf52070bd0fc6652f63db540887f6a5228d1ca`, merge commit `08684b89ef97d5487b236ea94e894bdda77e5c4c`.
-- Expansion Phase 2 — verifier skill bundle is implemented on `expansion-phase-2/verifier-skill-bundle` in open product PR [#15](https://github.com/jayesh9747/secureops-guardian/pull/15) and remains unmerged. The separate public skill repository is pinned at payload commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, tag `guardian-network-egress-v1.0.4`; skill PR [#1](https://github.com/jayesh9747/secureops-guardian-verifier-skill/pull/1) is open at head `c1b107cc3d3427a21eca51f8bb227bbd2d8a93b1`, whose later packaging guard does not change the payload. Product evidence is in [`EXPANSION_PHASE_2_VERIFIER_SKILL_BUNDLE.md`](../evidence/EXPANSION_PHASE_2_VERIFIER_SKILL_BUNDLE.md).
+- Expansion Phase 2 — verifier skill bundle merged in product PR [#15](https://github.com/jayesh9747/secureops-guardian/pull/15) as `5d4eaff1676c4496b37da9321baab778f304a54f`. The separate public skill repository remains pinned at payload commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, tag `guardian-network-egress-v1.0.4`; skill PR [#1](https://github.com/jayesh9747/secureops-guardian-verifier-skill/pull/1) remains open at head `c1b107cc3d3427a21eca51f8bb227bbd2d8a93b1`. Product evidence is in [`EXPANSION_PHASE_2_VERIFIER_SKILL_BUNDLE.md`](../evidence/EXPANSION_PHASE_2_VERIFIER_SKILL_BUNDLE.md).
+- Expansion Phase 3 — FindingPack registry and workload security is implemented in open, non-draft product PR [#16](https://github.com/jayesh9747/secureops-guardian/pull/16) from `expansion-phase-3/finding-packs`. The final acceptance Standards and Spec reviews reported no findings on implementation head `06f694f`; Qodo reported reviews paused and was not manually requested. The deterministic/live-repository evidence record is [`EXPANSION_PHASE_3_FINDING_PACKS_AND_WORKLOAD_SECURITY.md`](../evidence/EXPANSION_PHASE_3_FINDING_PACKS_AND_WORKLOAD_SECURITY.md).
 - Frozen Phase 5 review-remediated core: `263e6a27307a667f08bfa832b436a754c0848a2e`.
 - Controlling proposal hash: `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`.
 - Remediation PR `jayesh9747/guardian-demo-checkout#1` is open and unmerged at commit `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
 - TrueForge runtime pin: `6026509d905fe255bf493e3845b1fca237bdf0fd`.
 - Saved TrueForge agent `01m0t4gpvz34x60qz6fxqz214d` now byte-matches the merged Phase 4 instructions, enables direct `list_pull_requests`, and separately approval-gates all three writes.
-- Saved TrueForge agent `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`, is reconciled to the Expansion Phase 2 portable manifest. Canonical saved/export manifest SHA-256 is `4ee60f192d6abfa1f46ba4e8c9f8b79cd825ac043d874305ae779a06931848e6`. The manifest attaches only the pinned `guardian-network-egress-v1` skill in addition to the retained official GitHub MCP, Fixture MCP, Daytona, dynamic children, all three write approvals, stock Generative UI, and ask-user behavior. Its immutable predecessor `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, remains saved so existing reference sessions keep resolving.
+- Saved TrueForge agent `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`, is reconciled to the Expansion Phase 3 portable manifest. Canonical saved/export manifest SHA-256 is `5d0a316269ce377478c64bb049ddd848ed0cdc65cf9ef31e94710383b8ee01bf`. The manifest attaches only the pinned `guardian-network-egress-v1` skill in addition to the retained official GitHub MCP, Fixture MCP, Daytona, dynamic children, all three write approvals, stock Generative UI, and ask-user behavior; the workload pack remains analysis-only and cannot route into those higher capabilities. Its immutable predecessor `secureops-guardian`, ID `01m0vvphezaejvtcxgf9z972ed`, remains saved so existing reference sessions keep resolving.
 - Phase-named saved agents remain only as historical test fixtures/reference configurations.
 - The TrueForge worktree has an operator-owned `docker-compose.yml` change. Preserve it and keep it out of product commits.
 
@@ -38,6 +39,7 @@ This file is navigation and handoff state, not a product specification. The acti
 | 7 — unified Guardian | `jayesh9747/secureops-guardian#8` | `b0ca030524aad8f4227e29bae86a0dcc5f219229` | `cfa65ef288d2ae615c1dd2d58d1086655177420c` | [`PHASE_7_UNIFIED_GUARDIAN.md`](../evidence/PHASE_7_UNIFIED_GUARDIAN.md) |
 | Expansion 1 — natural-language compiler | `jayesh9747/secureops-guardian#13` | `bb6d71035d4109a42bb13be561ea28c300834743` | `dc056805934ff55d83e0756c5d91a722184309b1` | [`EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md`](../evidence/EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md) |
 | Phase 8 — Expansion 1 acceptance corrections | `jayesh9747/secureops-guardian#14` | `5baf52070bd0fc6652f63db540887f6a5228d1ca` | `08684b89ef97d5487b236ea94e894bdda77e5c4c` | [`EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md`](../evidence/EXPANSION_PHASE_1_NATURAL_LANGUAGE_REQUEST_COMPILER.md) |
+| Expansion 2 — verifier skill bundle | `jayesh9747/secureops-guardian#15` | `12132f9f935d1f25668780fab86008bed61a7937` | `5d4eaff1676c4496b37da9321baab778f304a54f` | [`EXPANSION_PHASE_2_VERIFIER_SKILL_BUNDLE.md`](../evidence/EXPANSION_PHASE_2_VERIFIER_SKILL_BUNDLE.md) |
 
 Read a completed phase's plan or evidence only when verifying its prerequisite, reproducing its trace, or diagnosing a regression.
 
@@ -77,6 +79,7 @@ The repository currently contains:
 - Phase 7 stable request/scope schemas, parameterized read-only preflight, hard mode ceilings, fail-closed support evaluation, exact OPEN_PR artifact composition, cross-stage receipt hashing/validation, a composed current-fixture journey, prompt templates, one unified exported/saved manifest, and migration documentation.
 - Expansion Phase 1 natural-language compilation above the stable request: untrusted draft schema, explicit-source normalization, one-question missing-field outcome, digest-bound higher-capability confirmation, exact-JSON compatibility, and fail-closed planning integration.
 - Expansion Phase 2 immutable verifier delivery: one separate registered TrueForge skill, exact runtime-root proof, manifest/file digest validation, support-gated staging, candidate-before-reference and two-attempt/four-state preservation, pack identity/binding propagation through proof/proposal/receipt/UI/write reuse, and a synchronized saved-agent export.
+- Expansion Phase 3 immutable two-pack registry: the retained egress synthesis runs through `k8s-network-egress-v1@1.0.4` without proposal-hash drift; `k8s-workload-security-v1@1.0.0` performs exact-evidence Pod/Deployment analysis for six Kubernetes Pod Security Standards rule families. Workload results carry exact object/container identity and JSONPath evidence and are structurally/runtime limited to `ANALYSIS_ONLY` with stock presentation mapping.
 - The post-Phase 7 response contract keeps the security result in chat while assigning child-agent, MCP, sandbox, approval, timing, and failure visibility to TrueForge's Investigation rail. A successful OpenUI response contains its receipt in a progressive-disclosure tab and does not append the complete Markdown recovery rendering.
 
 The repository does not contain merge/deployment behavior, cluster access, a Guardian persistence database, custom TrueForge frontend, separate dashboard, broad vulnerability remediation, or general incident response.
@@ -92,6 +95,15 @@ Repository: `jayesh9747/guardian-demo-checkout`
 | Open remediation candidate | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |
 
 These SHAs are evidence identifiers, not moving aliases. Advancing the fixture branch does not change them. Replacing the scenario requires new commits, a fixture-version bump, synchronized product constants/tests/docs, and a new TrueForge GitHub-MCP join trace. Do not rewrite the owned fixture history.
+
+Repository: `jayesh9747/guardian-demo-privileged-api`
+
+| Role | Full commit SHA | Git blob SHA |
+| --- | --- | --- |
+| Benign workload | `d2ee0cdc4e27cc8af671f4c0de15081d1c996e36` | `3e8b0f62ef1ba0553b1b4b310444f9a207b9fc9a` |
+| Privilege-drift workload | `2c7bdb3e07714e08d9504b3504587fbf18847f29` | `b1a60bb96fad7f93bc95536d08381e5629a6a7bd` |
+
+These are repository-analysis fixtures only. They are not connected to Kubernetes and cannot support deployment, admission, runtime, or exploitability claims.
 
 ## Phase 5 entry and exit check
 

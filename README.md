@@ -84,7 +84,7 @@ suspect commit `2c7bdb3e07714e08d9504b3504587fbf18847f29` produces five exact-JS
 Kubernetes admission or live-cluster result. The pack has no verifier, patch, proposal, approval,
 branch, commit, or pull-request route.
 
-Saved agent: `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json); its release-candidate canonical manifest SHA-256 is `8a5c3eaff0e588e5b2ee6557c081378f7fee4cba55003b3813bfd877cc1c9d44`. The immutable predecessor `secureops-guardian` remains saved so existing reference sessions keep resolving.
+Saved agent: `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json); its release-candidate canonical manifest SHA-256 is `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`. The immutable predecessor `secureops-guardian` remains saved so existing reference sessions keep resolving.
 
 ## Prerequisites
 
@@ -277,7 +277,7 @@ AI coding assistants supported planning, implementation, tests, documentation, a
 | Fixture remediation | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |
 | Proposal SHA-256 | `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15` |
 | Pack-binding SHA-256 | `3afb251833539c6383a999c2255934c76648994505857e543bc5d3959b7c9e20` |
-| Saved/export manifest SHA-256 | `8a5c3eaff0e588e5b2ee6557c081378f7fee4cba55003b3813bfd877cc1c9d44` |
+| Saved/export manifest SHA-256 | `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0` |
 | Verifier payload | `ade2d1453bba033dd3300a7c7aede6e28b97582d` (`guardian-network-egress-v1.0.4`) |
 | Historical TrueForge source pin | `6026509d905fe255bf493e3845b1fca237bdf0fd` |
 

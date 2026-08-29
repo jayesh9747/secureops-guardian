@@ -88,6 +88,7 @@ describe('unified TrueForge manifest', () => {
       'MCP and Daytona calls under the responsible agent',
       'Findings, Evidence, and Activity remain separate',
       'NO_DETERMINISTIC_FINDING, never NO_FINDING',
+      'Never broaden it to no vulnerabilities, secure, safe, clean, compliant',
       'ANALYSIS_ONLY sandbox hard stop',
       'A blob or download reference is not complete file content',
       'capabilities.drop, never the parent capabilities path',

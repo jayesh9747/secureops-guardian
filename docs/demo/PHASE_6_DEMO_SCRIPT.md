@@ -1,6 +1,6 @@
 # SecureOps Guardian three-minute release demo
 
-Use the stock TrueForge UI at normal playback speed. The controlling completed release rehearsal is session `01m16e0sej7ybprysty571k1qf`; it returned the existing public fixture PR with no write or approval. Do not present the approximately six-to-seven-minute cold model execution as a three-minute completion claim. The three-minute flow is a guided walkthrough of the canonical completed session.
+Use the stock TrueForge UI at normal playback speed. The controlling completed release rehearsal is session `01m16gdxzf8vhg5jmx2dwjesmd`; it returned the existing public fixture PR with no write or approval. Do not present the approximately six-to-seven-minute cold model execution as a three-minute completion claim. The three-minute flow is a guided walkthrough of the canonical completed session. The accepted interactive browser timing rehearsal traversed the complete script in `168.3` seconds; an earlier `184.2`-second attempt was rejected.
 
 Hide browser bookmarks, notifications, provider settings, terminal paths, connector headers, tokens, and private identifiers before recording. Recording, upload, public visibility, and signed-out playback validation remain operator-only.
 
@@ -23,9 +23,9 @@ The timed rows contain roughly 250 words of screen direction and narration plus 
 
 ## Backup proof
 
-If the primary session is unavailable, use accepted rehearsal `01m16dknygk9013rm7t6nens2w`. It has the same frozen manifest, proposal, pack binding, child roles, one sandbox, six-read reconciliation, valid stock OpenUI, `PR_REUSED`, and zero approval/write events.
+If the primary session is unavailable, use accepted rehearsal `01m16fzxwk9pt3h39bt2rqg9x0`. It has the same frozen manifest, proposal, pack binding, child roles, one sandbox, six-read reconciliation, valid stock OpenUI, `PR_REUSED`, and zero approval/write events.
 
-Use workload session `01m16cd5dtc76v5djytwmsz71b` only as short backup evidence of pack breadth. It shows five exact workload-security findings and stops at GitHub-only `ANALYSIS_ONLY`. Use benign session `01m16epj331ec41djrb38xfvnr` to show `NO_DETERMINISTIC_FINDING` with three GitHub reads and zero sandbox/Fixture/approval/write. Neither should replace the checkout story in the primary video.
+Use workload session `01m16cd5dtc76v5djytwmsz71b` only as short backup evidence of pack breadth. It shows five exact workload-security findings and stops at GitHub-only `ANALYSIS_ONLY`. Use benign session `01m16fewfgxz7r5a0c9e7fvt0e` to show a pack-, subset-, file-, and revision-scoped `NO_DETERMINISTIC_FINDING` with three GitHub reads and zero sandbox/Fixture/approval/write. Neither should replace the checkout story in the primary video.
 
 If OpenUI fails during a backup take:
 
@@ -36,7 +36,7 @@ If OpenUI fails during a backup take:
 
 ## Cancellation/no-write proof
 
-Session `01m16ef7cw4nzwpygbfcrjdx2m` demonstrates cancellation at interpreted-request confirmation. It shows zero agents, zero MCP calls, zero sandboxes, and the terminal cancellation message. This is not a live first-write approval denial. The deterministic mutation matrix proves first-write denial; a new live first-write path was not manufactured because doing so would require a destructive fixture reset.
+Session `01m16gwfhkthfsx159xdkd5x7n` demonstrates cancellation at interpreted-request confirmation. It shows zero agents, zero MCP calls, zero sandboxes, and the terminal cancellation message. This is not a live first-write approval denial. The deterministic mutation matrix proves first-write denial; a new live first-write path was not manufactured because doing so would require a destructive fixture reset.
 
 ## Recording acceptance check
 

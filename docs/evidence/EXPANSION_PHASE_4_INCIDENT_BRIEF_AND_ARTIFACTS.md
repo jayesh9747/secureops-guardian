@@ -11,6 +11,10 @@ Product PR: [#17](https://github.com/jayesh9747/secureops-guardian/pull/17), ope
 The Standards and Spec review axes were clean at implementation head
 `70a036fa2149486d9f30b20c9123b192a9d5bf99`.
 
+Qodo automatically attempted PR #17 and reported that reviews are paused for this user. Because it
+was unavailable, no manual Qodo review was requested; the paused response contains no findings or
+approval, and none is claimed.
+
 ## Implemented boundary
 
 Phase 11 adds presentation and representation contracts without changing finding, verification,

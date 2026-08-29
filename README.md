@@ -10,7 +10,7 @@ Built for [The Agent Harness Hackathon](https://www.wemakedevs.org/hackathons/tr
 | **Created by** | [Jayesh Savaliya](https://github.com/jayesh9747) |
 | **Final agent** | `secureops-guardian` |
 | **Primary demo** | Kubernetes NetworkPolicy egress regression |
-| **Status** | Release gate passed; final demo follow-up in [PR #19](https://github.com/jayesh9747/secureops-guardian/pull/19) |
+| **Status** | Release gate passed; final saved agent and demo assets are on `main` |
 
 [Demo script](./docs/demo/PHASE_6_DEMO_SCRIPT.md) · [Architecture](./docs/current/ARCHITECTURE.md) · [Release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md) · [Fixture PR #1](https://github.com/jayesh9747/guardian-demo-checkout/pull/1)
 

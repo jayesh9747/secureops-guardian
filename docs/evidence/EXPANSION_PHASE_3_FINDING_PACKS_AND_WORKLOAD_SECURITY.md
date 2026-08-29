@@ -1,7 +1,8 @@
 # Expansion Phase 3 — FindingPack registry and workload security evidence
 
-Status: implementation evidence on `expansion-phase-3/finding-packs`; PR and review evidence are
-added during phase handoff. Updated 29 August 2026.
+Status: implemented on `expansion-phase-3/finding-packs` in open, non-draft product PR
+[#16](https://github.com/jayesh9747/secureops-guardian/pull/16); intentionally unmerged. Updated
+29 August 2026.
 
 ## Scope and entry gate
 
@@ -128,3 +129,18 @@ pnpm phase10:matrix
 
 The gate must reproduce the five suspect findings, zero benign findings, the workload higher-route
 stop, and the frozen egress proposal hash above.
+
+## Review and PR handoff
+
+The first independent Standards/Spec review found typed-identity and duplicated-construction
+concerns plus three spec gaps around patch binding, higher-capability routing, and security-context attribution. Follow-up
+review found contradictory effective capability metadata, field-level UID-0 semantics, a
+context-only patch bypass, and incomplete OpenUI identity. Each applicable finding was reproduced,
+fixed with regression coverage, and rerun through the complete gate. The final Standards review
+and final Spec review both reported zero findings on reviewed head `1ca2968`.
+
+Product PR [#16](https://github.com/jayesh9747/secureops-guardian/pull/16) is open and non-draft from
+`expansion-phase-3/finding-packs` into `main`; GitHub reported it cleanly mergeable and GitGuardian
+passed. Qodo automatically commented that reviews are paused for this user. Because Qodo was not
+available, no manual Qodo review was requested; its paused response is not a review or approval.
+The PR remains unmerged for operator acceptance.

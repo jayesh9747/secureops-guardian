@@ -138,21 +138,13 @@ export interface FindingPack<
   readonly presentation_adapter: (analysis: FindingPackAnalysis) => FindingPackPresentation;
 }
 
-const REGISTERED_FINDING_PACKS = Object.freeze([EGRESS_PACK, WORKLOAD_PACK] as const);
-
-interface RegisteredFindingPackExecutor {
-  readonly identity: FindingPackIdentity;
-  readonly capability: FindingPackCapability;
-  readonly scope_predicate: (file: FindingPackChangedFileEvidence) => boolean;
-  readonly analyze: (file: FindingPackChangedFileEvidence) => FindingPackExecution;
-}
-
-function createRegisteredExecutor<
+function createRegistration<
   I extends FindingPackIdentity,
   R extends FindingPackRuleId,
   C extends FindingPackCapability,
->(pack: FindingPack<I, R, C>): RegisteredFindingPackExecutor {
+>(pack: FindingPack<I, R, C>) {
   return Object.freeze({
+    pack,
     identity: pack.identity,
     capability: pack.capability,
     scope_predicate: pack.scope_predicate,
@@ -160,18 +152,30 @@ function createRegisteredExecutor<
   });
 }
 
-const REGISTERED_EXECUTORS: readonly RegisteredFindingPackExecutor[] = Object.freeze([
-  createRegisteredExecutor(EGRESS_PACK),
-  createRegisteredExecutor(WORKLOAD_PACK),
-]);
+const REGISTERED_FINDING_PACKS = Object.freeze([
+  createRegistration(EGRESS_PACK),
+  createRegistration(WORKLOAD_PACK),
+] as const);
+
+type PacksFromRegistrations<T extends readonly { readonly pack: unknown }[]> = {
+  readonly [K in keyof T]: T[K] extends { readonly pack: infer P } ? P : never;
+};
+
+function projectRegisteredPacks<const T extends readonly { readonly pack: unknown }[]>(
+  registrations: T,
+): PacksFromRegistrations<T> {
+  return registrations.map((registration) => registration.pack) as PacksFromRegistrations<T>;
+}
+
+const REGISTERED_PACK_VIEW = Object.freeze(projectRegisteredPacks(REGISTERED_FINDING_PACKS));
 
 export const FINDING_PACK_REGISTRY = Object.freeze({
-  packs: REGISTERED_FINDING_PACKS,
+  packs: REGISTERED_PACK_VIEW,
   analyze(request: FindingPackRequest): FindingPackExecution {
-    const matches = REGISTERED_EXECUTORS.flatMap((executor) =>
+    const matches = REGISTERED_FINDING_PACKS.flatMap((registration) =>
       request.changed_files
-        .filter((file) => executor.scope_predicate(file))
-        .map((file) => ({ executor, file })),
+        .filter((file) => registration.scope_predicate(file))
+        .map((file) => ({ registration, file })),
     );
     if (matches.length !== 1) {
       return {
@@ -193,17 +197,19 @@ export const FINDING_PACK_REGISTRY = Object.freeze({
       REMEDIATION_PROVEN: 1,
       OPEN_PR_ELIGIBLE: 2,
     };
-    if (capabilityRank[request.requested_capability] > capabilityRank[match.executor.capability]) {
+    if (
+      capabilityRank[request.requested_capability] > capabilityRank[match.registration.capability]
+    ) {
       return {
         outcome: 'INCONCLUSIVE',
         pack: null,
         severity: 'Unknown',
         missing_or_unsupported_requirements: [
-          `${match.executor.identity.pack_id} cannot satisfy ${request.requested_capability}.`,
+          `${match.registration.identity.pack_id} cannot satisfy ${request.requested_capability}.`,
         ],
         routes: WORKLOAD_ROUTES,
       };
     }
-    return match.executor.analyze(match.file);
+    return match.registration.analyze(match.file);
   },
 });

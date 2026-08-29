@@ -154,6 +154,10 @@ Fresh final-name [session `01m16kn1n07evwtjtje2e7rfk1`](http://localhost:8791/se
 
 The final README frame is [`secureops-guardian-pr-reused.jpg`](./final-release/secureops-guardian-pr-reused.jpg). It shows the final agent name, `PR_REUSED`, `High`, complete evidence, both completed investigators, and the GitHub/sandbox execution groups without the historical agent list or credentials.
 
+Final-name confirmation [session `01m16n6h2k2hbv34b1nv5mkjd4`](http://localhost:8791/sessions/01m16n6h2k2hbv34b1nv5mkjd4) provides the UI/UX safety close-up used in the README. Interpretation turn `01m16n6h5aznyhbca349nw0veg.ueyhrn` stopped with one ask-user requirement while the rail showed zero agents, zero MCP calls, and zero sandboxes. Cancellation turn `01m16n8c8vgbjchnj1mgjwdd7d.ueyhrn` made no tool call and ended with no investigation, Daytona verification, or GitHub operation. The captured frame is [`human-confirmation-gate.jpg`](./final-release/human-confirmation-gate.jpg).
+
+The supporting UI gallery is [`four-state-verification.jpg`](./final-release/four-state-verification.jpg), [`proposed-change-and-approval-boundary.jpg`](./final-release/proposed-change-and-approval-boundary.jpg), and [`auditable-run-receipt.jpg`](./final-release/auditable-run-receipt.jpg). Each uses the final agent name and the same accepted PR-reuse session.
+
 Full verification from merged `origin/main` plus only the final-name metadata/docs change passed: formatting, lint, typecheck, build, Phases 5/6/7/10/11/12 matrices, 181 focused tests, and all 290 tests. The four public demo default refs were already pushed and were reverified without rewriting history:
 
 | Repository | Public default ref |

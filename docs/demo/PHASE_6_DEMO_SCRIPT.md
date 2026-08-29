@@ -38,7 +38,7 @@ If OpenUI fails during a backup take:
 
 ## Cancellation/no-write proof
 
-Session `01m16gwfhkthfsx159xdkd5x7n` demonstrates cancellation at interpreted-request confirmation. It shows zero agents, zero MCP calls, zero sandboxes, and the terminal cancellation message. This is not a live first-write approval denial. The deterministic mutation matrix proves first-write denial; a new live first-write path was not manufactured because doing so would require a destructive fixture reset.
+Final-name session `01m16n6h2k2hbv34b1nv5mkjd4` demonstrates cancellation at interpreted-request confirmation. It shows `secureops-guardian` waiting with zero agents, zero MCP calls, and zero sandboxes; the next turn cancels and states that no investigation, Daytona verification, or GitHub operation ran. Use the [confirmation-gate frame](../evidence/final-release/human-confirmation-gate.jpg) when the video needs a clear safety close-up. This is not a live first-write approval denial. The deterministic mutation matrix proves first-write denial; a new live first-write path was not manufactured because doing so would require a destructive fixture reset.
 
 ## Recording acceptance check
 

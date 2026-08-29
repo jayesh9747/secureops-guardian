@@ -71,12 +71,15 @@ export function renderFindingPackAnalysisMarkdown(
   const identity = `${presentation.object_identity.api_version}/${presentation.object_identity.kind} ${presentation.object_identity.namespace}/${presentation.object_identity.name}`;
   const findingRows =
     presentation.findings.length === 0
-      ? '| — | — | — | No deterministic finding |'
+      ? '| — | — | — | — | No deterministic finding |'
       : presentation.findings
-          .map(
-            (finding) =>
-              `| ${finding.rule_id} | ${finding.severity} | \`${tableCell(finding.json_path)}\` | ${tableCell(finding.summary)} |`,
-          )
+          .map((finding) => {
+            const findingIdentity =
+              finding.container_identity === null
+                ? identity
+                : `${identity} · ${finding.container_identity.container_type}:${finding.container_identity.name}`;
+            return `| ${finding.rule_id} | ${finding.severity} | ${tableCell(findingIdentity)} | \`${tableCell(finding.json_path)}\` | ${tableCell(finding.summary)} |`;
+          })
           .join('\n');
   const evidence = presentation.evidence_references
     .map((reference) => `- \`${reference.evidence_id}\` — \`${reference.source_ref}\``)
@@ -93,8 +96,8 @@ export function renderFindingPackAnalysisMarkdown(
 - File: \`${presentation.file}\`
 - Kubernetes object: \`${identity}\`
 
-| Rule | Severity | JSONPath | Finding |
-| --- | --- | --- | --- |
+| Rule | Severity | Identity | JSONPath | Finding |
+| --- | --- | --- | --- | --- |
 ${findingRows}
 
 ### Evidence

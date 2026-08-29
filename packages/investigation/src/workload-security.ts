@@ -26,7 +26,16 @@ export const WORKLOAD_RULE_ID_LIST: readonly WorkloadRuleId[] = Object.freeze(
 );
 
 const DNS_LABEL = /^[a-z0-9](?:[-a-z0-9]*[a-z0-9])?$/u;
-const DNS_SUBDOMAIN = /^[a-z0-9](?:[-a-z0-9.]*[a-z0-9])?$/u;
+
+function isDnsSubdomain(value: string): boolean {
+  return (
+    value.length > 0 &&
+    value.length <= 253 &&
+    value
+      .split('.')
+      .every((label) => label.length > 0 && label.length <= 63 && DNS_LABEL.test(label))
+  );
+}
 
 interface ExtractedContainer {
   readonly type: 'container' | 'initContainer' | 'ephemeralContainer';
@@ -37,7 +46,7 @@ interface ExtractedContainer {
 }
 
 interface ExtractedWorkload {
-  readonly object_identity: FindingPackFinding['object_identity'];
+  readonly object_identity: FindingPackFinding<WorkloadRuleId>['object_identity'];
   readonly pod_spec: JsonRecord;
   readonly pod_spec_path: '$.spec' | '$.spec.template.spec';
   readonly containers: readonly ExtractedContainer[];
@@ -162,9 +171,7 @@ export function extractSupportedWorkload(content: string): ExtractedWorkload | u
     typeof parsed.kind !== 'string' ||
     typeof parsed.metadata.name !== 'string' ||
     typeof parsed.metadata.namespace !== 'string' ||
-    parsed.metadata.name.length === 0 ||
-    parsed.metadata.name.length > 253 ||
-    !DNS_SUBDOMAIN.test(parsed.metadata.name) ||
+    !isDnsSubdomain(parsed.metadata.name) ||
     parsed.metadata.namespace.length === 0 ||
     parsed.metadata.namespace.length > 63 ||
     !DNS_LABEL.test(parsed.metadata.namespace)
@@ -210,10 +217,10 @@ function createWorkloadFinding(
   workload: ExtractedWorkload,
   evidence: FindingPackChangedFileEvidence,
   finding: Omit<
-    FindingPackFinding,
+    FindingPackFinding<WorkloadRuleId>,
     'severity' | 'object_identity' | 'evidence_references' | 'legacy_rule_result'
   >,
-): FindingPackFinding {
+): FindingPackFinding<WorkloadRuleId> {
   return {
     ...finding,
     severity: 'High',
@@ -225,7 +232,7 @@ function createWorkloadFinding(
 function privilegedFindings(
   workload: ExtractedWorkload,
   evidence: FindingPackChangedFileEvidence,
-): FindingPackFinding[] {
+): FindingPackFinding<WorkloadRuleId>[] {
   return workload.containers.flatMap((container) => {
     const securityContext = recordAt(container.value, 'securityContext');
     if (securityContext?.privileged !== true) return [];
@@ -244,7 +251,7 @@ function privilegedFindings(
 function privilegeEscalationFindings(
   workload: ExtractedWorkload,
   evidence: FindingPackChangedFileEvidence,
-): FindingPackFinding[] {
+): FindingPackFinding<WorkloadRuleId>[] {
   return workload.containers.flatMap((container) => {
     const securityContext = recordAt(container.value, 'securityContext');
     const observed = securityContext?.allowPrivilegeEscalation;
@@ -264,8 +271,8 @@ function privilegeEscalationFindings(
 function rootExecutionFindings(
   workload: ExtractedWorkload,
   evidence: FindingPackChangedFileEvidence,
-): FindingPackFinding[] {
-  const findings: FindingPackFinding[] = [];
+): FindingPackFinding<WorkloadRuleId>[] {
+  const findings: FindingPackFinding<WorkloadRuleId>[] = [];
   const podSecurityContext = recordAt(workload.pod_spec, 'securityContext');
   if (podSecurityContext?.runAsUser === 0) {
     findings.push(
@@ -315,8 +322,8 @@ function rootExecutionFindings(
 function capabilityFindings(
   workload: ExtractedWorkload,
   evidence: FindingPackChangedFileEvidence,
-): FindingPackFinding[] {
-  const findings: FindingPackFinding[] = [];
+): FindingPackFinding<WorkloadRuleId>[] {
+  const findings: FindingPackFinding<WorkloadRuleId>[] = [];
   for (const container of workload.containers) {
     const securityContext = recordAt(container.value, 'securityContext');
     const capabilities =
@@ -354,7 +361,7 @@ function capabilityFindings(
 function hostNamespaceFindings(
   workload: ExtractedWorkload,
   evidence: FindingPackChangedFileEvidence,
-): FindingPackFinding[] {
+): FindingPackFinding<WorkloadRuleId>[] {
   return (['hostNetwork', 'hostPID', 'hostIPC'] as const).flatMap((field) => {
     if (workload.pod_spec[field] !== true) return [];
     return [
@@ -372,7 +379,7 @@ function hostNamespaceFindings(
 function hostPathFindings(
   workload: ExtractedWorkload,
   evidence: FindingPackChangedFileEvidence,
-): FindingPackFinding[] {
+): FindingPackFinding<WorkloadRuleId>[] {
   const volumes = workload.pod_spec.volumes;
   if (!Array.isArray(volumes)) return [];
   return volumes.flatMap((volume, index) => {
@@ -391,7 +398,7 @@ function hostPathFindings(
 
 export function analyzeWorkloadSecurity(
   evidence: FindingPackChangedFileEvidence,
-): FindingPackAnalysis<'ANALYSIS_ONLY'> {
+): FindingPackAnalysis<'ANALYSIS_ONLY', typeof WORKLOAD_PACK_IDENTITY, WorkloadRuleId> {
   const workload = extractSupportedWorkload(evidence.content);
   if (workload === undefined) {
     throw new Error('Workload pack received malformed or unsupported evidence.');

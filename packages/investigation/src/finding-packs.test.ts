@@ -133,6 +133,27 @@ function workloadRequest(content: string, gitBlobSha: string) {
 
 describe('FindingPack registry contract', () => {
   it('exposes exactly the egress and workload packs with capability-bound routes', () => {
+    expectTypeOf(FINDING_PACK_REGISTRY.packs[0].identity).toEqualTypeOf<{
+      readonly pack_id: 'k8s-network-egress-v1';
+      readonly pack_version: '1.0.4';
+    }>();
+    expectTypeOf(FINDING_PACK_REGISTRY.packs[0].deterministic_rules).toEqualTypeOf<
+      readonly 'SEC-NET-001'[]
+    >();
+    expectTypeOf(FINDING_PACK_REGISTRY.packs[1].identity).toEqualTypeOf<{
+      readonly pack_id: 'k8s-workload-security-v1';
+      readonly pack_version: '1.0.0';
+    }>();
+    expectTypeOf(FINDING_PACK_REGISTRY.packs[1].deterministic_rules).toEqualTypeOf<
+      readonly (
+        | 'K8S-WORKLOAD-001'
+        | 'K8S-WORKLOAD-002'
+        | 'K8S-WORKLOAD-003'
+        | 'K8S-WORKLOAD-004'
+        | 'K8S-WORKLOAD-005'
+        | 'K8S-WORKLOAD-006'
+      )[]
+    >();
     expect(
       FINDING_PACK_REGISTRY.packs.map((pack) => ({
         identity: pack.identity,
@@ -482,6 +503,23 @@ describe('FindingPack registry contract', () => {
     expect(FINDING_PACK_REGISTRY.analyze(contextOnly)).toMatchObject({ outcome: 'INCONCLUSIVE' });
   });
 
+  it('rejects deletion-only and out-of-range hunks that cannot bind to the exact postimage', () => {
+    for (const forgedPatch of [
+      '@@ -1 +1,0 @@\n-completely-fabricated',
+      '@@ -1,2 +1 @@\n-completely-fabricated\n apiVersion: apps/v1',
+      '@@ -0,0 +999,1 @@\n+not-the-manifest',
+      '@@ -0,0 +0,1 @@\n+not-the-manifest',
+    ]) {
+      const request = workloadRequest(privilegedDeployment, blobSha(privilegedDeployment));
+      const changedFile = request.changed_files[0];
+      if (changedFile === undefined) throw new Error('Expected one workload changed file.');
+      changedFile.patch = forgedPatch;
+      changedFile.patch_sha256 = sha256(forgedPatch);
+
+      expect(FINDING_PACK_REGISTRY.analyze(request)).toMatchObject({ outcome: 'INCONCLUSIVE' });
+    }
+  });
+
   it('rejects unsafe repository paths and non-canonical Kubernetes identities', () => {
     const unsafePath = workloadRequest(nonRootPod, blobSha(nonRootPod));
     const unsafeFile = unsafePath.changed_files[0];
@@ -504,6 +542,14 @@ describe('FindingPack registry contract', () => {
       FINDING_PACK_REGISTRY.analyze(workloadRequest(unsafeIdentity, blobSha(unsafeIdentity)))
         .outcome,
     ).toBe('INCONCLUSIVE');
+
+    for (const invalidName of ['a..b', 'a-.b', `${'a'.repeat(64)}.b`]) {
+      const invalidIdentity = nonRootPod.replace('name: non-root', `name: ${invalidName}`);
+      expect(
+        FINDING_PACK_REGISTRY.analyze(workloadRequest(invalidIdentity, blobSha(invalidIdentity)))
+          .outcome,
+      ).toBe('INCONCLUSIVE');
+    }
   });
 
   it('makes workload verification, proposal, approval, and write routes structurally unreachable', () => {

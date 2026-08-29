@@ -36,7 +36,8 @@ it does not claim Pod Security Admission behavior.
 
 Every conclusive result is bound to repository, full revision, file, SHA-256-bound unified patch,
 Git blob identity, Kubernetes object identity, exact container identity where applicable, stable
-JSONPath, evidence ID, and source reference. Patch hunks must contain a mutation and match the exact
-postimage blob; context-only or unrelated hunks are rejected. Repository-only analysis may
+JSONPath, evidence ID, and source reference. Patch hunks must contain an added postimage mutation,
+declare in-range postimage coordinates, and match the exact postimage blob; context-only,
+deletion-only, out-of-range, or unrelated hunks are rejected. Repository-only analysis may
 establish only manifest facts. Deployment, admission, runtime Pod state, exploitability,
 reachability, data access, exfiltration, and live-cluster behavior remain `Unknown`.

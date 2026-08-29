@@ -78,6 +78,7 @@ describe('workload FindingPack presentation mapping', () => {
     expect(markdown).toContain('k8s-workload-security-v1@1.0.0');
     expect(markdown).toContain('- Severity: `High`');
     expect(markdown).toContain('ANALYSIS_ONLY');
+    expect(markdown).toContain('container:catalog-api');
     expect(markdown).toContain(
       'No verifier, proposal, approval, branch, commit, or PR was reached.',
     );

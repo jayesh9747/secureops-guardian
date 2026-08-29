@@ -251,7 +251,7 @@ For Phase 6, Qodo's automatic attempt, an earlier manual request, and the offici
 
 For Phase 7, Qodo's automatic attempt and official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513497) on [PR #8](https://github.com/jayesh9747/secureops-guardian/pull/8) were also paused. The [paused response](https://github.com/jayesh9747/secureops-guardian/pull/8#issuecomment-5408513076) contains no findings or approval. The alternate standards/spec review found valid comparison scopes were rejected by the composed journey and actionable receipt states could bypass proof/proposal stage binding; both were reproduced and remediated with focused tests.
 
-Phase 12 Qodo status is recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr) after the release PR is opened. A paused response is not treated as a review, finding, or approval; the repository standards/spec review remains the controlling release review.
+For Phase 12, Qodo's [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461905572) and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906267) on release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) were paused. The [official paused response](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906533) contains no findings, completed review, or approval; none is claimed. The independent Standards/Spec review is the controlling release review, recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
 
 ## AI-assistance disclosure
 

@@ -2,7 +2,7 @@
 
 Date: 29 August 2026.
 
-Status: release candidate validated live; full candidate verification, final reviews, Qodo status, and release PR are recorded below when complete. Operator approval, merge, recording upload, and submission remain outside this implementation handoff.
+Status: release gate passed for the agent-executable scope; exact-candidate verification, clean public setup, independent reviews, paused Qodo attempts, and non-draft release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) are recorded below. Operator approval, merge, recording upload, signed-out validation, and submission remain outside this implementation handoff.
 
 ## Scope and entry gate
 
@@ -122,7 +122,7 @@ Screenshots contain no connector headers, credentials, provider settings, local 
 
 `pnpm phase12:matrix` is the focused release command. It runs the natural-language compiler, FindingPack, verifier, pack-delivery, GitHub-write, reliability, presentation, artifact, and saved-agent contract suites. The adversarial coverage in those suites includes contradictory scope, prompt injection, malformed/unsupported resources, pack/digest tampering, proposal/candidate/remote conflicts, denial, and representation identity mismatch.
 
-Pre-review exact-candidate verification passed:
+Final exact-candidate verification passed after the review corrections:
 
 - `pnpm install --frozen-lockfile`, `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `git diff --check` passed.
 - `pnpm test` passed 27 files / 290 tests.
@@ -130,14 +130,16 @@ Pre-review exact-candidate verification passed:
 - `pnpm phase5:matrix`, `phase6:matrix`, `phase7:matrix`, `phase10:matrix`, and `phase11:matrix` passed, covering denial/no-mutation, reuse, conflict, inconclusive/adversarial states, pack behavior, and all presentation/artifact terminal mappings.
 - `pnpm bundle:verifier` reproduced exact SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9`.
 - Canonically sorted saved and exported manifests byte-matched at SHA-256 `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`.
-- The changed-artifact secret/local-path scan and relative-link check passed. The public-link check found one stale pre-existing Phase 6 commit URL; the release documentation removed that dead link, and the checker is rerun before handoff.
-- Clean public branch setup and the final post-review verification rerun remain pending until the candidate is committed and pushed.
-- Standards and Phase 12 spec reviews are pending.
+- The changed-artifact secret/local-path scan, relative-link check, and added-public-link check passed.
+- A clean clone of the pushed public branch at `e8bb6665702fb64f6917a870e656386fcd81b7a9` passed frozen install, formatting, lint, typecheck, all 290 tests, build, and the 181-test Phase 12 matrix from `/private/tmp`, with a clean worktree.
+- Independent Standards and Phase 12 Spec reviews initially found the overbroad benign claim, stale tag-object SHA, and pre-final workload trace. Those findings were reproduced and corrected. Both axes reported no remaining findings at `e8bb666`; Standards retained only a non-blocking future refactor judgment about centralized prompt size, which is intentionally not widened into this release gate.
 
 ## Qodo and release PR
 
-Qodo status and the non-draft release PR will be recorded after the exact candidate is pushed. A paused Qodo response will not be described as findings, approval, or a completed review. The PR remains open for operator review; this implementation session does not merge or submit.
+Non-draft release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) is open and unmerged from `expansion-phase-5/evaluation-demo-release` into `main`. Qodo's [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461905572) reported that reviews are paused for this user. The official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906267) received the same [paused response](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906533). These responses contain no findings, completed review, or approval; none is claimed. The independent Standards/Spec reviews above are the controlling release reviews.
+
+The only external product-repository writes were pushing the release branch, opening PR #18, and posting the official Qodo command. The fixture repositories were not mutated. This implementation session does not merge or submit.
 
 ## Release decision
 
-The code and live agent evidence satisfy the three-repository, three-rehearsal, fresh-session, cancellation/no-write, presentation, and capability-boundary portions of the Phase 12 gate. Final promotion remains contingent on the exact-candidate verification/reviews recorded above and operator completion of the final recording, signed-out video validation, merge, and submission.
+The code and live agent evidence satisfy the agent-executable Phase 12 release gate: three repositories under the final manifest, three consecutive primary rehearsals, a fresh session, cancellation/no-write proof, presentation/artifact evidence, a `168.3`-second walkthrough, exact-candidate verification, clean public setup, and independent reviews. PR #18 is deliberately left open. Promotion remains contingent on operator acceptance, final recording/upload and signed-out playback validation, merge, and submission.

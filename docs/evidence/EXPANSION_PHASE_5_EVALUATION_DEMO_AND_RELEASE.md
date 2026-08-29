@@ -131,7 +131,7 @@ Final exact-candidate verification passed after the review corrections:
 - `pnpm bundle:verifier` reproduced exact SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9`.
 - Canonically sorted saved and exported manifests byte-matched at SHA-256 `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`.
 - The changed-artifact secret/local-path scan, relative-link check, and added-public-link check passed.
-- A clean clone of the pushed public branch at `e8bb6665702fb64f6917a870e656386fcd81b7a9` passed frozen install, formatting, lint, typecheck, all 290 tests, build, and the 181-test Phase 12 matrix from `/private/tmp`, with a clean worktree.
+- A clean clone of the pushed public branch at `e8bb6665702fb64f6917a870e656386fcd81b7a9` passed frozen install, formatting, lint, typecheck, all 290 tests, build, and the 181-test Phase 12 matrix from a fresh temporary directory, with a clean worktree.
 - Independent Standards and Phase 12 Spec reviews initially found the overbroad benign claim, stale tag-object SHA, and pre-final workload trace. Those findings were reproduced and corrected. Both axes reported no remaining findings at `e8bb666`; Standards retained only a non-blocking future refactor judgment about centralized prompt size, which is intentionally not widened into this release gate.
 
 ## Qodo and release PR

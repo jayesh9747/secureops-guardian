@@ -75,6 +75,18 @@ describe('unified TrueForge manifest', () => {
       'Finding — what security problem was found',
       'Keep the always-visible summary under 120 words',
       'Use stock OpenUI as the primary rendering for every terminal mode',
+      'Interpreted request card',
+      'repository, base branch, exact commit or comparison, optional target file, selected pack, and capability ceiling',
+      'Finding, Key reason, What Guardian did, and Next action',
+      'Evidence, Causal chain, conditional Verification, conditional Proposed change, Limitations, and Run receipt',
+      'guardian-incident-brief.md',
+      'guardian-run-receipt.json',
+      'must not create or enter a sandbox merely to export',
+      'Buttons are forbidden unless a real handler',
+      'at least 14 px body text and 20–24 px line height',
+      'one row per child with status, elapsed time, and one-sentence result',
+      'MCP and Daytona calls under the responsible agent',
+      'Findings, Evidence, and Activity remain separate',
       'Never merge, deploy, access a cluster',
     ]) {
       expect(instructions).toContain(requirement);

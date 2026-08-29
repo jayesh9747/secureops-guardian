@@ -4,7 +4,10 @@ import {
   EXPOSURE_EVIDENCE_INVESTIGATOR_TASK,
 } from '@guardian/investigation';
 import { PHASE_THREE_AGENT_INSTRUCTIONS } from '@guardian/policy-verifier';
-import { PHASE_SIX_PRESENTATION_INSTRUCTIONS } from '@guardian/presentation';
+import {
+  PHASE_ELEVEN_PRESENTATION_INSTRUCTIONS,
+  PHASE_SIX_PRESENTATION_INSTRUCTIONS,
+} from '@guardian/presentation';
 import {
   DEMO_REPOSITORY,
   LAST_GOOD_COMMIT_SHA,
@@ -178,6 +181,10 @@ After a terminal result, preserve the retained presentation contract:
 <phase-6-presentation-contract>
 ${PHASE_SIX_PRESENTATION_INSTRUCTIONS}
 </phase-6-presentation-contract>
+
+<phase-11-presentation-contract>
+${PHASE_ELEVEN_PRESENTATION_INSTRUCTIONS}
+</phase-11-presentation-contract>
 
 The embedded Phase 6 sentence about not implementing retained Phase 7 is historical presentation-layer scope: the presentation adapter must not perform orchestration. It does not disable this root Phase 7 contract, whose already-validated artifacts are its only presentation inputs.
 

@@ -4,7 +4,7 @@ SecureOps Guardian is one saved TrueForge agent that helps an on-call platform/s
 
 The demo joins real GitHub commit evidence from the public [`guardian-demo-checkout`](https://github.com/jayesh9747/guardian-demo-checkout) repository with explicitly synthetic incident observations. Unlike a generic incident summary, Guardian identifies one changed NetworkPolicy rule, rejects deny-all containment because it breaks checkout's database path, proves an exact replacement against four policy states, and creates or deterministically reuses one reviewable pull request only at the approval boundary.
 
-Users select only `secureops-guardian_v0` and describe an exact repository change in ordinary language; exact schema-version-1 JSON remains available for tests and advanced use. Guardian compiles natural language into the existing typed request without guessing a repository, branch, revision, or file. Missing facts produce one tool-free question, while remediation and pull-request interpretations require confirmation before preflight. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. The immutable FindingPack registry exposes `k8s-network-egress-v1` and the analysis-only `k8s-workload-security-v1`. Proven remediation remains limited to the NetworkPolicy pack.
+Users select only `secureops-guardian` and describe an exact repository change in ordinary language; exact schema-version-1 JSON remains available for tests and advanced use. Guardian compiles natural language into the existing typed request without guessing a repository, branch, revision, or file. Missing facts produce one tool-free question, while remediation and pull-request interpretations require confirmation before preflight. `ANALYSIS_ONLY` is the default, `PREPARE_REMEDIATION` may produce a proposal without writes, and `OPEN_PR` may reach the separately approved write path. The immutable FindingPack registry exposes `k8s-network-egress-v1` and the analysis-only `k8s-workload-security-v1`. Proven remediation remains limited to the NetworkPolicy pack.
 
 ## Judge-visible result
 
@@ -17,10 +17,18 @@ Users select only `secureops-guardian_v0` and describe an exact repository chang
 - Retry verifies the existing branch and PR, then returns the same URL without another write or approval.
 - Stock TrueForge OpenUI renders a decision-first Incident Brief; deterministic Markdown and JSON representations remain available from the same validated identities.
 
+## Demo preview
+
+The final saved agent keeps the decision in chat and the auditable execution trace in TrueForge's Investigation rail.
+
+![SecureOps Guardian PR reuse demo with two completed investigators, sandbox verification, and GitHub reconciliation](./docs/evidence/final-release/secureops-guardian-pr-reused.jpg)
+
+Follow the exact three-minute narration and screen sequence in the [demo video script](./docs/demo/PHASE_6_DEMO_SCRIPT.md).
+
 ## Architecture and TrueForge capabilities
 
 ```text
-Engineer -> saved TrueForge agent secureops-guardian_v0
+Engineer -> saved TrueForge agent secureops-guardian
   +-- natural language or exact JSON -> validated GuardianRequest
   +-- parameterized scope preflight -> official GitHub MCP reads
   +-- exact changed-file evidence -> deterministic FindingPack registry
@@ -84,7 +92,7 @@ suspect commit `2c7bdb3e07714e08d9504b3504587fbf18847f29` produces five exact-JS
 Kubernetes admission or live-cluster result. The pack has no verifier, patch, proposal, approval,
 branch, commit, or pull-request route.
 
-Saved agent: `secureops-guardian_v0`, ID `01m0w6s2eyqtzyb6q4y6ppsta9`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json); its release-candidate canonical manifest SHA-256 is `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`. The immutable predecessor `secureops-guardian` remains saved so existing reference sessions keep resolving.
+Saved agent: `secureops-guardian`, ID `01m16kjdg9xkg1hrv1x291whn8`. The exact exported saved specification is [`exports/secureops-guardian.trueforge.json`](./exports/secureops-guardian.trueforge.json); its canonical manifest SHA-256 is `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`. The `_v0` candidate was retained only long enough to validate the final name and is no longer a user-selectable entry point.
 
 ## Prerequisites
 
@@ -102,6 +110,7 @@ git clone https://github.com/jayesh9747/secureops-guardian.git
 git clone https://github.com/jayesh9747/guardian-demo-checkout.git
 git clone https://github.com/jayesh9747/guardian-demo-privileged-api.git
 git clone https://github.com/jayesh9747/guardian-demo-orders-egress.git
+git clone https://github.com/jayesh9747/guardian-demo-worker-crash.git
 git clone https://github.com/jayesh9747/secureops-guardian-verifier-skill.git
 cd secureops-guardian
 pnpm install --frozen-lockfile
@@ -140,7 +149,7 @@ Configure the Gemini provider through TrueForge settings, select `google-gemini/
 
 ### Pinned verifier skill
 
-Register the public `guardian-network-egress-v1` skill from [`secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill) at immutable commit `ade2d1453bba033dd3300a7c7aede6e28b97582d` (tag `guardian-network-egress-v1.0.4`) and attach it to `secureops-guardian_v0`. The runtime-proven mount is `/opt/tf/skills/guardian-network-egress-v1`. The root contract pins manifest SHA-256 `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`; the manifest pins bundle SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9` and every fixture digest. Guardian never searches for, generates, downloads, or accepts a substitute pack.
+Register the public `guardian-network-egress-v1` skill from [`secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill) at immutable commit `ade2d1453bba033dd3300a7c7aede6e28b97582d` (tag `guardian-network-egress-v1.0.4`) and attach it to `secureops-guardian`. The runtime-proven mount is `/opt/tf/skills/guardian-network-egress-v1`. The root contract pins manifest SHA-256 `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`; the manifest pins bundle SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9` and every fixture digest. Guardian never searches for, generates, downloads, or accepts a substitute pack.
 
 ### Official GitHub MCP
 
@@ -253,6 +262,8 @@ For Phase 7, Qodo's automatic attempt and official [`/agentic_review` request](h
 
 For Phase 12, Qodo's [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461905572) and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906267) on release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) were paused. The [official paused response](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906533) contains no findings, completed review, or approval; none is claimed. The independent Standards/Spec review is the controlling release review, recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
 
+For the post-merge final-agent follow-up PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19), both the [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120050) and the official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120715) received a [paused response](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462121000). Those responses contain no review findings or approval; none is claimed.
+
 ## AI-assistance disclosure
 
 AI coding assistants supported planning, implementation, tests, documentation, and review. The operator retained responsibility for scope, credentials, approvals, writes, evidence interpretation, review acceptance, recording, visibility, and submission. A paused Qodo response is never presented as approval.
@@ -263,7 +274,7 @@ AI coding assistants supported planning, implementation, tests, documentation, a
 - Remediation uses exactly one pinned verifier pack. The old five-filename exact-JSON envelope remains accepted only as a deprecated compatibility shape and never selects files or changes the pack.
 - The workload pack supports only `v1/Pod` and `apps/v1/Deployment` and cannot produce remediation or writes.
 - The preserved public state safely demonstrates PR reuse and live cancellation at interpreted-request confirmation, not a new live first-write denial or creation sequence. The first-write denial remains deterministic integration evidence because manufacturing it live would require a destructive fixture reset.
-- Phase-named saved agents and exported specifications are retained only as historical test fixtures/reference configurations.
+- Phase-named exported specifications are retained only as historical test fixtures/reference configurations; no phase-named saved agent is registered.
 - There is no live cluster, production telemetry, CVE scan, packet capture, penetration test, compliance assessment, general incident response, or autonomous containment.
 - Broader remediation repositories, rules, workflows, history, analytics, and other retained features are not implemented.
 
@@ -272,6 +283,7 @@ AI coding assistants supported planning, implementation, tests, documentation, a
 | Artifact | Reference |
 | --- | --- |
 | Product Phase 12 release base | `3cd6d8e046fba93dde8921ae5c4bb955f7fbdc2c` |
+| Merged Phase 12 release | `0c94cbe638427a5c1494ffa30499757b808b57c9` |
 | Frozen Phase 5 core | `263e6a27307a667f08bfa832b436a754c0848a2e` |
 | Phase 5 documentation | `1777bfd070ac1ebd34e23a604767ae2e703c36ad` |
 | Fixture remediation | `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |

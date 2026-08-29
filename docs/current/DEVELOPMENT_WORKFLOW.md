@@ -40,7 +40,7 @@ For every phase PR:
 
 If Qodo is not installed or does not review the PR, keep the PR open and treat Phase 0 as incomplete.
 
-For Expansion Phase 5 release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18), both the automatic attempt and official `/agentic_review` request reported reviews paused for this user. They contain no findings or approval. The independent Standards/Spec reviews are clean, but the PR remains open for explicit operator acceptance; do not reinterpret the paused Qodo responses as a completed review.
+For Expansion Phase 5 release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18), both the automatic attempt and official `/agentic_review` request reported reviews paused for this user. They contain no findings or approval. The independent Standards/Spec reviews were clean and the operator later merged the PR; do not reinterpret the paused Qodo responses as a completed review.
 
 ## Commit and PR scope
 

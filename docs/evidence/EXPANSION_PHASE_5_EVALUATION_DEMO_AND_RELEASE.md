@@ -2,7 +2,7 @@
 
 Date: 29 August 2026.
 
-Status: release gate passed for the agent-executable scope; exact-candidate verification, clean public setup, independent reviews, paused Qodo attempts, and non-draft release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) are recorded below. Operator approval, merge, recording upload, signed-out validation, and submission remain outside this implementation handoff.
+Status: release gate passed and release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) was operator-merged as `0c94cbe638427a5c1494ffa30499757b808b57c9`. Exact-candidate verification, clean public setup, independent reviews, truthful paused-Qodo status, and post-merge final-agent verification are recorded below. Recording upload, signed-out validation, and submission remain operator actions.
 
 ## Scope and entry gate
 
@@ -136,10 +136,29 @@ Final exact-candidate verification passed after the review corrections:
 
 ## Qodo and release PR
 
-Non-draft release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) is open and unmerged from `expansion-phase-5/evaluation-demo-release` into `main`. Qodo's [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461905572) reported that reviews are paused for this user. The official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906267) received the same [paused response](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906533). These responses contain no findings, completed review, or approval; none is claimed. The independent Standards/Spec reviews above are the controlling release reviews.
+Release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) was operator-merged from `expansion-phase-5/evaluation-demo-release` into `main` as `0c94cbe638427a5c1494ffa30499757b808b57c9`. Qodo's [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461905572) reported that reviews are paused for this user. The official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906267) received the same [paused response](https://github.com/jayesh9747/secureops-guardian/pull/18#issuecomment-5461906533). These responses contain no findings, completed review, or approval; none is claimed. The independent Standards/Spec reviews above are the controlling release reviews.
 
-The only external product-repository writes were pushing the release branch, opening PR #18, and posting the official Qodo command. The fixture repositories were not mutated. This implementation session does not merge or submit.
+Post-merge final-agent PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19) also received paused Qodo responses for both its [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120050) and official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120715). The [official response](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462121000) contains no findings, completed review, or approval; none is claimed.
+
+The release-gate implementation did not merge or submit. The later merge was an explicit operator action. The finalization pass made no fixture-content mutation; it only verified already-pushed public default branches.
 
 ## Release decision
 
-The code and live agent evidence satisfy the agent-executable Phase 12 release gate: three repositories under the final manifest, three consecutive primary rehearsals, a fresh session, cancellation/no-write proof, presentation/artifact evidence, a `168.3`-second walkthrough, exact-candidate verification, clean public setup, and independent reviews. PR #18 is deliberately left open. Promotion remains contingent on operator acceptance, final recording/upload and signed-out playback validation, merge, and submission.
+The code and live agent evidence satisfied the agent-executable Phase 12 release gate: three repositories under the final manifest, three consecutive primary rehearsals, a fresh session, cancellation/no-write proof, presentation/artifact evidence, a `168.3`-second walkthrough, exact-candidate verification, clean public setup, and independent reviews. PR #18 is merged. Final recording/upload, signed-out playback validation, and submission remain operator actions.
+
+## Post-merge final-agent verification
+
+After PR #18 merged, the exact merged manifest was saved under the final immutable name `secureops-guardian`, ID `01m16kjdg9xkg1hrv1x291whn8`. Read-back and portable-export canonicalization both produced SHA-256 `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`. The `_v0` candidate was deleted only after this match and the fresh rehearsal passed; the registry then listed exactly one agent. Historical session `01m16gdxzf8vhg5jmx2dwjesmd` returned HTTP 200 both before and after `_v0` retirement.
+
+Fresh final-name [session `01m16kn1n07evwtjtje2e7rfk1`](http://localhost:8791/sessions/01m16kn1n07evwtjtje2e7rfk1) used interpretation turn `01m16kn1pasy2fcwqh23ybe3ed.ueyhrn` and execution turn `01m16kpw5004hdkrr9s6gpfgck.ueyhrn`. It completed in `9m 12s`, returned `PR_REUSED`, created the exact two child threads (`01m16kqms5tjev5wa4z4a4jyhd`, `01m16kv1jrwhs7cvcv2gg96sd2`), and created one sandbox (`01m16kxq4e19yrm7bf4tnarnkp`). Persisted events contained no `tool.approval_required`, `create_branch`, `create_or_update_file`, or `create_pull_request` event. Exact-head reconciliation call `call_874188` found checkout PR #1 still open and unmerged at `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3`.
+
+The final README frame is [`secureops-guardian-pr-reused.jpg`](./final-release/secureops-guardian-pr-reused.jpg). It shows the final agent name, `PR_REUSED`, `High`, complete evidence, both completed investigators, and the GitHub/sandbox execution groups without the historical agent list or credentials.
+
+Full verification from merged `origin/main` plus only the final-name metadata/docs change passed: formatting, lint, typecheck, build, Phases 5/6/7/10/11/12 matrices, 181 focused tests, and all 290 tests. The four public demo default refs were already pushed and were reverified without rewriting history:
+
+| Repository | Public default ref |
+| --- | --- |
+| `guardian-demo-checkout` | `main` `7b2f2ad51f9ef97334176fbfed3138465b62fcdb`; remediation `44fb8c7f5e99f835c6779f5e7b777c1b016af5b3` |
+| `guardian-demo-orders-egress` | `main` `18708176180bbcfdd5d92d496814a563c40d3b80` |
+| `guardian-demo-privileged-api` | `main` `2c7bdb3e07714e08d9504b3504587fbf18847f29` |
+| `guardian-demo-worker-crash` | `main` `db042c062535e4bd7780fc5aa78f9659fd1508bd` |

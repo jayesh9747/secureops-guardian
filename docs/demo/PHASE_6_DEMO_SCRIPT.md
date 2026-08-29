@@ -1,8 +1,10 @@
 # SecureOps Guardian three-minute release demo
 
-Use the stock TrueForge UI at normal playback speed. The controlling completed release rehearsal is session `01m16gdxzf8vhg5jmx2dwjesmd`; it returned the existing public fixture PR with no write or approval. Do not present the approximately six-to-seven-minute cold model execution as a three-minute completion claim. The three-minute flow is a guided walkthrough of the canonical completed session. The accepted interactive browser timing rehearsal traversed the complete script in `168.3` seconds; an earlier `184.2`-second attempt was rejected.
+Use the stock TrueForge UI at normal playback speed. Select the one saved agent named `secureops-guardian`. The controlling final-name rehearsal is session `01m16kn1n07evwtjtje2e7rfk1`; it returned the existing public fixture PR with no write or approval after `9m 12s` of cold execution. Do not present cold model execution as a three-minute completion claim. The three-minute flow is a guided walkthrough of this completed session. The accepted interactive browser timing rehearsal for the same output path traversed the complete script in `168.3` seconds; an earlier `184.2`-second attempt was rejected.
 
 Hide browser bookmarks, notifications, provider settings, terminal paths, connector headers, tokens, and private identifiers before recording. Recording, upload, public visibility, and signed-out playback validation remain operator-only.
+
+README preview frame: [`secureops-guardian-pr-reused.jpg`](../evidence/final-release/secureops-guardian-pr-reused.jpg). It truthfully shows the final agent name, `PR_REUSED`, the completed two-agent investigation, official GitHub and owned Fixture connectors, and the sandbox/GitHub execution groups.
 
 ## Primary recording — natural language to exact PR reuse
 
@@ -23,7 +25,7 @@ The timed rows contain roughly 250 words of screen direction and narration plus 
 
 ## Backup proof
 
-If the primary session is unavailable, use accepted rehearsal `01m16fzxwk9pt3h39bt2rqg9x0`. It has the same frozen manifest, proposal, pack binding, child roles, one sandbox, six-read reconciliation, valid stock OpenUI, `PR_REUSED`, and zero approval/write events.
+If the final-name session is unavailable, use historical accepted rehearsal `01m16gdxzf8vhg5jmx2dwjesmd`. It has the same canonical manifest, proposal, pack binding, child roles, one sandbox, six-read reconciliation, valid stock OpenUI, `PR_REUSED`, and zero approval/write events. Its header shows the retired `_v0` candidate name, so identify it as historical and do not present it as the final saved-agent record.
 
 Use final-manifest workload session `01m16j0267dqrsv34j5npgr8zm` only as short backup evidence of pack breadth. It shows five exact workload-security findings and stops at GitHub-only `ANALYSIS_ONLY`. Use benign session `01m16fewfgxz7r5a0c9e7fvt0e` to show a pack-, subset-, file-, and revision-scoped `NO_DETERMINISTIC_FINDING` with three GitHub reads and zero sandbox/Fixture/approval/write. Neither should replace the checkout story in the primary video.
 

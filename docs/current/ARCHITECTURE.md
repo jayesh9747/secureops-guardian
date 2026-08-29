@@ -4,10 +4,10 @@ Updated: 29 August 2026.
 
 ## User-facing system
 
-`secureops-guardian_v0` is the only saved TrueForge agent a user selects for new sessions. The immutable predecessor remains registered only so existing reference sessions continue to resolve. Phase-named agent specifications remain repository test fixtures and reference configurations; they are not separate product entry points.
+`secureops-guardian` is the only saved TrueForge agent a user selects for new sessions. The release-candidate `_v0` name has been retired after exact-manifest reconciliation. Phase-named agent specifications remain repository test fixtures and reference configurations; they are not separate product entry points.
 
 ```text
-User -> saved TrueForge agent secureops-guardian_v0
+User -> saved TrueForge agent secureops-guardian
           |
           +-- conversation-only intent -> direct response, zero tools
           |
@@ -47,7 +47,7 @@ TrueForge remains the sole agent harness. It owns the model loop, dynamic childr
 
 ## Phase 12 release freeze
 
-The release candidate is based on product commit `3cd6d8e046fba93dde8921ae5c4bb955f7fbdc2c`. Saved agent `secureops-guardian_v0` (`01m0w6s2eyqtzyb6q4y6ppsta9`) and the portable export share canonical manifest SHA-256 `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`. The egress verifier remains pinned to payload commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, manifest SHA-256 `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`, and bundle SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9`.
+The merged Phase 12 release is product commit `0c94cbe638427a5c1494ffa30499757b808b57c9`. Saved agent `secureops-guardian` (`01m16kjdg9xkg1hrv1x291whn8`) and the portable export share canonical manifest SHA-256 `e2c628d1233ba355f690b39be6e556c94c27b000662dd57d47fe32edb27183d0`. The egress verifier remains pinned to payload commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, manifest SHA-256 `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`, and bundle SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9`.
 
 Live release replays made five saved-agent constraints explicit without changing the typed module architecture: terminal FindingPack vocabulary is exact; a no-finding sentence stays bound to the selected pack, static subset, file, and revision rather than claiming general security; `ANALYSIS_ONLY` cannot enter a sandbox even when GitHub returns an offloaded blob reference; workload findings cite the leaf JSONPath; and OpenUI output must use stock assignment DSL beginning with `root = Stack(`, never JSX. When an offloaded GitHub blob cannot be read directly, the analysis route may reconstruct only from exact official parent/suspect commit evidence and must verify the cited Git blob identity; otherwise it returns `INCONCLUSIVE`. These are prompt-level fail-closed guards above the existing typed gates, not new capabilities.
 

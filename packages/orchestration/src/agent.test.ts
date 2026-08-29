@@ -11,8 +11,8 @@ const portableExportSchema = z.object({
 });
 
 describe('unified TrueForge manifest', () => {
-  it('exports one secureops-guardian_v0 with every retained Phase 2-6 capability', () => {
-    expect(SECUREOPS_GUARDIAN_AGENT_SPEC.name).toBe('secureops-guardian_v0');
+  it('exports one secureops-guardian with every retained Phase 2-6 capability', () => {
+    expect(SECUREOPS_GUARDIAN_AGENT_SPEC.name).toBe('secureops-guardian');
     const manifest = SECUREOPS_GUARDIAN_AGENT_SPEC.manifest;
     const github = manifest.mcp_servers.find((server) => server.name === 'github');
     const fixture = manifest.mcp_servers.find((server) => server.name === 'guardian-fixture');

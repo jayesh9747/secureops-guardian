@@ -3,6 +3,7 @@ import {
   LAST_GOOD_COMMIT_SHA,
   SUSPECT_COMMIT_SHA,
   TARGET_NETWORK_POLICY_FILE,
+  VERIFIER_PACK_IDENTITY,
   fullGitShaSchema,
 } from '@guardian/shared';
 import { z } from 'zod';
@@ -130,6 +131,7 @@ export function evaluatePreflight(plan: GuardianRunPlan, input: unknown) {
       proposal_permitted: false,
       approval_permitted: false,
       github_writes_permitted: [] as string[],
+      verifier_pack: null,
       runtime_claims: UNKNOWN_RUNTIME_CLAIMS,
     };
   }
@@ -146,6 +148,7 @@ export function evaluatePreflight(plan: GuardianRunPlan, input: unknown) {
     proposal_permitted: plan.capability_ceiling.proposal_creation,
     approval_permitted: plan.capability_ceiling.approval_request,
     github_writes_permitted: [...plan.capability_ceiling.github_writes],
+    verifier_pack: plan.mode === 'ANALYSIS_ONLY' ? null : VERIFIER_PACK_IDENTITY.pack_id,
     missing_or_unsupported_requirements: [] as string[],
     runtime_claims: UNKNOWN_RUNTIME_CLAIMS,
   };

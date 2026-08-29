@@ -1,3 +1,4 @@
+import { computeVerifierPackBinding, verifierPackIdentitySchema } from '@guardian/policy-verifier';
 import { z } from 'zod';
 
 import type { ProposalBinding } from './binding.js';
@@ -16,6 +17,8 @@ export const actionReceiptSchema = z
     base_branch: z.string().min(1),
     remediation_branch: z.string().min(1),
     proposal_hash_sha256: z.string().regex(/^[0-9a-f]{64}$/u),
+    verifier_pack: verifierPackIdentitySchema,
+    verifier_pack_binding_sha256: z.string().regex(/^[0-9a-f]{64}$/u),
     remote_commit_sha: z
       .string()
       .regex(/^[0-9a-f]{40}$/u)
@@ -33,6 +36,13 @@ export const actionReceiptSchema = z
   })
   .strict()
   .superRefine((receipt, context) => {
+    const expectedPackBinding = computeVerifierPackBinding(receipt);
+    if (receipt.verifier_pack_binding_sha256 !== expectedPackBinding) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Verifier pack binding digest is inconsistent.',
+      });
+    }
     const remotePrFieldCount = [
       receipt.remote_commit_sha,
       receipt.pr_number,
@@ -188,6 +198,8 @@ export function buildActionReceipt(
     base_branch: PHASE_FOUR_TARGET.baseBranch,
     remediation_branch: PHASE_FOUR_TARGET.remediationBranch,
     proposal_hash_sha256: binding.proposal.proposal_hash_sha256,
+    verifier_pack: binding.proposal.verifier_pack,
+    verifier_pack_binding_sha256: binding.proposal.verifier_pack_binding_sha256,
     ...statusEvidence,
     remaining_limitations: [
       ...binding.proposal.limitations,

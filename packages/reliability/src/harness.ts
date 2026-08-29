@@ -21,6 +21,7 @@ import {
   type CandidateAttemptOutcome,
   type FourStateProof,
 } from '@guardian/policy-verifier';
+import { VERIFIER_PACK_IDENTITY } from '@guardian/shared';
 import {
   CONFLICTING_REVISION_CASE_ID,
   DEMO_CASE_ID,
@@ -327,6 +328,7 @@ export function runPhaseFiveScenario(
       ],
       approval_event_references: [],
       verifier_output: {
+        verifier_pack: VERIFIER_PACK_IDENTITY,
         attempts: workflow.attempts.map(attemptRecord),
         four_state: null,
       },
@@ -360,6 +362,7 @@ export function runPhaseFiveScenario(
       candidateYaml: VERIFIED_CANDIDATE_YAML,
     },
     contract,
+    VERIFIER_PACK_IDENTITY,
   );
   const proposal = buildEligibleProposal({
     candidateYaml: VERIFIED_CANDIDATE_YAML,
@@ -373,6 +376,7 @@ export function runPhaseFiveScenario(
   if (bindingResult.status !== 'BOUND') throw new Error(bindingResult.reason);
   const binding = bindingResult.binding;
   const verifierOutput = {
+    verifier_pack: VERIFIER_PACK_IDENTITY,
     attempts: [attemptRecord(candidateAttempt)],
     four_state: proofRows(proof),
   };

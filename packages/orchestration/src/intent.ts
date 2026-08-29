@@ -475,7 +475,7 @@ function buildConfirmationQuestion(interpreted: InterpretedGuardianRequest): str
     interpreted.mode === 'OPEN_PR'
       ? 'This may reach three separately approval-gated GitHub writes only after every existing safety gate passes.'
       : 'This may prepare a sandbox-verified proposal but cannot request approval or write to GitHub.';
-  return `I interpreted this as ${interpreted.mode} for ${interpreted.repository} at ${interpreted.revision}, base branch ${interpreted.base_branch}, target ${target}. ${capabilityBoundary} Confirm this exact request and attach verifier.bundle.cjs, expected-contract.json, suspect.yaml, deny-all.yaml, and last-good.yaml in the same turn.`;
+  return `I interpreted this as ${interpreted.mode} for ${interpreted.repository} at ${interpreted.revision}, base branch ${interpreted.base_branch}, target ${target}. ${capabilityBoundary} Confirm this exact request.`;
 }
 
 function compileNaturalLanguageInput(
@@ -613,7 +613,10 @@ function compileNaturalLanguageInput(
 
   const interpretedRequestSha256 = canonicalRequestDigest(request);
   if (input.confirmation?.interpreted_request_sha256 === interpretedRequestSha256) {
-    if (!verifierInputsSchema.safeParse(input.verifier_inputs).success) {
+    if (
+      input.verifier_inputs !== undefined &&
+      !verifierInputsSchema.safeParse(input.verifier_inputs).success
+    ) {
       return verifierInputsNeed('NATURAL_LANGUAGE');
     }
     return { status: 'READY', source: 'NATURAL_LANGUAGE', request };
@@ -653,11 +656,14 @@ export function compileGuardianRequest(input: unknown): GuardianRequestCompilati
           request: parseGuardianRequest(input),
         };
       }
-      if (!verifierInputsSchema.safeParse(inputRecord.verifier_inputs).success) {
+      if (
+        inputRecord.verifier_inputs !== undefined &&
+        !verifierInputsSchema.safeParse(inputRecord.verifier_inputs).success
+      ) {
         return verifierInputsNeed('EXACT_JSON');
       }
       const exactEnvelope = guardianRequestSchema
-        .extend({ verifier_inputs: verifierInputsSchema })
+        .extend({ verifier_inputs: verifierInputsSchema.optional() })
         .strict()
         .parse(input);
       return {

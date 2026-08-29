@@ -7,14 +7,12 @@ import {
   TARGET_NETWORK_POLICY_FILE,
 } from '@guardian/shared';
 
-import { REQUIRED_VERIFIER_INPUTS } from './intent.js';
 import { evaluatePreflight } from './preflight.js';
 import { planGuardianRun } from './plan.js';
 
 function fixturePlan(mode: 'ANALYSIS_ONLY' | 'PREPARE_REMEDIATION' | 'OPEN_PR' = 'OPEN_PR') {
   return planGuardianRun({
     mode,
-    ...(mode === 'ANALYSIS_ONLY' ? {} : { verifier_inputs: REQUIRED_VERIFIER_INPUTS }),
     scope: {
       schema_version: 1,
       repository: DEMO_REPOSITORY,
@@ -71,13 +69,23 @@ describe('read-only preflight evaluation', () => {
       proposal_permitted: false,
       approval_permitted: false,
       github_writes_permitted: [],
+      verifier_pack: null,
+    });
+  });
+
+  it('selects the one internal verifier pack only after the exact remediation support gate', () => {
+    expect(
+      evaluatePreflight(fixturePlan('PREPARE_REMEDIATION'), fixtureObservation()),
+    ).toMatchObject({
+      outcome: 'REMEDIATION_PREPARATION_READY',
+      sandbox_permitted: true,
+      verifier_pack: 'k8s-network-egress-v1',
     });
   });
 
   it('returns INCONCLUSIVE for an unsupported repository without sandbox or writes', () => {
     const plan = planGuardianRun({
       mode: 'OPEN_PR',
-      verifier_inputs: REQUIRED_VERIFIER_INPUTS,
       scope: {
         schema_version: 1,
         repository: 'octo-org/arbitrary-repository',
@@ -107,6 +115,7 @@ describe('read-only preflight evaluation', () => {
       proposal_permitted: false,
       approval_permitted: false,
       github_writes_permitted: [],
+      verifier_pack: null,
       runtime_claims: {
         deployment: 'Unknown',
         runtime_exposure: 'Unknown',
@@ -154,6 +163,7 @@ describe('read-only preflight evaluation', () => {
       proposal_permitted: false,
       approval_permitted: false,
       github_writes_permitted: [],
+      verifier_pack: null,
     });
   });
 

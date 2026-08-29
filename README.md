@@ -27,6 +27,7 @@ Engineer -> saved TrueForge agent secureops-guardian_v0
   |     +-- change-security-investigator -> official GitHub MCP reads
   |     `-- exposure-evidence-investigator -> guardian-fixture MCP reads
   +-- mode ceiling -> analysis | prepare | open PR
+  +-- pinned TrueForge skill -> digest-verified verifier pack (prepare/open only)
   +-- Daytona -> candidate + four-state static verifier (prepare/open only)
   +-- exact remote reuse or three separately approved writes (open only)
   `-- stock OpenUI or Markdown + machine-readable run receipt
@@ -40,6 +41,7 @@ TrueForge is the sole agent harness. [`@guardian/orchestration`](./packages/orch
 | Dynamic sub-agents | Exactly two investigation child threads |
 | MCP | Official GitHub MCP plus read-only `guardian-fixture` |
 | Daytona | Credential-free candidate and verifier execution |
+| Skills | Immutable `guardian-network-egress-v1` verifier bundle |
 | Tool approval | Separate human decision for each of three GitHub writes |
 | Persistence | Reconnect/retry preserves proposal and pending action |
 | Generative UI | Stock OpenUI card; no frontend fork or dashboard |
@@ -60,6 +62,7 @@ Never put provider keys, Daytona credentials, GitHub tokens, authorization heade
 ```sh
 git clone https://github.com/jayesh9747/secureops-guardian.git
 git clone https://github.com/jayesh9747/guardian-demo-checkout.git
+git clone https://github.com/jayesh9747/secureops-guardian-verifier-skill.git
 cd secureops-guardian
 pnpm install --frozen-lockfile
 ```
@@ -91,7 +94,11 @@ Register a Streamable HTTP connector named `guardian-fixture` at `http://host.do
 
 ### Model and Daytona
 
-Configure the Gemini provider through TrueForge settings, select `google-gemini/gemini-3-6-flash`, and set temperature to `0`. Configure Daytona through TrueForge settings and confirm provider state `ready`. Keep all credentials only in TrueForge's secret configuration. The sandbox receives verifier inputs only.
+Configure the Gemini provider through TrueForge settings, select `google-gemini/gemini-3-6-flash`, and set temperature to `0`. Configure Daytona through TrueForge settings and confirm provider state `ready`. Keep all credentials only in TrueForge's secret configuration. The sandbox receives the registered verifier skill mount, not user-uploaded verifier files.
+
+### Pinned verifier skill
+
+Register the public `guardian-network-egress-v1` skill from [`secureops-guardian-verifier-skill`](https://github.com/jayesh9747/secureops-guardian-verifier-skill) at immutable commit `ade2d1453bba033dd3300a7c7aede6e28b97582d` (tag `guardian-network-egress-v1.0.4`) and attach it to `secureops-guardian_v0`. The runtime-proven mount is `/opt/tf/skills/guardian-network-egress-v1`. The root contract pins manifest SHA-256 `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`; the manifest pins bundle SHA-256 `028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9` and every fixture digest. Guardian never searches for, generates, downloads, or accepts a substitute pack.
 
 ### Official GitHub MCP
 
@@ -121,6 +128,7 @@ With the preserved fixture state, expect:
 - changed file `k8s/checkout-networkpolicy.yaml` and exposure `checkout-api -> forbidden.example.test:443/TCP`;
 - actual data access `Unknown` and a passing four-state proof;
 - proposal hash `2cf448b659d71c429c6205f17a0a568c24777684156532f4cd3f2bde00eded15`;
+- verifier pack `k8s-network-egress-v1` version `1.0.4`, with binding SHA-256 `3afb251833539c6383a999c2255934c76648994505857e543bc5d3959b7c9e20`;
 - `PR_REUSED` with [`guardian-demo-checkout#1`](https://github.com/jayesh9747/guardian-demo-checkout/pull/1);
 - zero write calls and zero approvals on the reuse path.
 
@@ -163,10 +171,14 @@ git diff --check
 Candidate replay:
 
 ```sh
-node packages/policy-verifier/dist/cli.bundle.cjs \
+node /opt/tf/skills/guardian-network-egress-v1/verifier.bundle.cjs \
+  --pack-root /opt/tf/skills/guardian-network-egress-v1 \
+  --expected-manifest-sha256 e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe \
   --candidate docs/evidence/PHASE_3_CANDIDATE.yaml \
-  --contract packages/policy-verifier/fixtures/expected-contract.json
+  --full-proof true
 ```
+
+The replay is intentionally valid only inside the TrueForge sandbox at the runtime-announced root. The CLI rejects repository copies, generated files, alternate mounts, and self-computed substitute-pack digests.
 
 ## Troubleshooting
 
@@ -197,7 +209,7 @@ AI coding assistants supported planning, implementation, tests, documentation, a
 ## Known limitations and retained roadmap
 
 - Any authorized repository can enter read-only preflight, but proven remediation remains limited to the exact owned Kubernetes NetworkPolicy case inside the documented static subset.
-- Expansion Phase 1 still uses the existing five explicit verifier uploads for remediation modes; automatic versioned verifier assets belong to Expansion Phase 2 and are not implemented here.
+- Remediation uses exactly one pinned verifier pack. The old five-filename exact-JSON envelope remains accepted only as a deprecated compatibility shape and never selects files or changes the pack.
 - The preserved public state safely demonstrates PR reuse, not a new live creation or denial sequence.
 - Phase-named saved agents and exported specifications are retained only as historical test fixtures/reference configurations.
 - There is no live cluster, production telemetry, CVE scan, packet capture, penetration test, compliance assessment, general incident response, or autonomous containment.

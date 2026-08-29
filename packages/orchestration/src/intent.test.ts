@@ -48,7 +48,7 @@ describe('natural-language Guardian request compiler', () => {
     expect(planGuardianRun(input).mode).toBe('ANALYSIS_ONLY');
   });
 
-  it('preserves the exact JSON remediation envelope while executing only GuardianRequest', () => {
+  it('executes exact JSON remediation without user-visible verifier inputs', () => {
     const result = compileGuardianRequest({
       mode: 'PREPARE_REMEDIATION',
       scope: {
@@ -57,7 +57,6 @@ describe('natural-language Guardian request compiler', () => {
         base_branch: BRANCH,
         suspect: { kind: 'commit', commit_sha: COMMIT_SHA },
       },
-      verifier_inputs: VERIFIER_INPUTS,
     });
 
     expect(result).toEqual({
@@ -75,7 +74,7 @@ describe('natural-language Guardian request compiler', () => {
     });
   });
 
-  it('fails closed before planning when exact JSON remediation omits verifier inputs', () => {
+  it('keeps the old exact verifier envelope as a deprecated input that cannot alter GuardianRequest', () => {
     const input = {
       mode: 'PREPARE_REMEDIATION',
       scope: {
@@ -86,40 +85,35 @@ describe('natural-language Guardian request compiler', () => {
       },
     };
 
-    expect(compileGuardianRequest(input)).toEqual({
-      status: 'NEEDS_INPUT',
+    expect(compileGuardianRequest({ ...input, verifier_inputs: VERIFIER_INPUTS })).toEqual({
+      status: 'READY',
       source: 'EXACT_JSON',
-      missing_fields: ['verifier_inputs'],
-      question:
-        'Provide a complete new remediation request with verifier.bundle.cjs, expected-contract.json, suspect.yaml, deny-all.yaml, and last-good.yaml in the same turn.',
+      request: input,
     });
-    expect(() => planGuardianRun(input)).toThrow('Guardian request is not executable: NEEDS_INPUT');
+    expect(planGuardianRun(input).mode).toBe('PREPARE_REMEDIATION');
   });
 
   it.each([
     { verifier_bundle: 'wrong.cjs' },
     { verifier_bundle: 'verifier.bundle.cjs', contract: 'expected-contract.json' },
-  ])(
-    'asks once when exact JSON remediation has malformed verifier inputs: %j',
-    (verifierInputs) => {
-      const result = compileGuardianRequest({
-        mode: 'OPEN_PR',
-        scope: {
-          schema_version: 1,
-          repository: REPOSITORY,
-          base_branch: BRANCH,
-          suspect: { kind: 'commit', commit_sha: COMMIT_SHA },
-        },
-        verifier_inputs: verifierInputs,
-      });
+  ])('rejects a malformed deprecated verifier envelope: %j', (verifierInputs) => {
+    const result = compileGuardianRequest({
+      mode: 'OPEN_PR',
+      scope: {
+        schema_version: 1,
+        repository: REPOSITORY,
+        base_branch: BRANCH,
+        suspect: { kind: 'commit', commit_sha: COMMIT_SHA },
+      },
+      verifier_inputs: verifierInputs,
+    });
 
-      expect(result).toMatchObject({
-        status: 'NEEDS_INPUT',
-        source: 'EXACT_JSON',
-        missing_fields: ['verifier_inputs'],
-      });
-    },
-  );
+    expect(result).toMatchObject({
+      status: 'NEEDS_INPUT',
+      source: 'EXACT_JSON',
+      missing_fields: ['verifier_inputs'],
+    });
+  });
 
   it('rejects verifier inputs on ANALYSIS_ONLY instead of silently discarding them', () => {
     expect(
@@ -388,7 +382,7 @@ describe('natural-language Guardian request compiler', () => {
     });
   });
 
-  it('asks once when confirmed natural-language remediation has malformed verifier inputs', () => {
+  it('rejects a malformed deprecated verifier envelope on natural-language remediation', () => {
     const userText = `Prepare a remediation for ${REPOSITORY} commit ${COMMIT_SHA} on base branch ${BRANCH}.`;
     const input = naturalLanguageInput(userText, 'Prepare a remediation', {
       requested_action: { kind: 'PREPARE_REMEDIATION', evidence: 'Prepare a remediation' },
@@ -458,30 +452,20 @@ describe('natural-language Guardian request compiler', () => {
     }
     expect(pending.interpreted_request_sha256).toMatch(/^[a-f0-9]{64}$/u);
     expect(pending.question).toContain('three separately approval-gated GitHub writes');
-    expect(pending.question).toContain('verifier.bundle.cjs');
+    expect(pending.question).not.toContain('verifier');
+    expect(pending.question).not.toContain('attach');
     expect(() => planGuardianRun(input)).toThrow(
       'Guardian request is not executable: CONFIRMATION_REQUIRED',
     );
 
-    const confirmedWithoutVerifier = {
+    const confirmed = {
       ...input,
       confirmation: {
         decision: 'CONFIRM',
         interpreted_request_sha256: pending.interpreted_request_sha256,
       },
     };
-    expect(compileGuardianRequest(confirmedWithoutVerifier)).toMatchObject({
-      status: 'NEEDS_INPUT',
-      source: 'NATURAL_LANGUAGE',
-      missing_fields: ['verifier_inputs'],
-    });
-    expect(() => planGuardianRun(confirmedWithoutVerifier)).toThrow(
-      'Guardian request is not executable: NEEDS_INPUT',
-    );
-
-    const readyInput = { ...confirmedWithoutVerifier, verifier_inputs: VERIFIER_INPUTS };
-    const ready = compileGuardianRequest(readyInput);
-    expect(ready).toMatchObject({
+    expect(compileGuardianRequest(confirmed)).toMatchObject({
       status: 'READY',
       source: 'NATURAL_LANGUAGE',
       request: {
@@ -493,7 +477,7 @@ describe('natural-language Guardian request compiler', () => {
         },
       },
     });
-    expect(planGuardianRun(readyInput).mode).toBe('OPEN_PR');
+    expect(planGuardianRun(confirmed).mode).toBe('OPEN_PR');
   });
 
   it('does not accept confirmation for a different interpreted request', () => {

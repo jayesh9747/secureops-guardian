@@ -5,6 +5,9 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   resolve: {
     alias: {
+      '@guardian/shared/verifier-pack-metadata': fileURLToPath(
+        new URL('./packages/shared/src/verifier-pack-metadata.ts', import.meta.url),
+      ),
       '@guardian/fixture-mcp/fixtures': fileURLToPath(
         new URL('./packages/fixture-mcp/src/fixtures.ts', import.meta.url),
       ),

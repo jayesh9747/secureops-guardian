@@ -15,6 +15,9 @@
 | 6 | `phase-6/ui-quality-submission` |
 | 7 | `phase-7/unified-guardian` |
 | Expansion Phase 1 — natural-language request compiler | `expansion-phase-1/natural-language-request-compiler` |
+| Expansion Phase 2 — verifier skill bundle | `expansion-phase-2/verifier-skill-bundle` |
+
+Expansion Phase 2 also uses a separate public skill repository, `jayesh9747/secureops-guardian-verifier-skill`, with the same branch name. Its immutable tag/commit is reviewed in a separate, unmerged skill PR. Do not fold skill payloads into the product repository or open a TrueForge upstream PR.
 
 Open one PR per phase. Later-phase work begins from updated `main` only after the previous phase PR is merged.
 

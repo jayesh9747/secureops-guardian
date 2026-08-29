@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+import { VERIFIER_PACK_IDENTITY } from '@guardian/shared';
 import { describe, expect, it } from 'vitest';
 
 import { parsePolicyContract } from './contract.js';
@@ -35,6 +36,7 @@ describe('pure deterministic NetworkPolicy verifier', () => {
         candidateYaml: lastGood,
       },
       contract,
+      VERIFIER_PACK_IDENTITY,
     );
     expect(proof.states.map(({ state, result }) => [state, result.classification])).toEqual([
       ['last-good', 'SECURE_AND_FUNCTIONAL'],

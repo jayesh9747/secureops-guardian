@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { verifierPackIdentitySchema } from '@guardian/policy-verifier';
 
 export const GUARDIAN_APPROVAL_BOUNDARY =
   'TrueForge requires separate human approval for each official GitHub MCP write.' as const;
@@ -57,6 +58,7 @@ const verifierPresentationSchema = z.discriminatedUnion('state', [
     .object({
       state: z.literal('FOUR_STATE_VERIFIED'),
       execution_boundary: z.literal(GUARDIAN_VERIFIER_BOUNDARY),
+      verifier_pack: verifierPackIdentitySchema,
       rows: z.array(proofRowSchema).length(4),
     })
     .strict(),
@@ -64,6 +66,7 @@ const verifierPresentationSchema = z.discriminatedUnion('state', [
     .object({
       state: z.literal('NO_SAFE_REMEDIATION'),
       execution_boundary: z.literal(GUARDIAN_VERIFIER_BOUNDARY),
+      verifier_pack: verifierPackIdentitySchema,
       attempts: z.array(verifierAttemptSchema).length(2),
     })
     .strict(),
@@ -81,6 +84,7 @@ const proposalPresentationSchema = z.discriminatedUnion('state', [
       state: z.literal('EXACT'),
       proposal_id: z.string().startsWith('proposal:sha256:'),
       proposal_hash_sha256: sha256Schema,
+      verifier_pack_binding_sha256: sha256Schema,
       exact_patch: z.string().min(1),
     })
     .strict(),

@@ -1,6 +1,6 @@
 # Unified SecureOps Guardian architecture
 
-Updated: 26 August 2026.
+Updated: 27 August 2026.
 
 ## User-facing system
 
@@ -25,7 +25,8 @@ User -> saved TrueForge agent secureops-guardian_v0
           |     +-- typed evidence validation + SEC-NET-001
           |
           +-- PREPARE_REMEDIATION or OPEN_PR only
-          |     `-- Daytona -> bounded candidate + four-state static verifier
+          |     +-- exact support gate -> pinned guardian-network-egress-v1 skill
+          |     `-- Daytona -> verified pack + bounded candidate + four-state proof
           |
           +-- OPEN_PR only
           |     `-- exact remote reconciliation
@@ -57,7 +58,7 @@ Natural language is a usability layer above the stable request schema. Model ext
 
 Incomplete or invalid explicit scope returns one concise question and no executable request, so `planGuardianRun` cannot produce a tool plan. Natural-language `PREPARE_REMEDIATION` and `OPEN_PR` interpretations require confirmation bound to the SHA-256 of the exact generated request. The typed compiler is the only digest authority. The prompt-only saved agent cannot execute that compiler, so its live confirmation binds every visible canonical scope and mode field and does not calculate or display a digest unless a deterministic integration supplies one. Confirmation establishes request meaning only; the existing three GitHub write approvals remain separate.
 
-The existing five-file verifier-input gate applies before both exact JSON and natural-language remediation can enter planning. Exact JSON retains its backward-compatible direct-validation path, but a remediation request without the exact verifier envelope returns `NEEDS_INPUT` instead of an executable request.
+The remediation support gate internally selects exactly `k8s-network-egress-v1`. The registered `guardian-network-egress-v1` TrueForge skill is pinned to immutable source revision `guardian-network-egress-v1.0.4`, source commit `ade2d1453bba033dd3300a7c7aede6e28b97582d`, and manifest digest `e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe`. Users do not name or attach verifier files. The old five-filename exact-JSON envelope is accepted only as a deprecated compatibility shape; it cannot select a file or pack. `ANALYSIS_ONLY` never enters Daytona, so the attached skill is not materialized into a sandbox.
 
 The compiler is a pure in-process module. Free-form text and draft data do not cross the planning seam: preflight and every retained Phase 2-7 gate consume only `GuardianRequest`.
 
@@ -79,7 +80,13 @@ The compiler is a pure in-process module. Free-form text and draft data do not c
 }
 ```
 
-`suspect` may instead be an exact comparison object with `base_sha` and `head_sha`, both full 40-character lowercase Git SHAs. For remediation modes, the outer compiler input must also contain the five exact verifier filenames; those inputs are an execution precondition and are not part of `GuardianRequest`. For natural-language remediation/write requests, ask-user also owns interpreted-request confirmation. Both missing-input and confirmation questions occur before every other tool call and never authorize a GitHub write.
+`suspect` may instead be an exact comparison object with `base_sha` and `head_sha`, both full 40-character lowercase Git SHAs. Remediation requests need no verifier-file fields. For natural-language remediation/write requests, ask-user owns interpreted-request confirmation before preflight. Confirmation never authorizes a GitHub write.
+
+## Verifier-pack seam
+
+TrueForge materializes the pinned skill at the runtime-proven `/opt/tf/skills/guardian-network-egress-v1` root. The first Daytona step verifies the required file paths, the root-pinned manifest and bundle SHA-256 digests, the manifest schema, the exact supported Guardian scope, the exact six-file payload set, and every file digest. Any mismatch returns `INCONCLUSIVE` before candidate generation. The first candidate is written only after `VERIFIER_PACK_READY` and before semantic inspection of the expected contract or reference policies. One diagnostics-only correction is allowed; a second failure returns `NO_SAFE_REMEDIATION`. A passing candidate must still produce the retained four-state matrix.
+
+The legacy proposal hash remains stable for compatibility. A separate pack-binding SHA-256 binds that proposal hash to the complete pack identity. Proofs, proposals, pre-mutation UI, action receipts, run receipts, PR bodies, and reuse checks all carry or validate the exact identity and binding.
 
 ## Mode ceilings
 
@@ -106,6 +113,6 @@ Truthful product claim: “Guardian can inspect any authorized GitHub repository
 - GitHub commits and files are real repository evidence, not proof of deployment or runtime behavior.
 - Incident Fixture MCP observations are owned synthetic evidence, not production telemetry.
 - Daytona output is deterministic static policy-contract validation, not Kubernetes admission, CNI, DNS, packet, application, data-access, exfiltration, or live-cluster proof.
-- Exact proposal identity binds repository, branches, file, suspect revision, candidate bytes, diff, evidence, proof, and limitations.
+- Exact proposal identity binds repository, branches, file, suspect revision, candidate bytes, diff, evidence, proof, limitations, verifier pack, and pack-binding digest.
 - `create_branch`, `create_or_update_file`, and `create_pull_request` require separate approvals and are retry-safe, not atomic.
 - Guardian never merges, deploys, accesses a cluster, overwrites a conflict, or creates a new persistence database.

@@ -3,7 +3,13 @@ import { fullGitShaSchema } from '@guardian/shared';
 import { z } from 'zod';
 
 import { bindEligibleProposal, type ProposalBinding } from './binding.js';
-import { PHASE_FOUR_TARGET, SUSPECT_CANDIDATE_GIT_BLOB_SHA } from './constants.js';
+import {
+  LEGACY_REMEDIATION_PR_NUMBER,
+  LEGACY_REMEDIATION_PR_URL,
+  PHASE_FOUR_TARGET,
+  SUSPECT_CANDIDATE_GIT_BLOB_SHA,
+} from './constants.js';
+import { buildLegacyRemediationPullRequestBody } from './presentation.js';
 
 export type GitHubWriteTool = 'create_branch' | 'create_or_update_file' | 'create_pull_request';
 export type WriteStep = 'CREATE_BRANCH' | 'UPDATE_FILE' | 'CREATE_PR';
@@ -125,11 +131,16 @@ export function evaluateRemoteSnapshot(
     snapshot.branch.commitMessage === binding.commitMessage;
 
   if (snapshot.pullRequest !== null) {
+    const currentBodyMatches = snapshot.pullRequest.body === binding.pullRequestBody;
+    const frozenLegacyBodyMatches =
+      snapshot.pullRequest.number === LEGACY_REMEDIATION_PR_NUMBER &&
+      snapshot.pullRequest.url === LEGACY_REMEDIATION_PR_URL &&
+      snapshot.pullRequest.body === buildLegacyRemediationPullRequestBody(binding.proposal);
     const pullRequestMatches =
       snapshot.pullRequest.base === PHASE_FOUR_TARGET.baseBranch &&
       snapshot.pullRequest.head === PHASE_FOUR_TARGET.remediationBranch &&
       snapshot.pullRequest.title === binding.pullRequestTitle &&
-      snapshot.pullRequest.body === binding.pullRequestBody;
+      (currentBodyMatches || frozenLegacyBodyMatches);
     if (!branchHasCandidate || !pullRequestMatches) {
       return {
         status: 'WRITE_CONFLICT',

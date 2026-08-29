@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
 
 import { actionReceiptSchema } from '@guardian/github-write';
-import { canonicalJson } from '@guardian/policy-verifier';
+import {
+  canonicalJson,
+  computeVerifierPackBinding,
+  verifierPackIdentitySchema,
+} from '@guardian/policy-verifier';
 import { z } from 'zod';
 
 import { guardianModeSchema, repositoryScopeSchema } from './scope.js';
@@ -71,6 +75,8 @@ export const guardianRunReceiptSchema = z
     approval_event_references: z.array(z.string().min(1)),
     missing_or_unsupported_requirements: z.array(z.string().min(1)),
     proposal_hash_sha256: sha256Schema.nullable(),
+    verifier_pack: verifierPackIdentitySchema.nullable(),
+    verifier_pack_binding_sha256: sha256Schema.nullable(),
     action_receipt: actionReceiptSchema.nullable(),
     runtime_claims: z
       .object({
@@ -102,6 +108,8 @@ export const guardianRunReceiptSchema = z
         receipt.stages.proposal !== 'ABSENT' ||
         receipt.stages.github_action !== 'NOT_REACHED' ||
         receipt.proposal_hash_sha256 !== null ||
+        receipt.verifier_pack !== null ||
+        receipt.verifier_pack_binding_sha256 !== null ||
         receipt.action_receipt !== null ||
         receipt.approval_event_references.length > 0 ||
         receipt.runtime_claims.deployment !== 'Unknown' ||
@@ -124,6 +132,8 @@ export const guardianRunReceiptSchema = z
         receipt.stages.proposal !== 'ABSENT' ||
         receipt.stages.github_action !== expectedGitHubAction ||
         receipt.proposal_hash_sha256 !== null ||
+        receipt.verifier_pack !== null ||
+        receipt.verifier_pack_binding_sha256 !== null ||
         receipt.action_receipt !== null ||
         receipt.approval_event_references.length > 0 ||
         receipt.runtime_claims.deployment !== 'Unknown' ||
@@ -168,6 +178,31 @@ export const guardianRunReceiptSchema = z
       });
     }
 
+    if (receipt.proposal_hash_sha256 === null) {
+      if (receipt.verifier_pack !== null || receipt.verifier_pack_binding_sha256 !== null) {
+        context.addIssue({
+          code: 'custom',
+          message: 'A receipt without a proposal cannot carry verifier pack binding state.',
+        });
+      }
+    } else if (receipt.verifier_pack === null || receipt.verifier_pack_binding_sha256 === null) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A proposal receipt requires the exact verifier pack identity and binding digest.',
+      });
+    } else {
+      const expectedPackBinding = computeVerifierPackBinding({
+        proposal_hash_sha256: receipt.proposal_hash_sha256,
+        verifier_pack: receipt.verifier_pack,
+      });
+      if (receipt.verifier_pack_binding_sha256 !== expectedPackBinding) {
+        context.addIssue({
+          code: 'custom',
+          message: 'Run receipt verifier pack binding is invalid.',
+        });
+      }
+    }
+
     const action = receipt.action_receipt;
     const isActionTerminal = ['DENIED', 'PR_CREATED', 'PR_REUSED', 'WRITE_CONFLICT'].includes(
       receipt.terminal_status,
@@ -197,7 +232,9 @@ export const guardianRunReceiptSchema = z
         action.status !== receipt.terminal_status ||
         action.repository !== receipt.scope.repository ||
         action.base_branch !== receipt.scope.base_branch ||
-        action.proposal_hash_sha256 !== receipt.proposal_hash_sha256
+        action.proposal_hash_sha256 !== receipt.proposal_hash_sha256 ||
+        canonicalJson(action.verifier_pack) !== canonicalJson(receipt.verifier_pack) ||
+        action.verifier_pack_binding_sha256 !== receipt.verifier_pack_binding_sha256
       ) {
         context.addIssue({
           code: 'custom',

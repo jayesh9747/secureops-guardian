@@ -1,6 +1,15 @@
 import { z } from 'zod';
 
-export const DEMO_REPOSITORY = 'jayesh9747/guardian-demo-checkout';
+import { VERIFIER_PACK_METADATA, VERIFIER_PACK_SCOPE } from './verifier-pack-metadata.js';
+
+export {
+  VERIFIER_PACK_METADATA,
+  VERIFIER_PACK_ROOT,
+  VERIFIER_PACK_SCOPE,
+  VERIFIER_SKILL_NAME,
+} from './verifier-pack-metadata.js';
+
+export const DEMO_REPOSITORY = VERIFIER_PACK_SCOPE.repository;
 export const DEMO_CASE_ID = 'checkout-networkpolicy-egress-exposure';
 export const MISSING_DEPLOYMENT_REVISION_CASE_ID =
   'checkout-networkpolicy-egress-exposure-missing-deployment-revision';
@@ -9,9 +18,14 @@ export const MISSING_REACHABILITY_CASE_ID =
 export const CONFLICTING_REVISION_CASE_ID =
   'checkout-networkpolicy-egress-exposure-conflicting-revision';
 export const LAST_GOOD_COMMIT_SHA = 'a6d177b43396c7b4b45aa98cb2970d0489a7a4f9';
-export const SUSPECT_COMMIT_SHA = '7b2f2ad51f9ef97334176fbfed3138465b62fcdb';
-export const TARGET_NETWORK_POLICY_FILE = 'k8s/checkout-networkpolicy.yaml';
-
+export const SUSPECT_COMMIT_SHA = VERIFIER_PACK_SCOPE.suspect_commit_sha;
+export const TARGET_NETWORK_POLICY_FILE = VERIFIER_PACK_SCOPE.target_file;
+export const VERIFIER_PACK_IDENTITY = {
+  ...VERIFIER_PACK_METADATA,
+  manifest_sha256: 'e70853b49715a949f61ae7584ef963b15267026051091a169e78a27249a869fe',
+} as const;
+export const VERIFIER_BUNDLE_SHA256 =
+  '028172c2b937dc95e1d406db49d5801d5742a5636b5360dc99bd1d6b4c0049f9' as const;
 export const fullGitShaSchema = z
   .string()
   .regex(/^[0-9a-f]{40}$/u, 'Expected a full Git commit SHA.');
@@ -27,6 +41,7 @@ export interface GuardianAgentDefinition {
   name: string;
   instructions: string;
   mcpServers?: readonly GuardianMcpServerSpec[];
+  skills?: readonly string[];
   sandbox?: { enabled: boolean; file_downloads?: boolean };
   dynamicSubAgents?: boolean;
   generativeUi?: boolean;
@@ -46,13 +61,20 @@ export function defineGuardianAgent(definition: GuardianAgentDefinition) {
       mcp_servers: (definition.mcpServers ?? []).map((server) => ({
         ...server,
         enable_tools: [...server.enable_tools],
+        disable_tools: [],
+        preload_tools: [],
         require_approval_for_tools: [...server.require_approval_for_tools],
       })),
+      skills: (definition.skills ?? []).map((name) => ({ name })),
       config: {
         sandbox: definition.sandbox ?? { enabled: false },
         generative_ui: { enabled: definition.generativeUi ?? false },
         ask_user_questions: { enabled: definition.askUserQuestions ?? false },
         dynamic_sub_agents: { enabled: definition.dynamicSubAgents ?? false },
+        context_management: {
+          compaction: { enabled: true },
+          large_tool_response: { enabled: true },
+        },
         iteration_limit: definition.iterationLimit,
       },
     },

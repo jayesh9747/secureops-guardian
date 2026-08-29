@@ -11,6 +11,7 @@ import {
   verifyFourStates,
   type EligibleProposal,
 } from '@guardian/policy-verifier';
+import { VERIFIER_PACK_IDENTITY } from '@guardian/shared';
 import {
   DENY_ALL_NETWORK_POLICY_YAML,
   POLICY_CONTRACT_JSON,
@@ -74,6 +75,7 @@ export function buildPhaseSixControllingArtifacts(): {
       candidateYaml: VERIFIED_CANDIDATE_YAML,
     },
     contract,
+    VERIFIER_PACK_IDENTITY,
   );
   const proposal = buildEligibleProposal({
     candidateYaml: VERIFIED_CANDIDATE_YAML,

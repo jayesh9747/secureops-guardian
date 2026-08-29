@@ -54,6 +54,8 @@ describe('unified current-fixture journey', () => {
         presentation: 'MARKDOWN',
       },
       proposal_hash_sha256: null,
+      verifier_pack: null,
+      verifier_pack_binding_sha256: null,
       action_receipt: null,
       approval_event_references: [],
       runtime_claims: {
@@ -92,6 +94,10 @@ describe('unified current-fixture journey', () => {
       approval_event_references: [],
     });
     expect(result.receipt.proposal_hash_sha256).toMatch(/^[0-9a-f]{64}$/u);
+    expect(result.receipt.verifier_pack).toMatchObject({
+      pack_id: 'k8s-network-egress-v1',
+    });
+    expect(result.receipt.verifier_pack_binding_sha256).toMatch(/^[0-9a-f]{64}$/u);
     expect(result.openui).toBeNull();
     expect(result.markdown).toContain('No GitHub write or approval is permitted in this mode.');
   });

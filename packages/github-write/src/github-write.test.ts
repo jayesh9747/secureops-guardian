@@ -1,7 +1,14 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { canonicalJson, type EligibleProposal } from '@guardian/policy-verifier';
+import {
+  buildEligibleProposal,
+  canonicalJson,
+  computeVerifierPackBinding,
+  parsePolicyContract,
+  verifyFourStates,
+} from '@guardian/policy-verifier';
+import { VERIFIER_PACK_IDENTITY } from '@guardian/shared';
 import { describe, expect, it } from 'vitest';
 
 import { PHASE_FOUR_AGENT_SPEC } from './agent.js';
@@ -9,6 +16,7 @@ import { bindEligibleProposal } from './binding.js';
 import {
   PHASE_FOUR_TARGET,
   PHASE_THREE_PROPOSAL_HASH,
+  PHASE_THREE_VERIFIER_PACK_BINDING_SHA256,
   SUSPECT_CANDIDATE_GIT_BLOB_SHA,
   VERIFIED_CANDIDATE_GIT_BLOB_SHA,
   VERIFIED_CANDIDATE_SHA256,
@@ -21,17 +29,36 @@ import {
   writeCallMatchesProposal,
   type RemoteSnapshot,
 } from './contract.js';
-import { buildPreMutationPresentation } from './presentation.js';
+import {
+  buildLegacyRemediationPullRequestBody,
+  buildPreMutationPresentation,
+} from './presentation.js';
 import { buildPhaseFourReceiptArtifacts } from './receipt-artifacts.js';
 import { buildActionReceipt } from './receipt.js';
 
-const proposal = JSON.parse(
-  readFileSync(new URL('../../../docs/evidence/PHASE_3_PROPOSAL.json', import.meta.url), 'utf8'),
-) as EligibleProposal;
 const candidateArtifact = readFileSync(
   new URL('../../../docs/evidence/PHASE_3_CANDIDATE.yaml', import.meta.url),
   'utf8',
 );
+const policyFixture = (name: string) =>
+  readFileSync(new URL(`../../policy-verifier/fixtures/${name}`, import.meta.url), 'utf8');
+const suspectArtifact = policyFixture('suspect.yaml');
+const proof = verifyFourStates(
+  {
+    lastGoodYaml: candidateArtifact,
+    suspectYaml: suspectArtifact,
+    denyAllYaml: policyFixture('deny-all.yaml'),
+    candidateYaml: candidateArtifact,
+  },
+  parsePolicyContract(policyFixture('expected-contract.json')),
+  VERIFIER_PACK_IDENTITY,
+);
+const proposal = buildEligibleProposal({
+  candidateYaml: candidateArtifact,
+  suspectYaml: suspectArtifact,
+  proof,
+});
+if (proposal === undefined) throw new Error('Expected the controlling eligible proposal.');
 const bindingResult = bindEligibleProposal(proposal);
 if (bindingResult.status !== 'BOUND') throw new Error(bindingResult.reason);
 const binding = bindingResult.binding;
@@ -51,6 +78,15 @@ function snapshot(overrides: Partial<RemoteSnapshot> = {}): RemoteSnapshot {
 }
 
 describe('Phase 4 proposal binding and presentation', () => {
+  it('keeps the pinned pack binding derived from the proposal hash and pack identity', () => {
+    expect(PHASE_THREE_VERIFIER_PACK_BINDING_SHA256).toBe(
+      computeVerifierPackBinding({
+        proposal_hash_sha256: PHASE_THREE_PROPOSAL_HASH,
+        verifier_pack: VERIFIER_PACK_IDENTITY,
+      }),
+    );
+  });
+
   it('byte-matches the displayed candidate to the merged sandbox-verified artifact', () => {
     const candidateBytes = Buffer.from(binding.candidateYaml);
     const candidateGitBlobSha = createHash('sha1')
@@ -80,6 +116,12 @@ describe('Phase 4 proposal binding and presentation', () => {
     expect(
       decideWrite({ ...proposal, proposal_hash_sha256: '0'.repeat(64) }, snapshot()).status,
     ).toBe('WRITE_CONFLICT');
+    expect(
+      bindEligibleProposal({
+        ...proposal,
+        verifier_pack: { ...proposal.verifier_pack, manifest_sha256: 'f'.repeat(64) },
+      }).status,
+    ).toBe('WRITE_CONFLICT');
   });
 
   it('rejects proof rows whose security flags contradict their classification', () => {
@@ -99,6 +141,11 @@ describe('Phase 4 proposal binding and presentation', () => {
     expect(presentation).toContain(binding.proposal.canonical_diff);
     expect(presentation).toContain(binding.candidateYaml);
     expect(presentation).toContain(PHASE_THREE_PROPOSAL_HASH);
+    expect(presentation).toContain(binding.proposal.verifier_pack.pack_id);
+    expect(presentation).toContain(binding.proposal.verifier_pack.pack_version);
+    expect(presentation).toContain(binding.proposal.verifier_pack.source_revision);
+    expect(presentation).toContain(binding.proposal.verifier_pack.manifest_sha256);
+    expect(presentation).toContain(binding.proposal.verifier_pack_binding_sha256);
     expect(presentation).toContain('evidence:security-alert:checkout-egress:001');
     expect(presentation).toContain('SECURE_BUT_OPERATIONALLY_REJECTED');
     expect(presentation).toContain('retry-safe, not atomic');
@@ -212,6 +259,34 @@ describe('Phase 4 ordered write contract', () => {
     expect(evaluateRemoteSnapshot(binding, alteredBody).status).toBe('WRITE_CONFLICT');
   });
 
+  it('reuses the exact frozen Phase 4 PR body after a fresh pack-bound proof', () => {
+    const legacyBody = buildLegacyRemediationPullRequestBody(binding.proposal);
+    expect(legacyBody).not.toContain(binding.proposal.verifier_pack.pack_id);
+    expect(legacyBody).not.toContain(binding.proposal.verifier_pack_binding_sha256);
+    expect(
+      evaluateRemoteSnapshot(
+        binding,
+        snapshot({
+          branch: {
+            commitSha: candidateCommitSha,
+            targetFileGitBlobSha: VERIFIED_CANDIDATE_GIT_BLOB_SHA,
+            commitMessage: binding.commitMessage,
+          },
+          pullRequest: {
+            number: 1,
+            url: 'https://github.com/jayesh9747/guardian-demo-checkout/pull/1',
+            title: binding.pullRequestTitle,
+            base: PHASE_FOUR_TARGET.baseBranch,
+            head: PHASE_FOUR_TARGET.remediationBranch,
+            body: legacyBody,
+          },
+        }),
+      ).status,
+    ).toBe('PR_REUSED');
+    expect(binding.proposal.verifier_pack).toEqual(VERIFIER_PACK_IDENTITY);
+    expect(binding.proposal.verifier_pack_binding_sha256).toMatch(/^[0-9a-f]{64}$/u);
+  });
+
   it('fails closed instead of overwriting mismatched remote work', () => {
     const mismatchedContent = evaluateRemoteSnapshot(
       binding,
@@ -251,7 +326,14 @@ describe('Phase 4 truthful receipts and TrueForge policy', () => {
           'utf8',
         ),
       ) as unknown;
-      expect(canonicalJson(committed)).toBe(canonicalJson(receiptCase.receipt));
+      const {
+        verifier_pack: historicalPackMigration,
+        verifier_pack_binding_sha256: historicalPackBindingMigration,
+        ...historicalReceipt
+      } = receiptCase.receipt;
+      expect(historicalPackMigration.pack_id).toBe('k8s-network-egress-v1');
+      expect(historicalPackBindingMigration).toMatch(/^[0-9a-f]{64}$/u);
+      expect(canonicalJson(committed)).toBe(canonicalJson(historicalReceipt));
     }
   });
 
@@ -268,6 +350,10 @@ describe('Phase 4 truthful receipts and TrueForge policy', () => {
     expect(receipt.status).toBe('DENIED');
     expect(receipt.approved_tool_call_references).toEqual([]);
     expect(receipt.denied_tool_call_references).toEqual(['call_denied_branch']);
+    expect(receipt.verifier_pack).toEqual(binding.proposal.verifier_pack);
+    expect(receipt.verifier_pack_binding_sha256).toBe(
+      binding.proposal.verifier_pack_binding_sha256,
+    );
     expect(receipt).not.toHaveProperty('remote_commit_sha');
     expect(receipt).not.toHaveProperty('pr_url');
 
@@ -333,5 +419,11 @@ describe('Phase 4 truthful receipts and TrueForge policy', () => {
       sandbox: { enabled: false },
       dynamic_sub_agents: { enabled: false },
     });
+    expect(PHASE_FOUR_AGENT_SPEC.manifest.instructions).toContain(
+      'The complete PR reuse reconciliation is exactly six reads',
+    );
+    expect(PHASE_FOUR_AGENT_SPEC.manifest.instructions).toContain(
+      'get_file_contents and get_commit for the remediation branch',
+    );
   });
 });

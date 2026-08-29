@@ -215,6 +215,8 @@ function buildInconclusiveResult(options: {
     approval_event_references: [],
     missing_or_unsupported_requirements: requirements,
     proposal_hash_sha256: null,
+    verifier_pack: null,
+    verifier_pack_binding_sha256: null,
     action_receipt: null,
     runtime_claims: options.preflight.runtime_claims,
     limitations: [
@@ -247,6 +249,7 @@ function stopReadyPreflight(
     proposal_permitted: false,
     approval_permitted: false,
     github_writes_permitted: [],
+    verifier_pack: null,
   };
 }
 
@@ -300,6 +303,8 @@ GitHub-only analysis does not establish deployment, runtime exposure, data acces
       approval_event_references: [],
       missing_or_unsupported_requirements: [],
       proposal_hash_sha256: null,
+      verifier_pack: null,
+      verifier_pack_binding_sha256: null,
       action_receipt: null,
       runtime_claims: preflight.runtime_claims,
       limitations: [
@@ -325,6 +330,8 @@ GitHub-only analysis does not establish deployment, runtime exposure, data acces
     tool_event_references: toolEventReferences,
     approval_event_references: [] as string[],
     missing_or_unsupported_requirements: [] as string[],
+    verifier_pack: proposal.verifier_pack,
+    verifier_pack_binding_sha256: proposal.verifier_pack_binding_sha256,
     runtime_claims: {
       deployment: 'SupportedByOwnedSyntheticEvidence' as const,
       runtime_exposure: 'SupportedByOwnedSyntheticEvidence' as const,

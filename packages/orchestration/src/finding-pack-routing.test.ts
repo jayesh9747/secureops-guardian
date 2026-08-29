@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
@@ -36,6 +37,7 @@ const changedFile = {
   revision: REVISION,
   file: FILE,
   patch: manifestPatch,
+  patch_sha256: createHash('sha256').update(manifestPatch).digest('hex'),
   content: manifest,
   git_blob_sha: BLOB_SHA,
   evidence_references: [
@@ -101,6 +103,13 @@ describe('natural-language FindingPack routing', () => {
     expect(result.analysis).toMatchObject({
       outcome: 'INCONCLUSIVE',
       routes: { verifier: false, proposal: false, approval: false, github_writes: [] },
+    });
+    expect(result.capability_ceiling).toEqual({
+      incident_fixture_reads: false,
+      daytona_sandbox: false,
+      proposal_creation: false,
+      approval_request: false,
+      github_writes: [],
     });
   });
 });

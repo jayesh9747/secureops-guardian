@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { z } from 'zod';
 
 import {
@@ -149,6 +151,7 @@ function synthesizeValidated(options: {
         revision: change.suspect_commit.sha,
         file: change.changed_file.path,
         patch: change.changed_file.exact_diff,
+        patch_sha256: createHash('sha256').update(change.changed_file.exact_diff).digest('hex'),
         content: change.changed_file.reconstructed_suspect_manifest_yaml,
         git_blob_sha: change.changed_file.manifest_blob_sha,
         evidence_references: change.changed_file.references.evidence_ids.map(

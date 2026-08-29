@@ -67,6 +67,7 @@ export interface FindingPackChangedFileEvidence {
   readonly revision: string;
   readonly file: string;
   readonly patch: string;
+  readonly patch_sha256: string;
   readonly content: string;
   readonly git_blob_sha: string;
   readonly evidence_references: readonly FindingPackEvidenceReference[];
@@ -141,6 +142,7 @@ export interface FindingPackEvidenceContract {
     'revision',
     'file',
     'patch',
+    'patch_sha256',
     'content',
     'git_blob_sha',
     'evidence_references',
@@ -190,6 +192,7 @@ const EXACT_GITHUB_FILE_EVIDENCE: FindingPackEvidenceContract = Object.freeze({
     'revision',
     'file',
     'patch',
+    'patch_sha256',
     'content',
     'git_blob_sha',
     'evidence_references',
@@ -205,12 +208,17 @@ function gitBlobSha(content: string): string {
     .digest('hex');
 }
 
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
 function patchMatchesPostimage(patch: string, content: string): boolean {
   const patchLines = patch.split('\n');
   const contentLines = content.endsWith('\n')
     ? content.slice(0, -1).split('\n')
     : content.split('\n');
   let foundHunk = false;
+  let foundMutation = false;
   for (let index = 0; index < patchLines.length; index += 1) {
     const header = patchLines[index];
     if (header === undefined || !header.startsWith('@@ ')) continue;
@@ -229,7 +237,10 @@ function patchMatchesPostimage(patch: string, content: string): boolean {
       }
       if (line.startsWith(' ') || (line.startsWith('+') && !line.startsWith('+++'))) {
         postimage.push(line.slice(1));
-      } else if (!line.startsWith('-') && !line.startsWith('\\ No newline at end of file')) {
+        if (line.startsWith('+')) foundMutation = true;
+      } else if (line.startsWith('-') && !line.startsWith('---')) {
+        foundMutation = true;
+      } else if (!line.startsWith('\\ No newline at end of file')) {
         return false;
       }
     }
@@ -242,7 +253,7 @@ function patchMatchesPostimage(patch: string, content: string): boolean {
       return false;
     }
   }
-  return foundHunk;
+  return foundHunk && foundMutation;
 }
 
 function isSafeRepositoryRelativePath(rawPath: string): boolean {
@@ -281,6 +292,8 @@ function evidenceIsBound(file: FindingPackChangedFileEvidence): boolean {
     /^[0-9a-f]{40}$/u.test(file.revision) &&
     isSafeRepositoryRelativePath(file.file) &&
     file.patch.length > 0 &&
+    /^[0-9a-f]{64}$/u.test(file.patch_sha256) &&
+    sha256(file.patch) === file.patch_sha256 &&
     patchMatchesPostimage(file.patch, file.content) &&
     /^[0-9a-f]{40}$/u.test(file.git_blob_sha) &&
     gitBlobSha(file.content) === file.git_blob_sha &&

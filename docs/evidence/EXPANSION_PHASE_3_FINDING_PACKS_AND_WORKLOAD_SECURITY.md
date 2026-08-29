@@ -83,11 +83,11 @@ reachability, data access, exfiltration, and live-cluster behavior remain `Unkno
 
 Saved agent `secureops-guardian_v0` (`01m0w6s2eyqtzyb6q4y6ppsta9`) was reconciled to the portable
 Phase 10 manifest. Its canonical saved/export manifest SHA-256 is
-`1cb3e8170ec3235657554cc0aa9d46d986c589dae091817da92729bdb18081eb`. The accepted replay below
+`5d0a316269ce377478c64bb049ddd848ed0cdc65cf9ef31e94710383b8ee01bf`. The accepted replay below
 ran at pre-review digest `1388136250f4b8ba9077b048d808d020280d0265139c771905f8755686620ec9`;
-the post-review change only tightened deterministic patch binding, higher-capability routing, and
-effective Pod/container security-context attribution, and the complete deterministic gate was
-rerun afterward.
+the post-review changes tightened deterministic patch binding, effective higher-capability stops,
+field-level Pod/container security-context attribution, and exact OpenUI identity mapping. The
+complete deterministic gate was rerun afterward.
 
 TrueForge session `01m160ykwk93kqkxva95cazah2`, turn
 `01m160ykz5x2jr90qb4s1rph72.ueyhrn`, analyzed the exact suspect repository, revision, and target

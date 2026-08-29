@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { PHASE_THREE_PROPOSAL_HASH } from '@guardian/github-write';
 import {
   FINDING_PACK_REGISTRY,
@@ -81,6 +83,9 @@ function repositoryEvidence(options: {
     revision: options.revision,
     file: FILE,
     patch: options.role === 'suspect' ? SUSPECT_PATCH : BENIGN_PATCH,
+    patch_sha256: createHash('sha256')
+      .update(options.role === 'suspect' ? SUSPECT_PATCH : BENIGN_PATCH)
+      .digest('hex'),
     content: options.content,
     git_blob_sha: options.gitBlobSha,
     evidence_references: [

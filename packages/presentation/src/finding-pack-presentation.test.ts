@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import { FINDING_PACK_REGISTRY } from '@guardian/investigation';
@@ -29,6 +30,7 @@ const analysis = FINDING_PACK_REGISTRY.analyze({
       revision,
       file,
       patch,
+      patch_sha256: createHash('sha256').update(patch).digest('hex'),
       content,
       git_blob_sha: blobSha,
       evidence_references: [
@@ -81,6 +83,8 @@ describe('workload FindingPack presentation mapping', () => {
     );
     expect(openui).toContain('root = Stack(');
     expect(openui).toContain('TabItem("evidence", "Evidence"');
+    expect(openui).toContain('apps/v1/Deployment commerce/catalog-api');
+    expect(openui).toContain('container:catalog-api');
     expect(openui).not.toContain('Prepare remediation');
     expect(openui).not.toContain('Open PR');
   });

@@ -128,8 +128,9 @@ export function renderFindingPackAnalysisOpenUi(
   presentation: FindingPackAnalysisPresentation,
 ): string {
   const title = JSON.stringify(presentation.headline);
+  const objectIdentity = `${presentation.object_identity.api_version}/${presentation.object_identity.kind} ${presentation.object_identity.namespace}/${presentation.object_identity.name}`;
   const scope = JSON.stringify(
-    `${presentation.repository}@${presentation.revision} · ${presentation.file}`,
+    `${presentation.repository}@${presentation.revision} · ${presentation.file} · ${objectIdentity}`,
   );
   const pack = JSON.stringify(
     `${presentation.pack.pack_id}@${presentation.pack.pack_version} · ${presentation.capability}`,
@@ -138,7 +139,9 @@ export function renderFindingPackAnalysisOpenUi(
     presentation.findings.map((finding) => [
       finding.rule_id,
       finding.severity,
-      finding.container_identity?.name ?? 'Pod',
+      finding.container_identity === null
+        ? objectIdentity
+        : `${objectIdentity} · ${finding.container_identity.container_type}:${finding.container_identity.name}`,
       finding.json_path,
     ]),
   );

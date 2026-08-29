@@ -93,12 +93,17 @@ function blobSha(content: string): string {
     .digest('hex');
 }
 
+function sha256(content: string): string {
+  return createHash('sha256').update(content).digest('hex');
+}
+
 function postimagePatch(content: string): string {
   const lines = (content.endsWith('\n') ? content.slice(0, -1) : content).split('\n');
   return `@@ -0,0 +1,${String(lines.length)} @@\n${lines.map((line) => `+${line}`).join('\n')}`;
 }
 
 function workloadRequest(content: string, gitBlobSha: string) {
+  const patch = postimagePatch(content);
   return {
     requested_capability: 'ANALYSIS_ONLY' as const,
     changed_files: [
@@ -106,7 +111,8 @@ function workloadRequest(content: string, gitBlobSha: string) {
         repository: 'jayesh9747/guardian-demo-privileged-api',
         revision: '2c7bdb3e07714e08d9504b3504587fbf18847f29',
         file: 'k8s/api-deployment.yaml',
-        patch: postimagePatch(content),
+        patch,
+        patch_sha256: sha256(patch),
         content,
         git_blob_sha: gitBlobSha,
         evidence_references: [
@@ -172,6 +178,7 @@ describe('FindingPack registry contract', () => {
           'revision',
           'file',
           'patch',
+          'patch_sha256',
           'content',
           'git_blob_sha',
           'evidence_references',
@@ -191,6 +198,7 @@ describe('FindingPack registry contract', () => {
           revision: SUSPECT_COMMIT_SHA,
           file: TARGET_NETWORK_POLICY_FILE,
           patch: SUSPECT_NETWORK_POLICY_PATCH,
+          patch_sha256: sha256(SUSPECT_NETWORK_POLICY_PATCH),
           content: suspectNetworkPolicy,
           git_blob_sha: SUSPECT_NETWORK_POLICY_BLOB_SHA,
           evidence_references: [
@@ -284,7 +292,7 @@ describe('FindingPack registry contract', () => {
     expect(positive.findings).toContainEqual(
       expect.objectContaining({
         rule_id: 'K8S-WORKLOAD-003',
-        container_identity: { container_type: 'container', name: 'app' },
+        container_identity: null,
         json_path: '$.spec.securityContext.runAsUser',
         observed_value: { runAsUser: 0, runAsNonRoot: true },
       }),
@@ -292,7 +300,7 @@ describe('FindingPack registry contract', () => {
     expect(negative.findings.map((finding) => finding.rule_id)).not.toContain('K8S-WORKLOAD-003');
   });
 
-  it('uses effective container overrides for Pod-level UID 0 attribution', () => {
+  it('reports Pod-level UID 0 even when a container overrides its effective user', () => {
     const overridden = FINDING_PACK_REGISTRY.analyze(
       workloadRequest(podRootContainerOverridePod, blobSha(podRootContainerOverridePod)),
     );
@@ -304,15 +312,21 @@ describe('FindingPack registry contract', () => {
     if (overridden.outcome !== 'ANALYZED' || contradiction.outcome !== 'ANALYZED') return;
 
     expect(overridden.findings.filter((finding) => finding.rule_id === 'K8S-WORKLOAD-003')).toEqual(
-      [],
+      [
+        expect.objectContaining({
+          container_identity: null,
+          json_path: '$.spec.securityContext.runAsUser',
+          observed_value: { runAsUser: 0, runAsNonRoot: null },
+        }),
+      ],
     );
     expect(
       contradiction.findings.filter((finding) => finding.rule_id === 'K8S-WORKLOAD-003'),
     ).toEqual([
       expect.objectContaining({
-        container_identity: { container_type: 'container', name: 'catalog-api' },
+        container_identity: null,
         json_path: '$.spec.securityContext.runAsUser',
-        observed_value: { runAsUser: 0, runAsNonRoot: true },
+        observed_value: { runAsUser: 0, runAsNonRoot: null },
       }),
     ]);
   });
@@ -456,8 +470,16 @@ describe('FindingPack registry contract', () => {
     const changedFile = request.changed_files[0];
     if (changedFile === undefined) throw new Error('Expected one workload changed file.');
     changedFile.patch = '@@ -1 +1 @@\n+not-the-manifest';
+    changedFile.patch_sha256 = sha256(changedFile.patch);
 
     expect(FINDING_PACK_REGISTRY.analyze(request)).toMatchObject({ outcome: 'INCONCLUSIVE' });
+
+    const contextOnly = workloadRequest(privilegedDeployment, blobSha(privilegedDeployment));
+    const contextOnlyFile = contextOnly.changed_files[0];
+    if (contextOnlyFile === undefined) throw new Error('Expected one workload changed file.');
+    contextOnlyFile.patch = '@@ -1 +1 @@\n apiVersion: apps/v1';
+    contextOnlyFile.patch_sha256 = sha256(contextOnlyFile.patch);
+    expect(FINDING_PACK_REGISTRY.analyze(contextOnly)).toMatchObject({ outcome: 'INCONCLUSIVE' });
   });
 
   it('rejects unsafe repository paths and non-canonical Kubernetes identities', () => {
@@ -557,6 +579,7 @@ describe('FindingPack registry contract', () => {
       revision: SUSPECT_COMMIT_SHA,
       file: TARGET_NETWORK_POLICY_FILE,
       patch: SUSPECT_NETWORK_POLICY_PATCH,
+      patch_sha256: sha256(SUSPECT_NETWORK_POLICY_PATCH),
       content: suspectNetworkPolicy,
       git_blob_sha: SUSPECT_NETWORK_POLICY_BLOB_SHA,
       evidence_references: [

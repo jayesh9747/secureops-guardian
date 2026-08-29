@@ -206,6 +206,22 @@ export function extractSupportedWorkload(content: string): ExtractedWorkload | u
   };
 }
 
+function createWorkloadFinding(
+  workload: ExtractedWorkload,
+  evidence: FindingPackChangedFileEvidence,
+  finding: Omit<
+    FindingPackFinding,
+    'severity' | 'object_identity' | 'evidence_references' | 'legacy_rule_result'
+  >,
+): FindingPackFinding {
+  return {
+    ...finding,
+    severity: 'High',
+    object_identity: workload.object_identity,
+    evidence_references: evidence.evidence_references,
+  };
+}
+
 function privilegedFindings(
   workload: ExtractedWorkload,
   evidence: FindingPackChangedFileEvidence,
@@ -214,16 +230,13 @@ function privilegedFindings(
     const securityContext = recordAt(container.value, 'securityContext');
     if (securityContext?.privileged !== true) return [];
     return [
-      {
+      createWorkloadFinding(workload, evidence, {
         rule_id: WORKLOAD_RULE_IDS.privileged,
-        severity: 'High' as const,
-        object_identity: workload.object_identity,
         container_identity: { container_type: container.type, name: container.name },
         json_path: `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.privileged`,
-        evidence_references: evidence.evidence_references,
         observed_value: true,
         summary: 'Container explicitly enables privileged execution.',
-      },
+      }),
     ];
   });
 }
@@ -237,16 +250,13 @@ function privilegeEscalationFindings(
     const observed = securityContext?.allowPrivilegeEscalation;
     if (observed === false) return [];
     return [
-      {
+      createWorkloadFinding(workload, evidence, {
         rule_id: WORKLOAD_RULE_IDS.privilege_escalation,
-        severity: 'High' as const,
-        object_identity: workload.object_identity,
         container_identity: { container_type: container.type, name: container.name },
         json_path: `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.allowPrivilegeEscalation`,
-        evidence_references: evidence.evidence_references,
         observed_value: observed ?? null,
         summary: 'Container does not explicitly disable privilege escalation.',
-      },
+      }),
     ];
   });
 }
@@ -257,34 +267,47 @@ function rootExecutionFindings(
 ): FindingPackFinding[] {
   const findings: FindingPackFinding[] = [];
   const podSecurityContext = recordAt(workload.pod_spec, 'securityContext');
+  if (podSecurityContext?.runAsUser === 0) {
+    findings.push(
+      createWorkloadFinding(workload, evidence, {
+        rule_id: WORKLOAD_RULE_IDS.root_execution,
+        container_identity: null,
+        json_path: `${workload.pod_spec_path}.securityContext.runAsUser`,
+        observed_value: {
+          runAsUser: 0,
+          runAsNonRoot:
+            typeof podSecurityContext.runAsNonRoot === 'boolean'
+              ? podSecurityContext.runAsNonRoot
+              : null,
+        },
+        summary:
+          podSecurityContext.runAsNonRoot === true
+            ? 'Pod declares UID 0 while also declaring runAsNonRoot.'
+            : 'Pod declares UID 0.',
+      }),
+    );
+  }
   for (const container of workload.containers) {
     const securityContext = recordAt(container.value, 'securityContext');
-    const containerRunAsUser = securityContext?.runAsUser;
-    const effectiveRunAsUser =
-      typeof containerRunAsUser === 'number' ? containerRunAsUser : podSecurityContext?.runAsUser;
-    if (effectiveRunAsUser !== 0) continue;
+    if (securityContext?.runAsUser !== 0) continue;
     const effectiveRunAsNonRoot =
       typeof securityContext?.runAsNonRoot === 'boolean'
         ? securityContext.runAsNonRoot
         : typeof podSecurityContext?.runAsNonRoot === 'boolean'
           ? podSecurityContext.runAsNonRoot
           : null;
-    findings.push({
-      rule_id: WORKLOAD_RULE_IDS.root_execution,
-      severity: 'High',
-      object_identity: workload.object_identity,
-      container_identity: { container_type: container.type, name: container.name },
-      json_path:
-        containerRunAsUser === 0
-          ? `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.runAsUser`
-          : `${workload.pod_spec_path}.securityContext.runAsUser`,
-      evidence_references: evidence.evidence_references,
-      observed_value: { runAsUser: 0, runAsNonRoot: effectiveRunAsNonRoot },
-      summary:
-        effectiveRunAsNonRoot === true
-          ? 'Container effectively runs as UID 0 while effective runAsNonRoot is true.'
-          : 'Container effectively runs as UID 0.',
-    });
+    findings.push(
+      createWorkloadFinding(workload, evidence, {
+        rule_id: WORKLOAD_RULE_IDS.root_execution,
+        container_identity: { container_type: container.type, name: container.name },
+        json_path: `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.runAsUser`,
+        observed_value: { runAsUser: 0, runAsNonRoot: effectiveRunAsNonRoot },
+        summary:
+          effectiveRunAsNonRoot === true
+            ? 'Container declares UID 0 while effective runAsNonRoot is true.'
+            : 'Container declares UID 0.',
+      }),
+    );
   }
   return findings;
 }
@@ -300,31 +323,29 @@ function capabilityFindings(
       securityContext === undefined ? undefined : recordAt(securityContext, 'capabilities');
     const drop = capabilities?.drop;
     if (!Array.isArray(drop) || !drop.includes('ALL')) {
-      findings.push({
-        rule_id: WORKLOAD_RULE_IDS.capabilities,
-        severity: 'High',
-        object_identity: workload.object_identity,
-        container_identity: { container_type: container.type, name: container.name },
-        json_path: `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.capabilities.drop`,
-        evidence_references: evidence.evidence_references,
-        observed_value: drop ?? null,
-        summary: 'Container does not drop the ALL Linux capability set.',
-      });
+      findings.push(
+        createWorkloadFinding(workload, evidence, {
+          rule_id: WORKLOAD_RULE_IDS.capabilities,
+          container_identity: { container_type: container.type, name: container.name },
+          json_path: `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.capabilities.drop`,
+          observed_value: drop ?? null,
+          summary: 'Container does not drop the ALL Linux capability set.',
+        }),
+      );
     }
     const add = capabilities?.add;
     if (!Array.isArray(add)) continue;
     for (const [index, capability] of add.entries()) {
       if (capability === 'NET_BIND_SERVICE') continue;
-      findings.push({
-        rule_id: WORKLOAD_RULE_IDS.capabilities,
-        severity: 'High',
-        object_identity: workload.object_identity,
-        container_identity: { container_type: container.type, name: container.name },
-        json_path: `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.capabilities.add[${String(index)}]`,
-        evidence_references: evidence.evidence_references,
-        observed_value: capability,
-        summary: 'Container adds a Linux capability outside the Restricted allowance.',
-      });
+      findings.push(
+        createWorkloadFinding(workload, evidence, {
+          rule_id: WORKLOAD_RULE_IDS.capabilities,
+          container_identity: { container_type: container.type, name: container.name },
+          json_path: `${workload.pod_spec_path}.${container.collection}[${String(container.index)}].securityContext.capabilities.add[${String(index)}]`,
+          observed_value: capability,
+          summary: 'Container adds a Linux capability outside the Restricted allowance.',
+        }),
+      );
     }
   }
   return findings;
@@ -337,16 +358,13 @@ function hostNamespaceFindings(
   return (['hostNetwork', 'hostPID', 'hostIPC'] as const).flatMap((field) => {
     if (workload.pod_spec[field] !== true) return [];
     return [
-      {
+      createWorkloadFinding(workload, evidence, {
         rule_id: WORKLOAD_RULE_IDS.host_namespaces,
-        severity: 'High' as const,
-        object_identity: workload.object_identity,
         container_identity: null,
         json_path: `${workload.pod_spec_path}.${field}`,
-        evidence_references: evidence.evidence_references,
         observed_value: true,
         summary: `Pod explicitly enables the ${field} host namespace.`,
-      },
+      }),
     ];
   });
 }
@@ -360,16 +378,13 @@ function hostPathFindings(
   return volumes.flatMap((volume, index) => {
     if (!isRecord(volume) || volume.hostPath === undefined || volume.hostPath === null) return [];
     return [
-      {
+      createWorkloadFinding(workload, evidence, {
         rule_id: WORKLOAD_RULE_IDS.host_path,
-        severity: 'High' as const,
-        object_identity: workload.object_identity,
         container_identity: null,
         json_path: `${workload.pod_spec_path}.volumes[${String(index)}].hostPath`,
-        evidence_references: evidence.evidence_references,
         observed_value: volume.hostPath,
         summary: 'Pod uses a hostPath volume.',
-      },
+      }),
     ];
   });
 }

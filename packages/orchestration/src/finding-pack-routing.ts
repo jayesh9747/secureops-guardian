@@ -34,10 +34,20 @@ export function routeFindingPackAnalysis(
     requested_capability: requestedCapability[plan.mode],
     changed_files: allEvidenceMatchesScope && targetResolved ? scopedFiles : [],
   });
+  const effectiveCapabilityCeiling =
+    analysis.outcome === 'ANALYZED' && analysis.capability !== 'ANALYSIS_ONLY'
+      ? plan.capability_ceiling
+      : {
+          incident_fixture_reads: false,
+          daytona_sandbox: false,
+          proposal_creation: false,
+          approval_request: false,
+          github_writes: [],
+        };
 
   return {
     request: { mode: plan.mode, scope: plan.scope },
-    capability_ceiling: plan.capability_ceiling,
+    capability_ceiling: effectiveCapabilityCeiling,
     analysis,
   };
 }

@@ -203,7 +203,7 @@ Representative merged PR [#3](https://github.com/jayesh9747/secureops-guardian/p
 
 Qodo's follow-up confirmed those High findings resolved and raised two Medium issues. Commit [`9b95dfb`](https://github.com/jayesh9747/secureops-guardian/commit/9b95dfb024d4408c057c9afa1138e500f5d5f7fc) fixed both. The complete review discussion and decisions remain visible in [PR #3](https://github.com/jayesh9747/secureops-guardian/pull/3).
 
-Qodo attempts on release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) and final-agent PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19) were paused for this user. Those paused responses contain no findings or approval, and none is claimed. The truthful history is recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
+Qodo attempts on release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18), final-agent PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19), and README PR [#20](https://github.com/jayesh9747/secureops-guardian/pull/20) were paused for this user. Those paused responses contain no findings or approval, and none is claimed. The truthful history is recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
 
 ## Honest boundaries
 

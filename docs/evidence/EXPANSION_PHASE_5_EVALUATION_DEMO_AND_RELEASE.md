@@ -140,6 +140,8 @@ Release PR [#18](https://github.com/jayesh9747/secureops-guardian/pull/18) was o
 
 Post-merge final-agent PR [#19](https://github.com/jayesh9747/secureops-guardian/pull/19) also received paused Qodo responses for both its [automatic attempt](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120050) and official [`/agentic_review` request](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462120715). The [official response](https://github.com/jayesh9747/secureops-guardian/pull/19#issuecomment-5462121000) contains no findings, completed review, or approval; none is claimed.
 
+Post-merge README showcase PR [#20](https://github.com/jayesh9747/secureops-guardian/pull/20) received the same paused status on its [automatic Qodo attempt](https://github.com/jayesh9747/secureops-guardian/pull/20#issuecomment-5462253109). That response contains no findings, completed review, or approval; none is claimed.
+
 The release-gate implementation did not merge or submit. The later merge was an explicit operator action. The finalization pass made no fixture-content mutation; it only verified already-pushed public default branches.
 
 ## Release decision

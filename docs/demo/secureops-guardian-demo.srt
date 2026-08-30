@@ -1,0 +1,127 @@
+1
+00:00:00,000 --> 00:00:07,500
+This is SecureOps Guardian, a security investigation agent built inside TrueForge.
+
+2
+00:00:07,500 --> 00:00:18,000
+Sessions stay on the left, human conversation stays in the center,
+and the investigation rail exposes scope, evidence, verification, control, and outcome.
+
+3
+00:00:18,000 --> 00:00:26,000
+Guardian is for security and platform engineers moving
+from a suspicious change to a defensible next step.
+
+4
+00:00:26,000 --> 00:00:35,000
+It joins fragmented evidence, tests remediation safety,
+and keeps every external action under explicit human control.
+
+5
+00:00:35,000 --> 00:00:43,000
+One saved Guardian agent orchestrates bounded specialists.
+GitHub supplies real repository facts; Fixture supplies labelled synthetic context.
+
+6
+00:00:43,000 --> 00:00:52,000
+Daytona runs a pinned static verifier in isolation,
+and TrueForge preserves an inspectable UI and receipt.
+
+7
+00:00:52,000 --> 00:00:59,000
+ANALYZE ONLY — read-only investigation.
+PREPARE REMEDIATION — verified proposal, no external write.
+
+8
+00:00:59,000 --> 00:01:08,000
+OPEN PULL REQUEST — create or reuse a PR,
+with separate approval before any new write.
+
+9
+00:01:08,000 --> 00:01:12,000
+HUMAN — Hi there. What can you help me with?
+
+10
+00:01:12,000 --> 00:01:21,000
+GUARDIAN — I can analyze security risks, prepare a verified remediation,
+or open a pull request with separate write approval.
+
+11
+00:01:21,000 --> 00:01:25,000
+HUMAN — Can you analyze a repository without making changes?
+
+12
+00:01:25,000 --> 00:01:31,000
+GUARDIAN — Yes. Send the repository URL.
+I will ask for missing scope rather than assume it.
+
+13
+00:01:31,000 --> 00:01:35,000
+Guardian understands the outcome first—no repository is prefilled.
+
+14
+00:01:35,000 --> 00:01:39,000
+HUMAN — Here is the repository. Use the default branch and start read-only.
+
+15
+00:01:39,000 --> 00:01:45,000
+GUARDIAN — This is read-only analysis. No remediation or GitHub writes.
+Proceed?
+
+16
+00:01:45,000 --> 00:01:48,000
+HUMAN — Yes. The scope is correct—proceed.
+
+17
+00:01:48,000 --> 00:01:52,000
+This confirms scope, not permission for a later write.
+
+18
+00:01:52,000 --> 00:01:57,000
+FAST-FORWARDING REAL AGENT EXECUTION — 10×
+
+19
+00:01:57,000 --> 00:02:02,000
+The saved session still preserves every tool call, source,
+duration, failure, and result.
+
+20
+00:02:02,000 --> 00:02:07,000
+HUMAN — Prepare a verified remediation with two investigators and the sandbox.
+Do not write to GitHub.
+
+21
+00:02:07,000 --> 00:02:14,000
+GUARDIAN — I will join the evidence, verify a candidate in Daytona,
+and return a proposal only. GitHub writes stay disabled. Proceed?
+
+22
+00:02:14,000 --> 00:02:17,000
+HUMAN — Yes. Prepare the remediation only. No GitHub writes.
+
+23
+00:02:17,000 --> 00:02:22,000
+Guardian changes capability only after the human requests and confirms it.
+
+24
+00:02:22,000 --> 00:02:30,000
+Persistent sessions preserve analysis, remediation, cancellation,
+benign controls, failures, and retry-safe outcomes.
+
+25
+00:02:30,000 --> 00:02:42,000
+TrueForge exposes two specialist agents, MCP calls, sandbox steps,
+timing, and failed attempts instead of hiding them behind an answer.
+
+26
+00:02:42,000 --> 00:02:49,000
+Each specialist exposes Findings, Evidence, and Activity.
+
+27
+00:02:49,000 --> 00:02:56,000
+Inspect MCP calls, Daytona verification, the proposed change,
+limitations, write count, approvals, and receipt.
+
+28
+00:02:56,000 --> 00:03:00,000
+Visible evidence. Human control. That is SecureOps Guardian.

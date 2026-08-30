@@ -125,7 +125,15 @@ The submission-specific TrueForge UI now gives a first-time operator a clearer p
 | --- | --- |
 | ![Completed PR_REUSED investigation showing both specialist agents, execution counts, terminal state, and connected evidence sources](./docs/evidence/guardian-ui/guardian-pr-reused-outcome.png) | ![Selected Change Security Investigator workspace showing immediately accessible Findings, Evidence, and Activity tabs](./docs/evidence/guardian-ui/guardian-agent-workspace.png) |
 
-The completed frame uses the saved `PR_REUSED` session: real GitHub repository evidence, owned synthetic incident observations, deterministic static verification, two bounded investigators, and zero new GitHub writes. Review the proposed [three-minute product video script](./docs/demo/GUARDIAN_UI_VIDEO_SCRIPT.md); video generation is intentionally deferred until the script is approved.
+The completed frame uses the saved `PR_REUSED` session: real GitHub repository evidence, owned synthetic incident observations, deterministic static verification, two bounded investigators, and zero new GitHub writes. Review the approved [three-minute product video script](./docs/demo/GUARDIAN_UI_VIDEO_SCRIPT.md) and [production record](./docs/demo/SECUREOPS_GUARDIAN_VIDEO_PRODUCTION.md).
+
+### Three-minute product demo
+
+[Watch or download the finished SecureOps Guardian demo](./docs/demo/secureops-guardian-demo.mp4). It follows the approved human-first script, uses only real Guardian UI and saved-session frames, includes burned-in English captions, and preserves the real/synthetic/static evidence boundaries.
+
+### Five-minute recorded submission walkthrough
+
+[Watch or download the five-minute submission demo](./docs/demo/secureops-guardian-5min-submission-demo.mp4). This cut follows the supplied end-to-end recording: a read-only investigation, the human request for a locally verified fix, scope confirmation, two specialist agents, source-labelled evidence, six Daytona sandbox steps, the separate write approval, and the resulting GitHub pull request. [Read the timed narration script](./docs/demo/GUARDIAN_5_MINUTE_SUBMISSION_VIDEO_SCRIPT.md), [download the subtitle track](./docs/demo/secureops-guardian-5min-submission-demo.srt), or inspect the [production record](./docs/demo/SECUREOPS_GUARDIAN_5_MINUTE_VIDEO_PRODUCTION.md).
 
 ## Demo flow
 
@@ -233,6 +241,8 @@ Representative merged [PR #3](https://github.com/jayesh9747/secureops-guardian/p
 | [Architecture](./docs/current/ARCHITECTURE.md) | Components, trust boundaries, and frozen identities |
 | [Prompt templates](./docs/current/PHASE_7_PROMPTS.md) | Natural-language and exact-JSON examples |
 | [Demo script](./docs/demo/PHASE_6_DEMO_SCRIPT.md) | Three-minute recording sequence and narration |
+| [Five-minute demo script](./docs/demo/GUARDIAN_5_MINUTE_SUBMISSION_VIDEO_SCRIPT.md) | Exact recorded click path, narration, and execution facts |
+| [Five-minute production record](./docs/demo/SECUREOPS_GUARDIAN_5_MINUTE_VIDEO_PRODUCTION.md) | Render specifications, provenance, source map, and verification |
 | [Release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md) | Sessions, matrices, mutation proof, screenshots, and refs |
 | [Submission description](./docs/submission/PHASE_6_SUBMISSION_DESCRIPTION.md) | Concise hackathon submission copy |
 

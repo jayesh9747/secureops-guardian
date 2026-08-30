@@ -1,6 +1,6 @@
 # SecureOps Guardian product video script
 
-**Status:** revised approval draft — script and storyboard only. No video has been generated.
+**Status:** approved and rendered — [watch or download the finished video](./secureops-guardian-demo.mp4)
 
 **Target duration:** 3 minutes
 
@@ -186,9 +186,9 @@ The original README screenshots remain unchanged. The updated UI gallery supplie
 - Hide credentials, settings, private paths, notifications, unrelated tabs, and unrelated session content.
 - Prefer direct cuts and subtle zooms over cinematic effects; the evidence should remain the focus.
 
-## Gemini media handoff — only after approval
+## Gemini media production record
 
-After the operator approves this script, Gemini media tooling may assemble the supplied real recordings and screenshots, voice-over, captions, music, fast-forward segments, and transitions. It must not generate replacement UI, invent dialogue, alter displayed evidence, or expand product claims.
+After operator approval, Gemini Media generated the narration with the `Kore` voice and a restrained instrumental bed. Local editing assembled those assets with the supplied real Guardian screens, burned-in captions, fast-forward treatment, and scene transitions. No replacement UI, invented result, altered evidence, or expanded product claim was generated.
 
 Suggested production prompt:
 
@@ -196,9 +196,9 @@ Suggested production prompt:
 
 ## Approval checklist
 
-- [ ] First look, target audience, architecture, and three capabilities are clear.
-- [ ] The conversation feels natural and no repository is revealed before Guardian requests it.
-- [ ] Human scope acceptance and write boundaries are unambiguous.
-- [ ] Fast-forward treatment still preserves the real TrueForge execution trail.
-- [ ] Two subagents, MCP, sandbox, sessions, verification, limitations, and receipt are visible.
-- [ ] Only after all five content checks: generate video assets.
+- [x] First look, target audience, architecture, and three capabilities are clear.
+- [x] The conversation feels natural and no repository is revealed before Guardian requests it.
+- [x] Human scope acceptance and write boundaries are unambiguous.
+- [x] Fast-forward treatment still preserves the real TrueForge execution trail.
+- [x] Two subagents, MCP, sandbox, sessions, verification, limitations, and receipt are visible.
+- [x] Video assets were generated only after operator approval.

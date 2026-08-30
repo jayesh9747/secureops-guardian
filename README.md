@@ -125,7 +125,11 @@ The submission-specific TrueForge UI now gives a first-time operator a clearer p
 | --- | --- |
 | ![Completed PR_REUSED investigation showing both specialist agents, execution counts, terminal state, and connected evidence sources](./docs/evidence/guardian-ui/guardian-pr-reused-outcome.png) | ![Selected Change Security Investigator workspace showing immediately accessible Findings, Evidence, and Activity tabs](./docs/evidence/guardian-ui/guardian-agent-workspace.png) |
 
-The completed frame uses the saved `PR_REUSED` session: real GitHub repository evidence, owned synthetic incident observations, deterministic static verification, two bounded investigators, and zero new GitHub writes. Review the proposed [three-minute product video script](./docs/demo/GUARDIAN_UI_VIDEO_SCRIPT.md); video generation is intentionally deferred until the script is approved.
+The completed frame uses the saved `PR_REUSED` session: real GitHub repository evidence, owned synthetic incident observations, deterministic static verification, two bounded investigators, and zero new GitHub writes. Review the approved [three-minute product video script](./docs/demo/GUARDIAN_UI_VIDEO_SCRIPT.md) and [production record](./docs/demo/SECUREOPS_GUARDIAN_VIDEO_PRODUCTION.md).
+
+### Three-minute product demo
+
+[Watch or download the finished SecureOps Guardian demo](./docs/demo/secureops-guardian-demo.mp4). It follows the approved human-first script, uses only real Guardian UI and saved-session frames, includes burned-in English captions, and preserves the real/synthetic/static evidence boundaries.
 
 ## Demo flow
 

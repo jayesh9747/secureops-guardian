@@ -121,9 +121,9 @@ The submission-specific TrueForge UI now gives a first-time operator a clearer p
 | --- | --- |
 | ![SecureOps Guardian welcome screen with investigation modes, evidence boundary, and starter tasks](./docs/evidence/guardian-ui/guardian-welcome.png) | ![Cancelled investigation showing no investigation, GitHub write, approval, or receipt was produced](./docs/evidence/guardian-ui/guardian-cancelled-no-write.png) |
 
-| Verified outcome and auditable execution |
-| --- |
-| ![Completed PR_REUSED investigation showing the receipt, terminal state, zero writes, zero approvals, agent count, MCP calls, and sandbox trace](./docs/evidence/guardian-ui/guardian-pr-reused-outcome.png) |
+| Complete harness overview | Inspectable agent workspace |
+| --- | --- |
+| ![Completed PR_REUSED investigation showing both specialist agents, execution counts, terminal state, and connected evidence sources](./docs/evidence/guardian-ui/guardian-pr-reused-outcome.png) | ![Selected Change Security Investigator workspace showing immediately accessible Findings, Evidence, and Activity tabs](./docs/evidence/guardian-ui/guardian-agent-workspace.png) |
 
 The completed frame uses the saved `PR_REUSED` session: real GitHub repository evidence, owned synthetic incident observations, deterministic static verification, two bounded investigators, and zero new GitHub writes. Review the proposed [three-minute product video script](./docs/demo/GUARDIAN_UI_VIDEO_SCRIPT.md); video generation is intentionally deferred until the script is approved.
 

@@ -1,148 +1,204 @@
 # SecureOps Guardian product video script
 
-**Status:** approval draft — script and storyboard only. No video has been generated.
+**Status:** revised approval draft — script and storyboard only. No video has been generated.
 
-**Target duration:** 2 minutes 59 seconds
+**Target duration:** 3 minutes
 
 **Audience:** hackathon judges and security/platform engineers seeing SecureOps Guardian for the first time
 
-**Core promise:** turn a suspicious infrastructure change into bounded, source-linked evidence, a statically verified remediation candidate, and an auditable human-controlled outcome.
+**Story:** introduce the product as a stranger would discover it, begin with a normal conversation, let the agent request missing scope, show human confirmation, fast-forward real execution, and finish by inspecting the complete TrueForge harness.
 
-## Voice and visual direction
+## Recording rules
 
-- Calm, precise, incident-response tone; never sensational.
-- Record the real submission-specific TrueForge UI and saved sessions. Do not synthesize product screens.
-- Keep the pointer movement deliberate and use short callouts only where the interface does not already carry the message.
+- Record the real submission-specific TrueForge UI and saved sessions. Do not generate replacement product screens.
+- Do not prefill or mention a repository before the agent asks for one.
+- Present Guardian as a general security-investigation agent, not as an agent trained for one fixture repository.
 - Label GitHub evidence as real, Fixture incident observations as synthetic, and Daytona verification as deterministic and static.
-- Never imply live-cluster access, network enforcement, packet observation, data access, exfiltration proof, merge, or deployment.
+- Never claim live-cluster access, network enforcement, packet observation, data access, exfiltration proof, merge, or deployment.
 
 ## Timed script and storyboard
 
-### Scene 1 — The alert is only the beginning (`0:00–0:18`)
+### Scene 1 — First look at the product (`0:00–0:18`)
 
-**Screen:** Begin on a tight crop of the completed incident brief, then pull back to reveal the Guardian investigation rail.
+**Screen:** Start on the clean Guardian welcome page. Slowly identify the session history on the left, the human conversation in the center, and the investigation rail area on the right.
 
-**On-screen text:** `From suspicious change to controlled outcome`
-
-**Voice-over:**
-
-> A security alert tells you that something may be wrong. It rarely tells you which change caused it, what a safe fix looks like, or whether an automated action can be trusted. SecureOps Guardian closes that gap without taking control away from the operator.
-
-### Scene 2 — Problem statement (`0:18–0:40`)
-
-**Screen:** Move across the Evidence, Verify, Human control, and Outcome stages. Briefly reveal the source labels in the Evidence tab.
-
-**On-screen text:** `Evidence is fragmented. Remediation is risky. Actions need proof.`
+**On-screen text:** `SecureOps Guardian · Human-controlled security investigation`
 
 **Voice-over:**
 
-> During an incident, repository history, deployment context, security observations, and remediation checks live in different systems. A fast patch can break a required dependency, while a confident-looking answer can hide missing evidence. Teams need one workflow that separates facts from assumptions, tests the proposed change, and makes every write explicit.
+> This is SecureOps Guardian, a security investigation agent built inside TrueForge. The left side preserves agents and sessions, the center is the human conversation, and the right-side investigation rail exposes what the harness is actually doing—scope, evidence, verification, human control, and outcome.
 
-### Scene 3 — Who it is for (`0:40–0:56`)
+### Scene 2 — Why it exists and who it helps (`0:18–0:35`)
 
-**Screen:** Show the Guardian welcome screen and its three starter tasks: investigate a security regression, analyze a repository, and prepare a remediation pull request.
+**Screen:** Highlight the evidence-boundary message and the starter tasks.
 
-**On-screen text:** `For the on-call security or platform engineer`
-
-**Voice-over:**
-
-> Guardian is designed for the engineer on call: someone who must understand the regression quickly, explain it to a reviewer, and prepare a safe next step without granting an agent permission to merge, deploy, or touch a cluster.
-
-### Scene 4 — Why TrueForge (`0:56–1:17`)
-
-**Screen:** Hold on the welcome screen, then reveal the saved-agent name, connected sources, agent activity, and sandbox execution in the existing completed session.
-
-**On-screen text:** `One TrueForge agent · bounded subagents · MCP evidence · Daytona verification`
+**On-screen text:** `For security, platform, and on-call engineers`
 
 **Voice-over:**
 
-> We use TrueForge as the product harness because the investigation needs more than chat. One saved Guardian agent interprets the request, delegates bounded evidence work, calls connected MCP tools, runs a pinned verifier in a Daytona sandbox, pauses for human decisions, and preserves the execution trail in a persistent session.
+> We built Guardian for security and platform engineers who must move from a suspicious change to a defensible next step. It joins fragmented evidence, tests whether a remediation is safe, and keeps every external action under explicit human control.
 
-### Scene 5 — Intent becomes a bounded scope (`1:17–1:35`)
+### Scene 3 — Architecture in three lines (`0:35–0:52`)
 
-**Screen:** Start from the exact natural-language request. Show the interpreted repository, revision, base branch, target file, verifier pack, capability ceiling, and evidence limitations. Then show the confirmation controls.
+**Screen:** Animate three restrained callouts over the welcome page, then reveal the connected execution labels in a saved session.
 
-**On-screen text:** `Confirm the scope before investigation`
+**On-screen text:**
 
-**Voice-over:**
-
-> The operator starts with a plain-language request. Guardian converts it into a reviewable scope: repository, commit, branch, target file, selected verifier, allowed capability, and known limitations. This first confirmation approves the interpretation only. It is not permission for a GitHub write.
-
-### Scene 6 — Parallel evidence, clearly labelled (`1:35–1:55`)
-
-**Screen:** Open the subagent cards, then the Evidence table. Highlight the `official-github-mcp` and `guardian-fixture` source labels.
-
-**On-screen text:** `Real GitHub evidence + owned synthetic incident observations`
+1. `Saved Guardian agent → bounded specialist agents`
+2. `GitHub MCP + synthetic Fixture MCP → source-labelled evidence`
+3. `Daytona sandbox → pinned static verifier → typed UI + receipt`
 
 **Voice-over:**
 
-> Two investigators work in parallel. The change investigator traces the suspect commit, parent state, file history, branch, and existing pull requests through GitHub. The exposure investigator reads the owned Fixture MCP for synthetic alert, deployment, reachability, and dependency observations. Every record keeps its source, tool, and observed fact.
+> One saved Guardian agent orchestrates bounded specialists. GitHub MCP supplies real repository facts while the owned Fixture MCP supplies clearly labelled synthetic incident context. Daytona runs a pinned static verifier in isolation, and TrueForge preserves the result as an inspectable UI and receipt.
 
-### Scene 7 — Build and verify the candidate (`1:55–2:17`)
+### Scene 4 — The three choices (`0:52–1:08`)
 
-**Screen:** Open Verification and show the four states: last-good, suspect, deny-all negative control, and candidate. Then open Proposed change.
+**Screen:** Show each welcome-page option as it is named.
 
-**On-screen text:** `A safe candidate must restore policy and preserve dependencies`
-
-**Voice-over:**
-
-> Guardian binds the evidence to a pinned verifier and tests four states in an isolated Daytona workspace. Last-good passes. The suspect state fails because unrestricted egress was introduced. A deny-all patch also fails because it blocks required dependencies. Only the candidate passes both security and dependency checks, producing a reviewable NetworkPolicy change.
-
-### Scene 8 — Human control at the write boundary (`2:17–2:34`)
-
-**Screen:** Show the write approval boundary, then cut to the cancellation result with `CANCELLED`, zero writes, zero approvals, and no receipt.
-
-**On-screen text:** `Cancellation means no write`
+**On-screen text:** `Analyze only · Prepare remediation · Open pull request`
 
 **Voice-over:**
 
-> If a new branch or pull request is required, Guardian asks again at the exact write boundary. The operator can also stop earlier. In this saved cancellation, no investigators start, no GitHub write occurs, and no receipt pretends otherwise.
+> A user can choose three levels of capability. Analyze only is read-only. Prepare remediation adds sandbox verification and a proposed fix without external writes. Open pull request can create or reuse a GitHub pull request, but any new write requires a separate approval.
 
-### Scene 9 — Reconcile before writing (`2:34–2:49`)
+### Scene 5 — Begin like a normal human (`1:08–1:35`)
 
-**Screen:** Show the saved completed session with `PR_REUSED`, the receipt tab, and the terminal summary in the investigation rail.
+**Screen:** Start a fresh chat. Type the first line naturally; do not paste a repository or structured scope yet. Let the short exchange appear at normal speed.
 
-**On-screen text:** `PR_REUSED · 0 writes · 0 approvals`
+**Human:**
+
+> Hi there—what can you help me with?
+
+**Guardian:**
+
+> I can analyze security risks, prepare a sandbox-verified remediation, or open a pull request with separate write approval. What would you like to do?
+
+**Human:**
+
+> Can you analyze a repository without making changes?
+
+**Guardian:**
+
+> Yes. Send the repository URL. I will ask for any missing scope rather than assume it.
 
 **Voice-over:**
 
-> In this saved run, remote-state reconciliation found the exact remediation pull request already open. Guardian returned PR_REUSED with zero new writes and zero approvals, while preserving the finding, proposal identity, evidence, verification result, and machine-readable receipt.
+> Guardian understands the desired outcome first, then asks for missing scope without assuming a repository.
 
-### Scene 10 — Honest outcome and close (`2:49–2:59`)
+### Scene 6 — Supply scope, then accept it (`1:35–1:52`)
 
-**Screen:** End on the full completed interface and product mark.
+**Screen:** Only now paste the demonstration repository URL. Show Guardian’s interpreted scope card and the confirmation controls.
+
+**Human:**
+
+> Here is the repository I want reviewed. Use the default branch and start read-only.
+
+**Guardian:**
+
+> This is read-only analysis of the supplied repository. No remediation or GitHub writes are permitted. Proceed?
+
+**Human:**
+
+> Yes. The scope is correct—proceed.
+
+**Voice-over:**
+
+> This confirms scope, not permission for a later write.
+
+### Scene 7 — Fast-forward the read-only work (`1:52–2:02`)
+
+**Screen:** Speed the recording to `8×–12×`. Keep the investigation rail visible while Evidence advances. Return to normal speed when the finding appears.
+
+**On-screen text:** `Fast-forwarding real agent execution`
+
+**Voice-over:**
+
+> We fast-forward model wait time, but we do not replace the execution. The saved session still preserves every tool call, source, duration, failure, and result.
+
+### Scene 8 — A human requests deeper proof (`2:02–2:22`)
+
+**Screen:** Show the read-only finding, then enter the follow-up request and the second scope confirmation.
+
+**Human:**
+
+> Now prepare a verified remediation. Use two focused investigators and the sandbox, but do not write to GitHub.
+
+**Guardian:**
+
+> I will run two bounded investigators, join the evidence, verify a candidate in Daytona, and return a proposal only. GitHub writes stay disabled. Proceed?
+
+**Human:**
+
+> Yes—prepare the remediation only. No GitHub writes.
+
+**Voice-over:**
+
+> Guardian changes capability only after the human requests and confirms it.
+
+### Scene 9 — Fast-forward, then reveal the complete harness (`2:22–2:42`)
+
+**Screen:** Fast-forward active execution. Briefly pan across the saved session history, then stop on the corrected investigation overview showing both agent cards and the execution counts.
+
+**On-screen text:** `2 agents · MCP evidence · Daytona sandbox · persistent sessions`
+
+**Voice-over:**
+
+> The session history shows repeated harness validation, including analysis, remediation, cancellation, benign controls, failures, and retry-safe outcomes. In this run, TrueForge exposes two specialist agents, MCP calls, sandbox steps, timing, and failed attempts instead of hiding them behind a polished answer.
+
+### Scene 10 — Inspect the work, not just the answer (`2:42–2:56`)
+
+**Screen:** Click Change Security Investigator. Show Findings, Evidence, and Activity. Return to all agents, open Exposure Evidence Investigator, then show Sandbox Validation, the four-state proof, proposed change, limitations, and receipt.
+
+**On-screen text:** `Findings · Evidence · Activity · Four-state verification`
+
+**Voice-over:**
+
+> Each specialist is inspectable. We can review its finding, evidence references, and activity; then inspect GitHub and Fixture calls, Daytona verification, the proposed change, limitations, write count, approvals, and receipt. This is the TrueForge harness being validated—not a mock dashboard.
+
+### Scene 11 — Human control and close (`2:56–3:00`)
+
+**Screen:** End on the `PR_REUSED` terminal outcome with zero writes and zero approvals.
 
 **On-screen text:** `Investigate with evidence. Remediate with control.`
 
 **Voice-over:**
 
-> SecureOps Guardian turns an uncertain alert into a bounded, auditable next step—without claiming evidence it lacks or taking the final decision away from the human.
+> Visible evidence. Human control. That is SecureOps Guardian.
 
 ## Capture plan
 
 | Scene | Primary source | Required interaction |
 | --- | --- | --- |
-| 1–2 | Saved `PR_REUSED` session `01m16kn1n07evwtjtje2e7rfk1` | Incident brief, tabs, investigation rail |
-| 3–4 | New-chat welcome state | Starter tasks, evidence boundary, connected execution surfaces |
-| 5 | Saved confirmation-boundary session | Interpreted scope and confirmation controls |
-| 6–7 | Saved `PR_REUSED` session | Agent cards, Evidence, Verification, Proposed change |
-| 8 | Saved cancelled session `01m16n6h2k2hbv34b1nv5mkjd4` | Terminal cancellation summary |
-| 9–10 | Saved `PR_REUSED` session | Receipt and terminal `PR_REUSED` outcome |
+| 1–4 | New-chat welcome state | Explain the three-pane layout, evidence boundary, architecture, and three capabilities |
+| 5–6 | Fresh conversational session | Use the exact human dialogue; provide the repository only after Guardian asks |
+| 7 | Read-only analysis run | Accelerate waiting while leaving the live rail and activity visible |
+| 8–9 | Prepared-remediation session `01m0x0n0hqq69kaxq35xfc2zfh` | Human follow-up, two agents, counts, history, and persistent execution |
+| 10–11 | Saved `PR_REUSED` session `01m16kn1n07evwtjtje2e7rfk1` | Agent workspaces, sandbox proof, receipt, and terminal outcome |
 
-The existing README release screenshots and the new UI gallery can be used as still-frame fallbacks. Any screen recording should hide credentials, provider settings, private paths, notifications, and unrelated browser or chat history.
+The original README screenshots remain unchanged. The updated UI gallery supplies fallback stills for the welcome state, safe cancellation, visible agent list, selected-agent workspace, and `PR_REUSED` outcome.
+
+## Editing notes
+
+- Use a visible `8×–12×` fast-forward badge during model wait time; never cut in fabricated tool results.
+- Keep the full chat exchange readable long enough for a first-time viewer.
+- Pan across session history for no more than three seconds; its purpose is to show persistence and breadth of validation, not clutter.
+- Hide credentials, settings, private paths, notifications, unrelated tabs, and unrelated session content.
+- Prefer direct cuts and subtle zooms over cinematic effects; the evidence should remain the focus.
 
 ## Gemini media handoff — only after approval
 
-After the operator approves this script, Gemini media tooling may assemble the supplied real screen recordings and screenshots, voice-over, captions, music, and transitions. It must not generate replacement UI, invent investigation steps, alter displayed evidence, or expand the product claims.
+After the operator approves this script, Gemini media tooling may assemble the supplied real recordings and screenshots, voice-over, captions, music, fast-forward segments, and transitions. It must not generate replacement UI, invent dialogue, alter displayed evidence, or expand product claims.
 
 Suggested production prompt:
 
-> Create a concise 2:59 product demonstration from the supplied SecureOps Guardian recordings, storyboard, and approved narration. Preserve the chronological scene order and all factual UI text. Use restrained security-product motion graphics, readable captions, subtle zooms, and neutral instrumental audio under the voice-over. Treat real GitHub evidence, synthetic Fixture observations, and static Daytona verification as distinct evidence classes. Do not fabricate screens, results, tool calls, cluster access, write activity, merge activity, deployment, data access, or exfiltration proof. End on the supplied completed PR_REUSED interface and the line: “Investigate with evidence. Remediate with control.”
+> Create a three-minute product demonstration from the supplied SecureOps Guardian recordings, revised storyboard, and approved narration. Begin with the stranger-first welcome page, explain the product, audience, three-line architecture, and three capability options, then show the exact natural human conversation. Do not reveal or prefill a repository before Guardian asks for it. Use visible 8×–12× fast-forward treatment for real waiting periods. Clearly reveal persistent sessions, two specialist agents, MCP evidence, Daytona sandbox execution, failures, verification, human confirmation, terminal outcome, and receipt. Use restrained security-product motion graphics, readable captions, subtle zooms, and neutral instrumental audio. Do not fabricate screens, dialogue, results, tool calls, cluster access, writes, merges, deployment, data access, or exfiltration proof. End on the supplied PR_REUSED screen and the line: “Investigate with evidence. Remediate with control.”
 
 ## Approval checklist
 
-- [ ] Story and target user are correct.
-- [ ] Spoken claims stay inside the demonstrated evidence boundary.
-- [ ] Timing and narration are approved.
-- [ ] Saved sessions and screen states are acceptable for recording.
-- [ ] Only after all four checks: generate the video assets.
+- [ ] First look, target audience, architecture, and three capabilities are clear.
+- [ ] The conversation feels natural and no repository is revealed before Guardian requests it.
+- [ ] Human scope acceptance and write boundaries are unambiguous.
+- [ ] Fast-forward treatment still preserves the real TrueForge execution trail.
+- [ ] Two subagents, MCP, sandbox, sessions, verification, limitations, and receipt are visible.
+- [ ] Only after all five content checks: generate video assets.

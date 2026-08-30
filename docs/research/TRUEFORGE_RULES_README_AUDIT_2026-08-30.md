@@ -2,6 +2,8 @@
 
 Audited on 2026-08-30 against public repository commit [`5e0b377`](https://github.com/jayesh9747/secureops-guardian/commit/5e0b377cada9d1ffce58486f42cc64591f56f84b), which matched local `origin/main` at the time of review.
 
+Post-audit status: documentation [PR #21](https://github.com/jayesh9747/secureops-guardian/pull/21) requested `/agentic_review`; Qodo again reported that reviews were paused. The ranges below include that response where they describe current public history.
+
 Primary sources:
 
 - [Official hackathon rules](https://www.wemakedevs.org/hackathons/trueforge/rules)
@@ -32,7 +34,7 @@ The most important compliance risks cannot be repaired by rewriting the README:
 | Representative merged public PR with meaningful hackathon code | README links merged [PR #3](https://github.com/jayesh9747/secureops-guardian/pull/3), which contains core investigation and validation code | Meets | Keep PR #3 as the representative PR |
 | One or two sentences describing what Qodo found and the team's decision | Current section explains the three High and two Medium findings and fixes, but uses several sentences | Substantively meets; literal format could be tighter | Condense the required outcome summary to two sentences |
 | Completed Qodo review, decisions, and follow-up review against final code in the linked PR | PR #3 records the findings, replies/resolutions, and its Qodo review comment was updated through final code commit [`9b95dfb`](https://github.com/jayesh9747/secureops-guardian/commit/9b95dfb024d4408c057c9afa1138e500f5d5f7fc) | Meets for the representative link | Preserve the direct PR link; screenshots cannot replace it |
-| Every substantive change goes through a Qodo-reviewed PR before merge | Qodo comments report “reviews are paused” on PRs #4–#20; [PR #4](https://github.com/jayesh9747/secureops-guardian/pull/4) is a clear substantive example and shows no completed Qodo review | Does not meet the rule as written | Operator/organizer issue; see below |
+| Every substantive change goes through a Qodo-reviewed PR before merge | Qodo comments report “reviews are paused” on PRs #4–#21; [PR #4](https://github.com/jayesh9747/secureops-guardian/pull/4) is a clear substantive example and shows no completed Qodo review | Does not meet the rule as written | Operator/organizer issue; see below |
 | AI coding assistants disclosed | Team section says AI assistants supported planning, implementation, testing, documentation, and review, and states the creator's responsibilities | Meets | None |
 | Project built during official window | Earliest substantive code commit is recorded before the official start | Needs organizer clarification | Operator/organizer issue; see below |
 | Blog link if entering the blog prize | No blog link found in README | Optional unless entering that prize | Publish and submit a post; adding the link to README is helpful but not required |
@@ -43,7 +45,7 @@ The most important compliance risks cannot be repaired by rewriting the README:
 
 No new required section is needed. Do not remove or rename the existing setup instructions or `## Qodo Code Review Evidence` heading, and do not replace PR #3 with a paused-review PR.
 
-If the README is changed, its paused-review disclosure should be corrected from “PR #18, #19, and #20” to “PRs #4–#20.” That is a truthfulness correction, not a cure for the underlying review-history problem.
+The README's paused-review disclosure should cover PRs #4–#21 rather than only PRs #18–#20. That is a truthfulness correction, not a cure for the underlying review-history problem.
 
 ### Recommended replacement for the Qodo summary
 
@@ -53,7 +55,7 @@ Keep the exact heading and use a compact two-sentence summary:
 
 Add a separate, factual note after those two sentences:
 
-> **Review availability note:** Qodo completed the representative review above, then reported that reviews were paused for this user on PRs #4–#20. Those public paused responses are not claimed as completed reviews.
+> **Review availability note:** Qodo completed the representative review above, then reported that reviews were paused for this user on PRs #4–#21. Those public paused responses are not claimed as completed reviews.
 
 ### Optional judging improvements
 
@@ -67,7 +69,7 @@ Add a separate, factual note after those two sentences:
 
 These cannot be solved by a README PR:
 
-1. **Ask the organizers for a written decision on the Qodo outage.** Explain that PR #3 contains a completed Qodo review trail, while Qodo itself posted paused notices on PRs #4–#20. The rules provide no documented outage exception and say judges may inspect other substantive merges.
+1. **Ask the organizers for a written decision on the Qodo outage.** Explain that PR #3 contains a completed Qodo review trail, while Qodo itself posted paused notices on PRs #4–#21. The rules provide no documented outage exception and say judges may inspect other substantive merges.
 2. **Ask the organizers about the pre-start commit timestamp.** The commit contains 2,894 added lines of workspace and MCP code and predates 07:00 UTC. Do not rewrite public history or alter timestamps; request an explicit eligibility ruling and retain the response.
 3. **Submit before August 30 at 20:00 London time.** The form must include the public repository, about-three-minute working demo, and short agent/TrueForge write-up.
 4. **Publish the blog before submitting its link** if entering the blog prize. The official guidance asks for what was built, the agent's job, how TrueForge was wired in, and what broke or was learned; screenshots and a demo clip help.
@@ -79,7 +81,7 @@ These cannot be solved by a README PR:
 A README-only PR should remain narrow:
 
 - condense the Qodo result to the two-sentence version above;
-- correct the paused-review range to PRs #4–#20;
+- correct the paused-review range to PRs #4–#21;
 - add real demo/blog URLs only if they already exist; and
 - avoid claiming that this documentation PR fixes historical Qodo or timing compliance.
 

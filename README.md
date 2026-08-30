@@ -201,7 +201,7 @@ Detailed configuration and safety boundaries are in the [architecture guide](./d
 
 Representative merged [PR #3](https://github.com/jayesh9747/secureops-guardian/pull/3) contains the core investigation and evidence-validation code, with Qodo's review, our responses, and its follow-up review visible in the public history. Qodo found three High provenance gaps and two Medium clean-checkout and rule-evaluation issues; commits [`2fa5749`](https://github.com/jayesh9747/secureops-guardian/commit/2fa5749e4b07f09f131dd2f9f7ce4f3d4470edd0) and [`9b95dfb`](https://github.com/jayesh9747/secureops-guardian/commit/9b95dfb024d4408c057c9afa1138e500f5d5f7fc) fixed all five with exact diff/blob binding, complete manifest and canonical fixture validation, corrected implicit-egress behavior, clean-checkout resolution, and adversarial regression tests.
 
-**Review availability note:** Qodo completed the representative review above, then reported that reviews were paused for this user on PRs #4–#20. Those public paused responses are not claimed as completed reviews; the detailed status is recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr).
+**Review availability note:** Qodo completed the representative review above, then reported that reviews were paused for this user on PRs #4–#21. Those public paused responses are not claimed as completed reviews; the detailed release status is recorded in the [release evidence](./docs/evidence/EXPANSION_PHASE_5_EVALUATION_DEMO_AND_RELEASE.md#qodo-and-release-pr), and PR #21 preserves the latest paused response.
 
 ## Honest boundaries
 

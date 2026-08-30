@@ -84,11 +84,11 @@ This is not a chat wrapper. The harness performs the work the hackathon asks jud
 | Human-in-the-loop | Confirms interpreted scope and separately gates every GitHub write | “Waiting for you” state before action; cancellation produces no tools or writes |
 | Skills | Loads one immutable `guardian-network-egress-v1` verifier bundle | Pinned pack version and digest-bound result |
 | Persistent sessions | Keeps the investigation and action state across reconnects | Completed session remains inspectable and retry-safe |
-| Generative UI | Renders the typed Incident Brief in stock TrueForge OpenUI | Decision summary, progressive disclosures, controls, and receipt |
+| Generative UI | Renders the typed Incident Brief in the submission-specific TrueForge OpenUI | Decision summary, progressive disclosures, controls, and receipt |
 
 ## UI/UX: designed for an incident, not a transcript
 
-We kept the stock TrueForge interface and improved the product experience through a strict presentation contract—no custom dashboard or frontend fork.
+We extended the TrueForge interface through a submission-specific UI fork and a strict presentation contract—still one product harness, not a separate dashboard.
 
 1. **Interpret before acting.** The user sees the repository, branch, revision, target file, selected pack, capability ceiling, and limitations before investigation begins.
 2. **Ask before the irreversible step.** Confirmation is visually distinct, says exactly what is permitted, and never substitutes for write approval.
@@ -112,6 +112,20 @@ We kept the stock TrueForge interface and improved the product experience throug
 | Auditable receipt |
 | --- |
 | ![Machine-readable run receipt displayed with the completed subagents, MCP calls, and sandbox trace](./docs/evidence/final-release/auditable-run-receipt.jpg) |
+
+## Updated Guardian interface
+
+The submission-specific TrueForge UI now gives a first-time operator a clearer path from intent to evidence to outcome. It remains the sole product harness—not a separate dashboard—and adds Guardian branding, task starters, an explicit evidence boundary, a five-stage investigation rail, and terminal summaries that keep human control and write counts visible. The original release gallery above is preserved unchanged; these frames document the updated interface.
+
+| Stranger-first entry | Safe cancellation |
+| --- | --- |
+| ![SecureOps Guardian welcome screen with investigation modes, evidence boundary, and starter tasks](./docs/evidence/guardian-ui/guardian-welcome.png) | ![Cancelled investigation showing no investigation, GitHub write, approval, or receipt was produced](./docs/evidence/guardian-ui/guardian-cancelled-no-write.png) |
+
+| Verified outcome and auditable execution |
+| --- |
+| ![Completed PR_REUSED investigation showing the receipt, terminal state, zero writes, zero approvals, agent count, MCP calls, and sandbox trace](./docs/evidence/guardian-ui/guardian-pr-reused-outcome.png) |
+
+The completed frame uses the saved `PR_REUSED` session: real GitHub repository evidence, owned synthetic incident observations, deterministic static verification, two bounded investigators, and zero new GitHub writes. Review the proposed [three-minute product video script](./docs/demo/GUARDIAN_UI_VIDEO_SCRIPT.md); video generation is intentionally deferred until the script is approved.
 
 ## Demo flow
 
